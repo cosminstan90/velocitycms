@@ -1,404 +1,524 @@
-# Velocity CMS
-
-A headless CMS built with Next.js, Prisma, PostgreSQL, and Redis.
-Supports multi-site management, AI-assisted content (Claude), SEO/GEO scoring,
-content scheduling, internal linking, backup automation, and a headless REST API.
+# Velocity CMS — Deployment Guide (CloudPanel + divet.ro)
 
 ---
 
 ## Tech Stack
 
-| Layer      | Technology                          |
-|------------|-------------------------------------|
-| Framework  | Next.js (App Router, standalone)    |
-| Database   | PostgreSQL 16 (via Prisma ORM)      |
-| Cache      | Redis 7 (ioredis)                   |
-| Auth       | NextAuth v5 (JWT, Credentials)      |
-| Editor     | TipTap v3                           |
+| Layer      | Technology                                       |
+|------------|--------------------------------------------------|
+| Framework  | Next.js (App Router, standalone output)          |
+| Database   | PostgreSQL 16 via Prisma                         |
+| Cache      | Redis 7                                          |
+| Auth       | NextAuth v5                                      |
+| Editor     | TipTap v3                                        |
 | AI         | Anthropic Claude (alt text, GEO, internal links) |
-| Email      | Brevo REST API                      |
-| Analytics  | Umami (self-hosted)                 |
-| Images     | Sharp (WebP + thumbnails)           |
-| Styles     | Tailwind CSS v4                     |
+| Email      | Brevo REST API                                   |
+| Analytics  | Umami (self-hosted)                              |
+| Styles     | Tailwind CSS v4                                  |
 
 ---
 
-## Deploying to CloudPanel (divet.ro)
-
-> **This is the recommended production setup.**
-> CloudPanel handles nginx, SSL (Let's Encrypt), and the reverse proxy.
-> Docker manages only the app containers (Next.js, PostgreSQL, Redis, Umami).
-> No nginx or certbot containers are used.
-
-### Architecture
+## How it runs in production
 
 ```
-Internet
-    │
-    ▼
-CloudPanel nginx  (port 80/443, SSL, rate limiting)
-    │  reverse proxy
-    ▼
-Next.js Docker container  (127.0.0.1:3000, not publicly exposed)
-    │
-    ├── PostgreSQL Docker container  (internal Docker network only)
-    ├── Redis Docker container       (internal Docker network only)
-    └── Umami Docker container       (127.0.0.1:3001, optional subdomain)
+Internet → CloudPanel nginx (port 80/443 · SSL · rate limits)
+               │
+               └─ reverse proxy → Next.js Docker  (127.0.0.1:3000)
+                                       │
+                                       ├── PostgreSQL  (Docker-internal only)
+                                       └── Redis       (Docker-internal only)
 ```
+
+CloudPanel owns nginx and SSL.
+Docker owns the app, the database, and Redis.
+They never conflict.
 
 ---
 
-### Step 1 — Server requirements
+# PART A — One-time server setup
 
-Minimum: **2 vCPU, 4 GB RAM, 40 GB SSD** (Ubuntu 22.04 or 24.04 LTS).
-Recommended: 4 vCPU / 8 GB RAM for production traffic.
+> Do this once. SSH into your VPS as root.
 
-CloudPanel must already be installed. If not:
 ```bash
-curl -sS https://installer.cloudpanel.io/ce/v2/install.sh -o install.sh
-sudo bash install.sh
+ssh root@YOUR_VPS_IP
 ```
 
----
+### A1. Update the system
 
-### Step 2 — Install Docker on the VPS
+```bash
+apt update && apt upgrade -y
+apt install -y git curl wget unzip
+```
+
+### A2. Install Docker
 
 ```bash
 curl -fsSL https://get.docker.com | bash
-usermod -aG docker $USER
-# Log out and back in, then verify:
-docker compose version   # must show v2.x
 ```
 
----
-
-### Step 3 — Configure DNS
-
-In your DNS provider, point **divet.ro** to your VPS IP:
-
-| Type | Name  | Value   | TTL  |
-|------|-------|---------|------|
-| A    | @     | VPS_IP  | 300  |
-| A    | www   | VPS_IP  | 300  |
-
-Verify propagation: `dig +short divet.ro`
-
----
-
-### Step 4 — Create the site in CloudPanel
-
-1. Log in to CloudPanel → **Add Site**
-2. Choose **Reverse Proxy**
-3. Fill in:
-   - **Domain:** `divet.ro`
-   - **Reverse Proxy URL:** `http://127.0.0.1:3000`
-4. Click **Add Site**
-
-CloudPanel creates an nginx vhost that proxies `divet.ro → localhost:3000`.
-
----
-
-### Step 5 — Issue SSL certificate
-
-In CloudPanel → Sites → **divet.ro** → **SSL/TLS** tab:
-
-1. Click **Actions → New Let's Encrypt Certificate**
-2. Add both `divet.ro` and `www.divet.ro`
-3. Click **Create and Install**
-
-CloudPanel handles renewal automatically.
-
----
-
-### Step 6 — Install nginx rate-limit zones
-
-These zones must exist at the `http{}` level (outside any `server{}` block).
-CloudPanel includes everything in `/etc/nginx/conf.d/` automatically.
+Verify it works:
 
 ```bash
-# On the VPS, as root:
-cp /opt/velocitycms/nginx/cloudpanel-rate-limits.conf \
-   /etc/nginx/conf.d/velocitycms-rate-limits.conf
-
-nginx -t && systemctl reload nginx
+docker compose version
+# Should print: Docker Compose version v2.x.x
 ```
 
----
-
-### Step 7 — Add custom nginx directives for divet.ro
-
-In CloudPanel → Sites → **divet.ro** → **Nginx Directives** tab:
-
-1. Open the file on your local machine:
-   `nginx/cloudpanel-vhost-directives.conf`
-2. Copy the entire contents
-3. Paste into the **Nginx Directives** text area in CloudPanel
-4. Click **Save**
-
-This adds:
-- WebSocket proxy headers (needed for Next.js hot reload + streaming)
-- Security headers (X-Frame-Options, HSTS, CSP, etc.)
-- Immutable cache for `/_next/static/` assets (1-year TTL)
-- 24-hour cache for `/media/` uploads
-- Rate limiting on `/api/auth/`, `/api/`, and `/*`
-
----
-
-### Step 8 — Clone the repo and configure environment
+### A3. Create the app folder
 
 ```bash
 mkdir -p /opt/velocitycms
-git clone https://github.com/cosminstan90/velocitycms.git /opt/velocitycms
+```
+
+---
+
+# PART B — CloudPanel UI setup
+
+> Open your CloudPanel dashboard in the browser: `https://YOUR_VPS_IP:8443`
+
+### B1. Add the site
+
+1. Click **Add Site** in the top-right
+2. Choose **Create a Node.js Site** (NOT PHP, NOT reverse proxy yet)
+   - If Node.js is not available, choose **Reverse Proxy** instead
+3. Fill in:
+   - **Domain Name:** `divet.ro`
+   - **Node.js Version:** 20 (if using Node.js site type)
+   - **Reverse Proxy URL:** `http://127.0.0.1:3000`
+4. Click **Add Site**
+
+> If you chose "Node.js Site", go back into the site settings and change the
+> site type to **Reverse Proxy** pointing to `http://127.0.0.1:3000`
+
+### B2. Issue the SSL certificate
+
+1. CloudPanel → Sites → **divet.ro**
+2. Click the **SSL/TLS** tab (or the lock icon)
+3. Click **Actions → New Let's Encrypt Certificate**
+4. Add both:
+   - `divet.ro`
+   - `www.divet.ro`
+5. Click **Create and Install**
+
+> DNS must already be pointing to the VPS IP before this step works.
+> If it fails, wait 5 minutes for DNS to propagate and try again.
+
+---
+
+# PART C — Clone and configure
+
+> Back in your SSH session.
+
+### C1. Clone the repository
+
+```bash
 cd /opt/velocitycms
+git clone https://github.com/cosminstan90/velocitycms.git .
+```
+
+### C2. Generate your secrets
+
+Run each command and copy the output — you'll need them in the next step:
+
+```bash
+# AUTH_SECRET
+openssl rand -base64 32
+
+# CRON_SECRET
+openssl rand -hex 32
+
+# INTERNAL_API_KEY
+openssl rand -hex 32
+
+# CMS_PUBLISHER_TOKEN
+openssl rand -hex 32
+
+# POSTGRES_PASSWORD (make a strong one)
+openssl rand -hex 24
+
+# REDIS_PASSWORD (optional but recommended)
+openssl rand -hex 16
+```
+
+### C3. Create the production environment file
+
+```bash
 cp .env.example .env.prod
 nano .env.prod
 ```
 
-Fill in every value. Use the table below as a reference.
-Generate secrets with:
-```bash
-openssl rand -base64 32   # for AUTH_SECRET
-openssl rand -hex 32      # for CRON_SECRET, INTERNAL_API_KEY, CMS_PUBLISHER_TOKEN
-```
-
-**Minimum required `.env.prod` for divet.ro:**
+Replace the entire contents with this template, filling in your generated values:
 
 ```env
-# App
+# ── App ───────────────────────────────────────────────────────────────────────
 NEXTAUTH_URL=https://divet.ro
-AUTH_SECRET=<openssl rand -base64 32>
-NEXTAUTH_SECRET=<same as AUTH_SECRET>
+AUTH_SECRET=PASTE_OUTPUT_OF_OPENSSL_BASE64
+NEXTAUTH_SECRET=PASTE_SAME_AS_AUTH_SECRET
 
-# Database (must match POSTGRES_* below)
-DATABASE_URL=postgresql://cms_user:<POSTGRES_PASSWORD>@postgres:5432/velocitycms
+# ── Database ──────────────────────────────────────────────────────────────────
+# Use the same password as POSTGRES_PASSWORD below
+DATABASE_URL=postgresql://cms_user:PASTE_POSTGRES_PASSWORD@postgres:5432/velocitycms
 
-# Redis
-REDIS_URL=redis://:<REDIS_PASSWORD>@redis:6379
+# ── Redis ─────────────────────────────────────────────────────────────────────
+REDIS_URL=redis://:PASTE_REDIS_PASSWORD@redis:6379
 
-# Docker PostgreSQL credentials
-POSTGRES_PASSWORD=<strong-random-password>
+# ── Docker credentials ────────────────────────────────────────────────────────
+POSTGRES_PASSWORD=PASTE_POSTGRES_PASSWORD
 POSTGRES_USER=cms_user
 POSTGRES_DB=velocitycms
+REDIS_PASSWORD=PASTE_REDIS_PASSWORD
 
-# Redis password (optional but recommended)
-REDIS_PASSWORD=<strong-random-password>
+# ── Secrets ───────────────────────────────────────────────────────────────────
+CRON_SECRET=PASTE_CRON_SECRET
+INTERNAL_API_KEY=PASTE_INTERNAL_API_KEY
+CMS_PUBLISHER_TOKEN=PASTE_CMS_PUBLISHER_TOKEN
 
-# Secrets
-CRON_SECRET=<openssl rand -hex 32>
-INTERNAL_API_KEY=<openssl rand -hex 32>
-CMS_PUBLISHER_TOKEN=<openssl rand -hex 32>
+# ── Storage ───────────────────────────────────────────────────────────────────
+BACKUP_PATH=/opt/velocitycms/backups
 
-# Storage
-BACKUP_PATH=/backups
-
-# CORS — origins allowed to call /api/public/*
+# ── CORS (origins allowed to call /api/public/*) ──────────────────────────────
 CORS_ALLOWED_ORIGINS=https://divet.ro,https://www.divet.ro
 
-# Optional
+# ── AI (optional but recommended) ────────────────────────────────────────────
 ANTHROPIC_API_KEY=sk-ant-...
-BREVO_API_KEY=...
+
+# ── Email (optional) ──────────────────────────────────────────────────────────
+BREVO_API_KEY=
 BREVO_FROM_EMAIL=noreply@divet.ro
-PAGESPEED_API_KEY=...
-UMAMI_WEBSITE_ID=...
+
+# ── Analytics (optional) ──────────────────────────────────────────────────────
+UMAMI_WEBSITE_ID=
 UMAMI_URL=http://localhost:3001
+PAGESPEED_API_KEY=
 ```
 
-> **Never commit `.env.prod` to git.** It is already in `.gitignore`.
+Save and close: `Ctrl+O` → `Enter` → `Ctrl+X`
+
+Verify nothing is empty that should not be:
+
+```bash
+grep -E "^(NEXTAUTH_URL|AUTH_SECRET|DATABASE_URL|REDIS_URL|POSTGRES_PASSWORD|CRON_SECRET)" .env.prod
+```
+
+All six lines should show real values, not placeholder text.
 
 ---
 
-### Step 9 — First deploy
+# PART D — nginx configuration
+
+### D1. Install rate-limit zones
+
+CloudPanel's nginx loads everything in `/etc/nginx/conf.d/` automatically.
+
+```bash
+cp /opt/velocitycms/nginx/cloudpanel-rate-limits.conf \
+   /etc/nginx/conf.d/velocitycms-rate-limits.conf
+
+nginx -t
+# → nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+systemctl reload nginx
+```
+
+### D2. Add vhost directives in CloudPanel UI
+
+1. CloudPanel → Sites → **divet.ro** → **Nginx Directives** tab
+2. Copy the file contents:
+
+```bash
+cat /opt/velocitycms/nginx/cloudpanel-vhost-directives.conf
+```
+
+3. Paste the entire output into the **Nginx Directives** text box in CloudPanel
+4. Click **Save**
+
+This adds:
+- Correct proxy headers for Next.js (WebSocket, X-Forwarded-For, etc.)
+- Immutable 1-year cache for `/_next/static/` (JS/CSS bundles)
+- 24-hour cache for `/media/` uploads
+- Security headers (X-Frame-Options, HSTS, Referrer-Policy)
+- Rate limits on `/api/auth/` (5/min), `/api/` (60/min), `/` (200/min)
+
+---
+
+# PART E — First deploy
+
+### E1. Make scripts executable
 
 ```bash
 cd /opt/velocitycms
 chmod +x deploy-cloudpanel.sh backup-before-deploy.sh
+```
 
-# Build and start all services
+### E2. Start all services
+
+```bash
 docker compose -f docker-compose.yml -f docker-compose.cloudpanel.yml up -d --build
+```
 
-# Run database migrations
+This will take **5–10 minutes** on first run (downloading images + building Next.js).
+
+Watch the build progress:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.cloudpanel.yml logs -f nextjs
+```
+
+Wait until you see:
+```
+✓ Starting...
+```
+
+Press `Ctrl+C` to stop following logs.
+
+### E3. Check all containers are running
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.cloudpanel.yml ps
+```
+
+Expected output — all should show `healthy` or `running`:
+
+```
+NAME                    STATUS
+velocitycms_postgres    Up (healthy)
+velocitycms_redis       Up (healthy)
+velocitycms_app         Up (healthy)
+velocitycms_umami       Up
+```
+
+### E4. Run database migrations
+
+```bash
 docker compose -f docker-compose.yml -f docker-compose.cloudpanel.yml \
   exec nextjs npx prisma migrate deploy
+```
 
-# Seed initial data (first time only — creates admin user + default site)
+Expected: `All migrations have been successfully applied.`
+
+### E5. Seed the database (first time only)
+
+This creates the admin user and default site record:
+
+```bash
 docker compose -f docker-compose.yml -f docker-compose.cloudpanel.yml \
   exec nextjs npx prisma db seed
 ```
 
-Verify the app is running:
+Note the admin email and password printed in the output — save them.
+
+### E6. Verify the app is responding
+
 ```bash
 curl -s http://127.0.0.1:3000/api/health
-# → {"status":"ok","db":"ok","redis":"ok"}
 ```
 
-Then open **https://divet.ro** in your browser.
+Expected:
+```json
+{"status":"ok","db":"ok","redis":"ok"}
+```
+
+Then test through CloudPanel's nginx:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" https://divet.ro
+# → 200
+```
+
+Open `https://divet.ro` in your browser — the site should load.
+Open `https://divet.ro/admin/dashboard` and log in with the seed credentials.
 
 ---
 
-### Step 10 — Set up cron jobs
+# PART F — Cron jobs
 
-In CloudPanel → **Cron Jobs** (or via `crontab -e` on the VPS):
+### F1. Open the crontab
+
+```bash
+crontab -e
+```
+
+If asked to choose an editor, pick **nano** (option 1).
+
+### F2. Add these two jobs
 
 ```cron
-# Content scheduler — publish posts on schedule (every minute)
-* * * * * curl -s -X GET https://divet.ro/api/scheduler/run \
-  -H "X-Cron-Secret: YOUR_CRON_SECRET" >> /var/log/velocitycms-scheduler.log 2>&1
+# Content scheduler — publish posts on schedule (runs every minute)
+* * * * * curl -s -X GET https://divet.ro/api/scheduler/run -H "X-Cron-Secret: PASTE_YOUR_CRON_SECRET" >> /var/log/velocitycms-scheduler.log 2>&1
 
 # Daily full backup at 03:00 AM
-0 3 * * * curl -s -X POST https://divet.ro/api/backup/run \
-  -H "X-Cron-Secret: YOUR_CRON_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"type":"full"}' >> /var/log/velocitycms-backup.log 2>&1
+0 3 * * * curl -s -X POST https://divet.ro/api/backup/run -H "X-Cron-Secret: PASTE_YOUR_CRON_SECRET" -H "Content-Type: application/json" -d '{"type":"full"}' >> /var/log/velocitycms-backup.log 2>&1
 ```
 
-Replace `YOUR_CRON_SECRET` with the value from `.env.prod`.
+Replace `PASTE_YOUR_CRON_SECRET` with the `CRON_SECRET` value from `.env.prod`:
 
-> SSL renewal is managed automatically by CloudPanel — no cron needed.
+```bash
+grep CRON_SECRET /opt/velocitycms/.env.prod
+```
+
+Save: `Ctrl+O` → `Enter` → `Ctrl+X`
+
+### F3. Create the log files
+
+```bash
+touch /var/log/velocitycms-scheduler.log
+touch /var/log/velocitycms-backup.log
+```
+
+### F4. Test the scheduler endpoint manually
+
+```bash
+CRON_SECRET=$(grep ^CRON_SECRET /opt/velocitycms/.env.prod | cut -d= -f2)
+
+curl -s -X GET https://divet.ro/api/scheduler/run \
+  -H "X-Cron-Secret: $CRON_SECRET"
+# → {"published":0,"errors":[],"checkedAt":"...","total":0}
+```
 
 ---
 
-### Subsequent deploys
+# PART G — Add a convenience alias
+
+Add this to your shell so you don't have to type the full compose command every time:
+
+```bash
+echo "alias dc='docker compose -f /opt/velocitycms/docker-compose.yml -f /opt/velocitycms/docker-compose.cloudpanel.yml'" >> ~/.bashrc
+source ~/.bashrc
+```
+
+Now you can use:
+
+```bash
+dc ps                    # check container status
+dc logs -f nextjs        # stream app logs
+dc logs -f postgres      # stream database logs
+dc exec nextjs sh        # open a shell in the app container
+dc restart nextjs        # restart just the app
+```
+
+---
+
+# PART H — Future deploys
+
+Every time you push new code to GitHub, deploy it with:
 
 ```bash
 cd /opt/velocitycms
 ./deploy-cloudpanel.sh
 ```
 
-What it does:
-1. Creates a pre-deploy database backup
+What it does automatically:
+1. Creates a database backup (safe to roll back)
 2. `git pull --ff-only origin main`
-3. Pulls latest upstream images (postgres, redis, umami)
-4. Builds the Next.js Docker image
-5. Runs `prisma migrate deploy`
-6. Restarts **only** the Next.js container (postgres/redis untouched)
-7. Health check — rolls back warning if it fails
+3. Pulls latest postgres/redis/umami images
+4. Rebuilds the Next.js Docker image
+5. Runs `prisma migrate deploy` for any new migrations
+6. Restarts **only** the Next.js container (database stays up)
+7. Health check — warns you if the container is not responding
 
 ---
 
-## Development (local)
+# Troubleshooting
+
+### Site shows CloudPanel default page instead of the app
+
+The nginx vhost directives were not saved. Redo **Step D2**.
+
+### `curl http://127.0.0.1:3000/api/health` returns connection refused
+
+The Next.js container is not running or still starting up. Check:
 
 ```bash
-# Start database and cache
+dc ps
+dc logs nextjs
+```
+
+### SSL certificate failed / `https://divet.ro` not loading
+
+DNS is not pointing to the VPS yet. Check:
+
+```bash
+dig +short divet.ro
+# Must return your VPS IP
+```
+
+Then re-issue the certificate in CloudPanel UI.
+
+### Migrations fail with "database does not exist"
+
+The postgres container may not have finished its init. Wait 30 seconds and retry:
+
+```bash
+dc exec postgres pg_isready -U cms_user -d velocitycms
+# → /var/run/postgresql:5432 - accepting connections
+
+dc exec nextjs npx prisma migrate deploy
+```
+
+### Admin login fails after seed
+
+```bash
+dc exec nextjs npx prisma db seed
+```
+
+Check the output for the printed credentials.
+
+### See all container logs since last restart
+
+```bash
+dc logs --since 1h
+```
+
+---
+
+# Environment Variables Reference
+
+| Variable               | Required | Description                                              |
+|------------------------|----------|----------------------------------------------------------|
+| `NEXTAUTH_URL`         | ✓        | Public URL — `https://divet.ro`                          |
+| `AUTH_SECRET`          | ✓        | NextAuth JWT secret — `openssl rand -base64 32`          |
+| `DATABASE_URL`         | ✓        | PostgreSQL connection string (points to Docker service)  |
+| `REDIS_URL`            | ✓        | Redis connection string (points to Docker service)       |
+| `POSTGRES_PASSWORD`    | ✓        | Docker PostgreSQL password                               |
+| `POSTGRES_USER`        | ✓        | Docker PostgreSQL user (default: `cms_user`)             |
+| `POSTGRES_DB`          | ✓        | Docker PostgreSQL database (default: `velocitycms`)      |
+| `REDIS_PASSWORD`       | ✓        | Docker Redis password                                    |
+| `CRON_SECRET`          | ✓        | Secret for `/api/scheduler/run` and `/api/backup/run`    |
+| `INTERNAL_API_KEY`     | ✓        | Internal service-to-service key                          |
+| `CMS_PUBLISHER_TOKEN`  | ✓        | Publisher integration token                              |
+| `BACKUP_PATH`          | ✓        | Filesystem path for backup files                         |
+| `CORS_ALLOWED_ORIGINS` | –        | Comma-separated CORS origins for `/api/public/*`         |
+| `ANTHROPIC_API_KEY`    | –        | Claude AI — alt text, GEO scoring, internal link engine  |
+| `BREVO_API_KEY`        | –        | Brevo transactional email                                |
+| `BREVO_FROM_EMAIL`     | –        | Sender address                                           |
+| `UMAMI_WEBSITE_ID`     | –        | Umami analytics site ID                                  |
+| `UMAMI_URL`            | –        | Umami instance URL                                       |
+| `PAGESPEED_API_KEY`    | –        | Google PageSpeed Insights API key                        |
+
+---
+
+# Headless API
+
+All public endpoints require `X-API-Key: sk-...` header.
+Generate keys at `/admin/settings` → **Chei API** tab.
+
+| Method | Endpoint                    | Description                   |
+|--------|-----------------------------|-------------------------------|
+| GET    | `/api/public/posts`         | List posts (paginated)        |
+| GET    | `/api/public/posts/[slug]`  | Full post with tags + media   |
+| GET    | `/api/public/pages/[slug]`  | Full static page              |
+| GET    | `/api/public/categories`    | Nested category tree          |
+| GET    | `/api/public/tags`          | Tags with post counts         |
+
+---
+
+# Development (local)
+
+```bash
 docker compose up -d postgres redis
-
-# Install dependencies
 npm install
-
-# Apply migrations and generate Prisma client
 npx prisma migrate dev
 npx prisma db seed
-
-# Start dev server
 npm run dev
 ```
 
-Open `http://localhost:3000`
-Admin: `http://localhost:3000/admin/dashboard`
-
----
-
-## Environment Variables Reference
-
-| Variable                | Required | Description                                         |
-|-------------------------|----------|-----------------------------------------------------|
-| `DATABASE_URL`          | ✓        | PostgreSQL connection string                        |
-| `AUTH_SECRET`           | ✓        | NextAuth JWT secret (32+ chars)                     |
-| `NEXTAUTH_URL`          | ✓        | Public URL — `https://divet.ro`                     |
-| `REDIS_URL`             | ✓        | Redis connection string                             |
-| `CRON_SECRET`           | ✓        | Shared secret for `/api/scheduler/run`, `/api/backup/run`, `/api/revalidate` |
-| `INTERNAL_API_KEY`      | ✓        | Internal service-to-service auth                    |
-| `BACKUP_PATH`           | ✓        | Filesystem path for backup files                    |
-| `POSTGRES_PASSWORD`     | prod     | Docker PostgreSQL password                          |
-| `POSTGRES_USER`         | prod     | Docker PostgreSQL user (default: `cms_user`)        |
-| `POSTGRES_DB`           | prod     | Docker PostgreSQL database name                     |
-| `REDIS_PASSWORD`        | prod     | Docker Redis password                               |
-| `ANTHROPIC_API_KEY`     | –        | Claude API — alt text, GEO scoring, internal links  |
-| `BREVO_API_KEY`         | –        | Brevo email API key                                 |
-| `BREVO_FROM_EMAIL`      | –        | Sender address for notifications                    |
-| `CMS_PUBLISHER_TOKEN`   | –        | Publisher integration token                         |
-| `CORS_ALLOWED_ORIGINS`  | –        | Comma-separated CORS origins for `/api/public/*`    |
-| `PAGESPEED_API_KEY`     | –        | Google PageSpeed Insights API key                   |
-| `UMAMI_WEBSITE_ID`      | –        | Umami analytics site ID                             |
-| `UMAMI_URL`             | –        | Umami instance base URL                             |
-
----
-
-## Headless API
-
-All public endpoints require `X-API-Key: sk-...` header.
-Generate and manage API keys at `/admin/settings` → **Chei API** tab.
-
-| Method | Endpoint                       | Description                    |
-|--------|--------------------------------|--------------------------------|
-| GET    | `/api/public/posts`            | List posts (paginated)         |
-| GET    | `/api/public/posts/[slug]`     | Full post with tags + media    |
-| GET    | `/api/public/pages/[slug]`     | Full static page               |
-| GET    | `/api/public/categories`       | Nested category tree           |
-| GET    | `/api/public/tags`             | Tags with post counts          |
-
-**Query params for `/api/public/posts`:**
-- `page`, `limit` (max 100)
-- `category=slug`
-- `search=keyword`
-- `status=published|draft|all`
-- `fields=id,title,slug,...` — sparse fieldset
-
-### On-demand cache revalidation
-
-```bash
-curl -X POST https://divet.ro/api/revalidate \
-  -H "Content-Type: application/json" \
-  -H "x-cron-secret: YOUR_CRON_SECRET" \
-  -d '{"type": "post", "path": "/blog/my-article"}'
-```
-
-Types: `page` · `post` · `category` · `all`
-
----
-
-## Available Scripts
-
-| Script               | Description                                         |
-|----------------------|-----------------------------------------------------|
-| `npm run dev`        | Start development server                            |
-| `npm run build`      | Production build                                    |
-| `npm run start`      | Start production server (after build)               |
-| `npm run lint`       | ESLint check                                        |
-| `npm run perf-check` | SEO / content quality audit on all published posts  |
-
----
-
-## Architecture Notes
-
-- **ISR cache TTLs:** Homepage 30 min · Blog/category listings 1 h · Articles 2 h · Static pages 24 h
-- **On-demand revalidation:** `POST /api/revalidate` + automatic on publish/update/unpublish
-- **Rate limits (app layer):** Login 5/15 min per email · Uploads 20/h per user · Public API 200/min per IP
-- **Rate limits (nginx layer):** Auth 5/min · API 60/min · General 200/min — all with burst
-- **Security headers:** X-Frame-Options DENY · X-Content-Type-Options · Referrer-Policy · Permissions-Policy · HSTS (1 year)
-- **SSL:** Let's Encrypt, auto-renewed by CloudPanel
-- **Backups:** Daily full backup via cron · Pre-deploy backup before every deploy · 30-day retention
-
----
-
-## Useful Docker Commands
-
-```bash
-# Alias for convenience (add to ~/.bashrc)
-alias dc='docker compose -f /opt/velocitycms/docker-compose.yml -f /opt/velocitycms/docker-compose.cloudpanel.yml'
-
-# View logs
-dc logs -f nextjs
-dc logs -f postgres
-
-# Open a shell in the Next.js container
-dc exec nextjs sh
-
-# Run a Prisma migration manually
-dc exec nextjs npx prisma migrate deploy
-
-# Check container status
-dc ps
-
-# Restart a single service
-dc restart nextjs
-```
+Open `http://localhost:3000/admin/dashboard`
