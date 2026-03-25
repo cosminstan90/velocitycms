@@ -18,8 +18,14 @@ export async function PUT(
   const { id } = await params
   const { name, role } = await req.json()
 
+  // Verify user belongs to this site before mutating
+  const access = await prisma.userSiteAccess.findUnique({
+    where: { userId_siteId: { userId: id, siteId } },
+  })
+  if (!access) return NextResponse.json({ error: 'User not found on this site' }, { status: 404 })
+
   const user = await prisma.user.update({
-    where: { id, siteId },
+    where: { id },
     data: { ...(name !== undefined && { name }), ...(role !== undefined && { role }) },
     select: { id: true, email: true, name: true, role: true },
   })
@@ -45,6 +51,16 @@ export async function DELETE(
     return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 })
   }
 
-  await prisma.user.delete({ where: { id, siteId } })
+  // Verify user belongs to this site before removing
+  const access = await prisma.userSiteAccess.findUnique({
+    where: { userId_siteId: { userId: id, siteId } },
+  })
+  if (!access) return NextResponse.json({ error: 'User not found on this site' }, { status: 404 })
+
+  // Remove site access; only hard-delete user if they have no other site memberships
+  await prisma.userSiteAccess.delete({ where: { userId_siteId: { userId: id, siteId } } })
+  const remaining = await prisma.userSiteAccess.count({ where: { userId: id } })
+  if (remaining === 0) await prisma.user.delete({ where: { id } })
+
   return NextResponse.json({ success: true })
 }
