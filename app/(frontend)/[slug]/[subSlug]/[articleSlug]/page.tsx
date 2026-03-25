@@ -1,11 +1,11 @@
 /**
- * Route: /[categorySlug]/[slug]/[articleSlug]
+ * Route: /[slug]/[subSlug]/[articleSlug]
  * Article inside a subcategory.
  *
- * Param mapping (renamed to satisfy Next.js same-depth slug rule):
- *   [categorySlug]  = top-level category slug
- *   [slug]          = subcategory slug  (was [subCategorySlug])
- *   [articleSlug]   = article slug      (was [slug])
+ * Param mapping:
+ *   [slug]        = top-level category slug  (was [categorySlug])
+ *   [subSlug]     = subcategory slug         (was [slug] / [subCategorySlug])
+ *   [articleSlug] = article slug
  */
 import { prisma } from '@/lib/prisma'
 import ArticleTemplate from '@/components/frontend/ArticleTemplate'
@@ -17,7 +17,7 @@ import { notFound } from 'next/navigation'
 export const revalidate = 7200
 
 type Props = {
-  params: Promise<{ categorySlug: string; slug: string; articleSlug: string }>
+  params: Promise<{ slug: string; subSlug: string; articleSlug: string }>
 }
 
 async function getSiteData(siteId: string) {
@@ -40,7 +40,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { categorySlug, slug: subCategorySlug, articleSlug: slug } = await params
+  const { slug: categorySlug, subSlug: subCategorySlug, articleSlug: slug } = await params
 
   const post = await prisma.post.findFirst({
     where: {
@@ -90,7 +90,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function SubCategoryPostPage({ params }: Props) {
-  const { categorySlug, slug: subCategorySlug, articleSlug: slug } = await params
+  const { slug: categorySlug, subSlug: subCategorySlug, articleSlug: slug } = await params
 
   const post = await prisma.post.findFirst({
     where: {

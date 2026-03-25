@@ -1,9 +1,13 @@
 /**
- * Route: /[categorySlug]/[slug]
+ * Route: /[slug]/[subSlug]
  *
  * Handles two cases (resolved by DB lookup):
- *   1. Subcategory listing page — [slug] is a child category of [categorySlug]
- *   2. Article page — [slug] is a post slug within category [categorySlug]
+ *   1. Subcategory listing page — [subSlug] is a child category of [slug]
+ *   2. Article page — [subSlug] is a post slug within category [slug]
+ *
+ * Param mapping:
+ *   [slug]    = top-level category slug  (was [categorySlug])
+ *   [subSlug] = subcategory or article slug (was [slug])
  */
 import { prisma } from '@/lib/prisma'
 import ArticleTemplate from '@/components/frontend/ArticleTemplate'
@@ -18,7 +22,7 @@ export const revalidate = 3600
 const POSTS_PER_PAGE = 12
 
 type Props = {
-  params: Promise<{ categorySlug: string; slug: string }>
+  params: Promise<{ slug: string; subSlug: string }>
   searchParams: Promise<{ page?: string }>
 }
 
@@ -70,7 +74,7 @@ export async function generateStaticParams() {
 // ─── generateMetadata ─────────────────────────────────────────────────────────
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { categorySlug, slug } = await params
+  const { slug: categorySlug, subSlug: slug } = await params
 
   // Try subcategory first
   const subCategory = await prisma.category.findFirst({
@@ -138,7 +142,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // ─── Page component ───────────────────────────────────────────────────────────
 
 export default async function CategorySlugPage({ params, searchParams }: Props) {
-  const { categorySlug, slug } = await params
+  const { slug: categorySlug, subSlug: slug } = await params
   const { page: pageParam } = await searchParams
   const currentPage = Math.max(1, parseInt(pageParam ?? '1', 10))
   const skip = (currentPage - 1) * POSTS_PER_PAGE
