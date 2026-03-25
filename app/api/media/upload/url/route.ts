@@ -9,6 +9,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { processImage, saveProcessedImage, generateAltText } from '@/lib/media/image-processor'
 import { siteUploadDir, sitePublicPrefix } from '@/lib/media/storage'
+import { getSiteIdFromRequest } from '@/lib/site'
 import fs from 'fs/promises'
 import path from 'path'
 
