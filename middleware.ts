@@ -1,5 +1,4 @@
 import { auth } from '@/auth'
-import { getSiteIdFromHostname } from '@/lib/site'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -11,8 +10,23 @@ export default auth(async (req) => {
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-pathname', pathname)
 
-  // Domain-based site resolution (for frontend routes)
-  const resolvedSiteId = await getSiteIdFromHostname(hostname)
+  // Domain-based site resolution via internal Node.js API (prisma/ioredis can't run in Edge)
+  let resolvedSiteId: string | null = null
+  try {
+    const siteRes = await fetch(
+      new URL(`/api/internal/site-lookup?domain=${encodeURIComponent(hostname)}`, origin),
+      {
+        headers: { 'x-internal-key': process.env.INTERNAL_API_KEY ?? '' },
+        signal: AbortSignal.timeout(3_000),
+      }
+    )
+    if (siteRes.ok) {
+      resolvedSiteId = ((await siteRes.json()) as { siteId: string | null }).siteId
+    }
+  } catch {
+    // Fail open — never block requests due to lookup failure
+  }
+
   if (resolvedSiteId) {
     requestHeaders.set('x-site-id', resolvedSiteId)
   }
