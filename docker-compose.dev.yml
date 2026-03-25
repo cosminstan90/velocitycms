@@ -1,0 +1,25 @@
+# docker-compose.dev.yml — local development port overrides
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#
+# Exposes postgres and redis to the host machine so you can connect
+# with local tools (TablePlus, redis-cli, etc.) during development.
+# Never use this in production.
+
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  umami:
+    ports:
+      - "3001:3000"
+
+  nextjs:
+    ports:
+      - "3000:3000"

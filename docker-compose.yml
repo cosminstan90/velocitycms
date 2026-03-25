@@ -1,17 +1,13 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16
     container_name: velocitycms_postgres
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_DB: velocitycms
       POSTGRES_USER: cms_user
       POSTGRES_PASSWORD: cms_pass
       POSTGRES_MULTIPLE_DATABASES: velocitycms,umami
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
@@ -24,9 +20,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: velocitycms_redis
-    restart: always
-    ports:
-      - "6379:6379"
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -36,8 +30,6 @@ services:
   umami:
     image: ghcr.io/umami-software/umami:postgresql-latest
     container_name: velocitycms_umami
-    ports:
-      - "3001:3000"
     environment:
       DATABASE_URL: postgresql://cms_user:cms_pass@postgres:5432/umami
       DATABASE_TYPE: postgresql
@@ -45,26 +37,25 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    restart: always
+    restart: unless-stopped
 
   nextjs:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: velocitycms_app
-    ports:
-      - "3000:3000"
     environment:
       DATABASE_URL: postgresql://cms_user:cms_pass@postgres:5432/velocitycms
       REDIS_URL: redis://redis:6379
     volumes:
-      - ./media:/app/public/media/uploads
+      - media_uploads:/app/public/media/uploads
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    restart: always
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  media_uploads:
