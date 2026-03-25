@@ -1,6 +1,8 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
+
+export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import {
   FileText, Globe, Image, HardDrive, Plus, BarChart2,

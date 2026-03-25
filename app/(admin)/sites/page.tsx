@@ -1,6 +1,7 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
-import { useEffect, useMemo, useState } from 'react'
+
 import { Plus, Pencil, Trash2, Users, Globe, Type, CheckCircle2, XCircle } from 'lucide-react'
 
 interface SiteCard {

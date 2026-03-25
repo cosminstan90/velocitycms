@@ -1,6 +1,7 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useCallback } from 'react'
+
 import {
   Search, Map, Bot, ExternalLink, RefreshCw, Globe, Check, X,
   AlertCircle, ChevronRight, BarChart2,

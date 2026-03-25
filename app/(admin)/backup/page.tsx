@@ -1,6 +1,7 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
-import { useEffect, useState, useCallback } from 'react'
+
 import {
   Database, FolderSync, Archive, Play, Download, RotateCcw, Bell,
   CheckCircle2, XCircle, Loader2, Clock, HardDrive, AlertTriangle,
