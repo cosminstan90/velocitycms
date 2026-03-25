@@ -13,6 +13,7 @@ import { prisma } from '@/lib/prisma'
 import { processImage, saveProcessedImage, generateAltText } from '@/lib/media/image-processor'
 import { siteUploadDir, sitePublicPrefix } from '@/lib/media/storage'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { getSiteIdFromRequest } from '@/lib/site'
 
 const ALLOWED_TYPES: Record<string, string> = {
   'image/jpeg':       'image',
