@@ -68,6 +68,37 @@ export class WordPressImporter {
     this.db = db
   }
 
+  async parseXML(): Promise<WPData> {
+    const xml = await fs.readFile(this.xmlPath, 'utf-8')
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: '',
+      cdataPropName: '__cdata',
+      parseTagValue: false,
+      trimValues: true,
+      isArray: (tagName) =>
+        ['item', 'wp:category', 'wp:postmeta', 'category'].includes(tagName),
+    })
+    const parsed = parser.parse(xml)
+
+    // Normalise: fast-xml-parser may return channel.item as object if only one item
+    const channel = parsed?.rss?.channel ?? {}
+    if (channel.item && !Array.isArray(channel.item)) {
+      channel.item = [channel.item]
+    }
+    if (!channel.item) channel.item = []
+
+    // Flatten CDATA values
+    const flattenCdata = (obj: any): any => {
+      if (obj === null || typeof obj !== 'object') return obj
+      if (obj.__cdata !== undefined) return obj.__cdata
+      if (Array.isArray(obj)) return obj.map(flattenCdata)
+      return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, flattenCdata(v)]))
+    }
+
+    return flattenCdata(parsed) as WPData
+  }
+
   detectOldDomain(wpData: WPData): string | null {
     // Try to find from channel link
     if (wpData.rss.channel.link) {
