@@ -12,6 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { PostStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { validateApiKey } from '@/lib/auth/api-key'
 import { rateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit'
@@ -63,10 +64,10 @@ export async function GET(req: NextRequest) {
   selectedFields.add('id')
   selectedFields.add('slug')
 
-  const statusFilter =
+  const statusFilter: PostStatus | undefined =
     rawStatus === 'all' ? undefined :
-    rawStatus === 'draft' ? 'DRAFT' :
-    'PUBLISHED'
+    rawStatus === 'draft' ? PostStatus.DRAFT :
+    PostStatus.PUBLISHED
 
   // Find category id if slug provided
   let categoryId: string | undefined
