@@ -90,6 +90,7 @@ model Site {
   backupLogs       BackupLog[]
   cwvReports       CWVReport[]
   apiKeys          APIKey[]
+  importLogs       ImportLog[]
 }
 
 model UserSiteAccess {
