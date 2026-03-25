@@ -3,38 +3,10 @@ import Credentials from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { rateLimit } from '@/lib/rate-limit'
+import authConfig from '@/auth.config'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  session: { strategy: 'jwt' },
-  pages: {
-    signIn: '/login',
-  },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id as string
-        token.role = (user as any).role
-        // Fetch first site user has access to
-        const access = await prisma.userSiteAccess.findFirst({
-          where: { userId: user.id as string },
-          include: { site: true },
-          orderBy: { site: { createdAt: 'asc' } },
-        })
-        token.activeSiteId = access?.siteId ?? null
-        token.activeSiteName = access?.site?.name ?? null
-      }
-      return token
-    },
-    async session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.id as string
-        session.user.role = token.role as string
-        session.user.activeSiteId = token.activeSiteId as string | null
-        session.user.activeSiteName = token.activeSiteName as string | null
-      }
-      return session
-    },
-  },
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -66,4 +38,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id as string
+        token.role = (user as any).role
+        // Fetch first site user has access to
+        const access = await prisma.userSiteAccess.findFirst({
+          where: { userId: user.id as string },
+          include: { site: true },
+          orderBy: { site: { createdAt: 'asc' } },
+        })
+        token.activeSiteId = access?.siteId ?? null
+        token.activeSiteName = access?.site?.name ?? null
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id as string
+        session.user.role = token.role as string
+        session.user.activeSiteId = token.activeSiteId as string | null
+        session.user.activeSiteName = token.activeSiteName as string | null
+      }
+      return session
+    },
+  },
 })
