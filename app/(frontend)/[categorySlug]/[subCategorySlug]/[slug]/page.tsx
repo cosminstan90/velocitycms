@@ -29,24 +29,9 @@ async function getSiteData(siteId: string) {
 }
 
 export async function generateStaticParams() {
-  const posts = await prisma.post.findMany({
-    where: {
-      status: 'PUBLISHED',
-      category: { parentId: { not: null } },
-    },
-    select: {
-      slug: true,
-      category: { select: { slug: true, parent: { select: { slug: true } } } },
-    },
-  })
-
-  return posts
-    .filter((p) => p.category?.parent)
-    .map((p) => ({
-      categorySlug: p.category!.parent!.slug,
-      subCategorySlug: p.category!.slug,
-      slug: p.slug,
-    }))
+  // Return empty array — pages are generated on first request and cached by ISR
+  // (revalidate = 7200). Pre-rendering at build time requires a live DB connection.
+  return []
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

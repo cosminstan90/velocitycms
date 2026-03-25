@@ -14,14 +14,9 @@ type Props = {
 }
 
 export async function generateStaticParams() {
-  const [categories, pages] = await Promise.all([
-    prisma.category.findMany({ where: { parentId: null }, select: { slug: true } }),
-    prisma.page.findMany({ where: { status: 'PUBLISHED' }, select: { slug: true } }),
-  ])
-  return [
-    ...categories.map((c) => ({ slug: c.slug })),
-    ...pages.map((p) => ({ slug: p.slug })),
-  ]
+  // Return empty array — pages are generated on first request and cached by ISR
+  // (revalidate = 86400). Pre-rendering at build time requires a live DB connection.
+  return []
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

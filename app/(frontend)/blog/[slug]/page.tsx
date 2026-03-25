@@ -12,11 +12,10 @@ type Props = {
 }
 
 export async function generateStaticParams() {
-  const posts = await prisma.post.findMany({
-    where: { status: 'PUBLISHED', categoryId: null },
-    select: { slug: true },
-  })
-  return posts.map((p) => ({ slug: p.slug }))
+  // Return empty array — pages are generated on first request and cached by ISR
+  // (revalidate = 7200). Pre-rendering all slugs at build time requires a live
+  // DB connection which is not available in the Docker build stage.
+  return []
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

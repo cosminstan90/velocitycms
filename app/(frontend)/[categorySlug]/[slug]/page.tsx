@@ -62,36 +62,9 @@ async function mapPostsWithImages(posts: Array<{ id: string; featuredImageId: st
 // ─── generateStaticParams ─────────────────────────────────────────────────────
 
 export async function generateStaticParams() {
-  const [articles, subCategories] = await Promise.all([
-    // Articles with a parent category
-    prisma.post.findMany({
-      where: { status: 'PUBLISHED', categoryId: { not: null } },
-      select: { slug: true, category: { select: { slug: true, parentId: true } } },
-    }),
-    // Subcategories (categories that have a parentId)
-    prisma.category.findMany({
-      where: { parentId: { not: null } },
-      select: { slug: true, parent: { select: { slug: true } } },
-    }),
-  ])
-
-  const params: { categorySlug: string; slug: string }[] = []
-
-  for (const post of articles) {
-    if (post.category && !post.category.parentId) {
-      // Article belongs to a root category → /[categorySlug]/[postSlug]
-      params.push({ categorySlug: post.category.slug, slug: post.slug })
-    }
-  }
-
-  for (const sub of subCategories) {
-    if (sub.parent) {
-      // Subcategory listing → /[parentSlug]/[subSlug]
-      params.push({ categorySlug: sub.parent.slug, slug: sub.slug })
-    }
-  }
-
-  return params
+  // Return empty array — pages are generated on first request and cached by ISR
+  // (revalidate = 3600). Pre-rendering at build time requires a live DB connection.
+  return []
 }
 
 // ─── generateMetadata ─────────────────────────────────────────────────────────
