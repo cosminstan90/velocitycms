@@ -5,53 +5,71 @@ import type { Metadata } from 'next'
 export const revalidate = 1800
 
 export async function generateMetadata(): Promise<Metadata> {
-  const seo = await prisma.seoSettings.findFirst({ include: { site: true } })
-  if (!seo) return { title: 'Acasă' }
-  return {
-    title: seo.defaultMetaTitle ?? seo.siteName,
-    description: seo.defaultMetaDesc ?? undefined,
-    openGraph: {
+  try {
+    const seo = await prisma.seoSettings.findFirst({ include: { site: true } })
+    if (!seo) return { title: 'Acasă' }
+    return {
       title: seo.defaultMetaTitle ?? seo.siteName,
       description: seo.defaultMetaDesc ?? undefined,
-      url: seo.siteUrl,
-      images: seo.defaultOgImage ? [{ url: seo.defaultOgImage }] : [],
-    },
-    alternates: { canonical: seo.siteUrl },
+      openGraph: {
+        title: seo.defaultMetaTitle ?? seo.siteName,
+        description: seo.defaultMetaDesc ?? undefined,
+        url: seo.siteUrl,
+        images: seo.defaultOgImage ? [{ url: seo.defaultOgImage }] : [],
+      },
+      alternates: { canonical: seo.siteUrl },
+    }
+  } catch {
+    return { title: 'Acasă' }
   }
 }
 
 export default async function HomePage() {
-  const site = await prisma.site.findFirst({ where: { isActive: true } })
-  const seo = site
-    ? await prisma.seoSettings.findFirst({ where: { siteId: site.id } })
-    : null
+  let site = null
+  let seo = null
+  let posts: any[] = []
+  let categories: any[] = []
 
-  const posts = await prisma.post.findMany({
-    where: { status: 'PUBLISHED', siteId: site?.id },
-    take: 6,
-    orderBy: { publishedAt: 'desc' },
-    include: {
-      author: { select: { name: true, email: true } },
-      category: { select: { name: true, slug: true } },
-    },
-  })
+  try {
+    site = await prisma.site.findFirst({ where: { isActive: true } })
+    seo = site
+      ? await prisma.seoSettings.findFirst({ where: { siteId: site.id } })
+      : null
+
+    posts = await prisma.post.findMany({
+      where: { status: 'PUBLISHED', siteId: site?.id },
+      take: 6,
+      orderBy: { publishedAt: 'desc' },
+      include: {
+        author: { select: { name: true, email: true } },
+        category: { select: { name: true, slug: true } },
+      },
+    })
+
+    categories = await prisma.category.findMany({
+      where: { siteId: site?.id, parentId: null },
+      include: { _count: { select: { posts: true } } },
+      orderBy: { name: 'asc' },
+    })
+  } catch {
+    // DB unavailable at build time — ISR will populate on first runtime request
+  }
 
   // featuredImageId is a bare String? field — no Prisma relation. Fetch images separately.
-  const imageIds = posts.map((p) => p.featuredImageId).filter((id): id is string => !!id)
-  const mediaItems =
-    imageIds.length > 0
-      ? await prisma.media.findMany({
-          where: { id: { in: imageIds } },
-          select: { id: true, url: true, altText: true, width: true, height: true },
-        })
-      : []
-  const mediaMap = new Map(mediaItems.map((m) => [m.id, m]))
-
-  const categories = await prisma.category.findMany({
-    where: { siteId: site?.id, parentId: null },
-    include: { _count: { select: { posts: true } } },
-    orderBy: { name: 'asc' },
-  })
+  const imageIds = posts.map((p: any) => p.featuredImageId).filter((id): id is string => !!id)
+  let mediaItems: any[] = []
+  try {
+    mediaItems =
+      imageIds.length > 0
+        ? await prisma.media.findMany({
+            where: { id: { in: imageIds } },
+            select: { id: true, url: true, altText: true, width: true, height: true },
+          })
+        : []
+  } catch {
+    // no-op
+  }
+  const mediaMap = new Map(mediaItems.map((m: any) => [m.id, m]))
 
   const siteData = {
     siteName: seo?.siteName ?? site?.name ?? 'Site',
