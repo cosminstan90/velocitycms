@@ -120,6 +120,32 @@ export default function TiptapEditor({
     return () => document.removeEventListener('tiptap:open-image-picker', handler)
   }, [])
 
+  const editor = useEditor({
+    extensions: [
+      ...ALL_EXTENSIONS,
+      Placeholder.configure({ placeholder }),
+      SlashCommands,
+    ],
+    content: initialJson ?? { type: 'doc', content: [{ type: 'paragraph' }] },
+    editable: !readOnly,
+    editorProps: {
+      attributes: {
+        class: 'prose prose-invert prose-sm max-w-none focus:outline-none min-h-[400px] px-1 py-2',
+      },
+    },
+    onUpdate({ editor }) {
+      if (!onChange) return
+      const json = editor.getJSON()
+      const html = editor.getHTML()
+      onChange({
+        contentJson: json as Record<string, unknown>,
+        contentHtml: html,
+        characterCount: editor.storage.characterCount?.characters() ?? 0,
+        wordCount: editor.storage.characterCount?.words() ?? 0,
+      })
+    },
+  })
+
   // Listen for internal-link insertion requests from InternalLinksPanel
   useEffect(() => {
     if (!editor) return
@@ -159,32 +185,6 @@ export default function TiptapEditor({
     document.addEventListener('tiptap:insert-link', handler)
     return () => document.removeEventListener('tiptap:insert-link', handler)
   }, [editor])
-
-  const editor = useEditor({
-    extensions: [
-      ...ALL_EXTENSIONS,
-      Placeholder.configure({ placeholder }),
-      SlashCommands,
-    ],
-    content: initialJson ?? { type: 'doc', content: [{ type: 'paragraph' }] },
-    editable: !readOnly,
-    editorProps: {
-      attributes: {
-        class: 'prose prose-invert prose-sm max-w-none focus:outline-none min-h-[400px] px-1 py-2',
-      },
-    },
-    onUpdate({ editor }) {
-      if (!onChange) return
-      const json = editor.getJSON()
-      const html = editor.getHTML()
-      onChange({
-        contentJson: json as Record<string, unknown>,
-        contentHtml: html,
-        characterCount: editor.storage.characterCount?.characters() ?? 0,
-        wordCount: editor.storage.characterCount?.words() ?? 0,
-      })
-    },
-  })
 
   const handlePickerSelect = useCallback(
     (item: MediaItem) => {

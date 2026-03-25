@@ -49,6 +49,7 @@ interface WPPost {
 interface WPData {
   rss: {
     channel: {
+      link?: string
       item: WPPost[]
       'wp:category'?: WPCategory[]
     }
@@ -60,12 +61,26 @@ export class WordPressImporter {
   private xmlPath: string
   private options: ImportOptions
   private db: PrismaClient
+  private _importerId: string | null = null
 
   constructor({ siteId, xmlPath, options, db }: { siteId: string; xmlPath: string; options: ImportOptions; db: PrismaClient }) {
     this.siteId = siteId
     this.xmlPath = xmlPath
     this.options = options
     this.db = db
+  }
+
+  /** Resolves (and caches) the authorId to use for imported content. */
+  private async resolveImporterId(): Promise<string> {
+    if (this._importerId) return this._importerId
+    const access = await this.db.userSiteAccess.findFirst({
+      where: { siteId: this.siteId },
+      orderBy: { user: { createdAt: 'asc' } },
+      select: { userId: true },
+    })
+    if (!access) throw new Error('No user found for site — cannot import content without an author.')
+    this._importerId = access.userId
+    return this._importerId
   }
 
   async parseXML(): Promise<WPData> {
@@ -276,9 +291,11 @@ export class WordPressImporter {
         // Update contentJson if needed, but for simplicity, keep as is
       }
 
+      const authorId = await this.resolveImporterId()
       await this.db.post.create({
         data: {
           siteId: this.siteId,
+          authorId,
           title,
           slug,
           contentHtml,
@@ -291,9 +308,7 @@ export class WordPressImporter {
           focusKeyword,
           canonicalUrl,
           noIndex,
-          categories: {
-            connect: categoryIds.map(id => ({ id })),
-          },
+          categoryId: categoryIds[0] ?? null,
         },
       })
 
@@ -380,19 +395,19 @@ export class WordPressImporter {
         contentHtml = result.contentHtml
       }
 
+      const authorId = await this.resolveImporterId()
       await this.db.page.create({
         data: {
           siteId: this.siteId,
+          authorId,
           title,
           slug,
           contentHtml,
           contentJson,
-          excerpt,
           status,
           publishedAt,
           metaTitle,
           metaDescription,
-          focusKeyword,
           canonicalUrl,
           noIndex,
         },
@@ -482,7 +497,7 @@ export class WordPressImporter {
     // Split by tags roughly
     const parts = html.split(/(<[^>]+>)/)
 
-    let currentPara: string[] = []
+    let currentPara: any[] = []
     let currentList: any = null
 
     for (let i = 0; i < parts.length; i++) {

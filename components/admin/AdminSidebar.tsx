@@ -22,6 +22,7 @@ import {
   Menu,
   X,
   Zap,
+  Globe,
 } from 'lucide-react'
 
 const navItems = [

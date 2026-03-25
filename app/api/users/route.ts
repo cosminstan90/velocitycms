@@ -13,13 +13,12 @@ export async function GET(req: NextRequest) {
   const siteId = await getSiteIdFromRequest(req)
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
 
-  const users = await prisma.user.findMany({
+  const users = await prisma.userSiteAccess.findMany({
     where: { siteId },
-    select: { id: true, email: true, name: true, role: true, createdAt: true },
-    orderBy: { createdAt: 'desc' },
+    include: { user: { select: { id: true, email: true, name: true, role: true, createdAt: true } } },
+    orderBy: { user: { createdAt: 'desc' } },
   })
-
-  return NextResponse.json({ users })
+  return NextResponse.json({ users: users.map(a => a.user) })
 }
 
 export async function POST(req: NextRequest) {
@@ -40,8 +39,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const user = await prisma.user.create({
-      data: { siteId, email, name, passwordHash, role: role ?? 'EDITOR' },
+      data: { email, name, passwordHash, role: role ?? 'EDITOR' },
       select: { id: true, email: true, name: true, role: true, createdAt: true },
+    })
+    await prisma.userSiteAccess.create({
+      data: { userId: user.id, siteId, role: role ?? 'EDITOR' },
     })
     return NextResponse.json({ user }, { status: 201 })
   } catch {
