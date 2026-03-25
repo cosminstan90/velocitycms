@@ -1,0 +1,386 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  AUTHOR
+}
+
+enum PostStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PostType {
+  POST
+  PAGE
+}
+
+enum FieldType {
+  TEXT
+  TEXTAREA
+  NUMBER
+  SELECT
+  BOOLEAN
+  DATE
+  URL
+}
+
+enum SchedulerStatus {
+  PENDING
+  PUBLISHED
+  FAILED
+  CANCELLED
+}
+
+enum BackupType {
+  DATABASE
+  MEDIA
+  FULL
+}
+
+enum BackupStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id           String           @id @default(cuid())
+  email        String           @unique
+  name         String?
+  passwordHash String
+  role         Role             @default(EDITOR)
+  createdAt    DateTime         @default(now())
+  siteAccess   UserSiteAccess[]
+  posts        Post[]           @relation("PostAuthor")
+  pages        Page[]           @relation("PageAuthor")
+}
+
+model Site {
+  id               String                @id @default(cuid())
+  name             String                @db.VarChar(255)
+  domain           String                @unique @db.VarChar(255)
+  description      String?
+  timezone         String                @default("Europe/Bucharest")
+  language         String                @default("ro") @db.VarChar(5)
+  isActive         Boolean               @default(true)
+  createdAt        DateTime              @default(now())
+  userAccess       UserSiteAccess[]
+  categories       Category[]
+  posts            Post[]
+  pages            Page[]
+  media            Media[]
+  tags             Tag[]
+  redirects        Redirect[]
+  notFoundLogs     NotFoundLog[]
+  seoSettings      SeoSettings?
+  fieldDefinitions FieldDefinition[]
+  scheduleSettings SiteScheduleSettings?
+  schedulerLogs    SchedulerLog[]
+  backupLogs       BackupLog[]
+  cwvReports       CWVReport[]
+  apiKeys          APIKey[]
+}
+
+model UserSiteAccess {
+  id     String @id @default(cuid())
+  userId String
+  siteId String
+  role   Role
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  site   Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, siteId])
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  siteId      String
+  name        String
+  slug        String
+  description String?
+  metaTitle   String?
+  metaDesc    String?
+  parentId    String?
+  createdAt   DateTime   @default(now())
+  site        Site       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  parent      Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryChildren")
+  posts       Post[]
+
+  @@unique([siteId, slug])
+}
+
+model Post {
+  id                 String         @id @default(cuid())
+  siteId             String
+  title              String
+  slug               String
+  excerpt            String?
+  contentJson        Json
+  contentHtml        String
+  status             PostStatus     @default(DRAFT)
+  metaTitle          String?        @db.VarChar(60)
+  metaDescription    String?        @db.VarChar(155)
+  focusKeyword       String?
+  canonicalUrl       String?
+  noIndex            Boolean        @default(false)
+  ogTitle            String?
+  ogDescription      String?
+  ogImageId          String?
+  geoScore           Int?
+  geoBreakdown       Json?
+  directAnswer       String?
+  speakableSections  Json?
+  schemaMarkup       Json?
+  internalLinksUsed  Json?
+  revisions          Json           @default("[]")
+  categoryId         String?
+  authorId           String
+  featuredImageId    String?
+  sourceType         String?
+  publisherPageId    String?
+  publisherCampaign  String?
+  scheduledAt        DateTime?
+  publishedAt        DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  site               Site           @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  category           Category?      @relation(fields: [categoryId], references: [id])
+  author             User           @relation("PostAuthor", fields: [authorId], references: [id])
+  tags               PostTag[]
+  fieldValues        FieldValue[]
+  schedulerLogs      SchedulerLog[]
+  cwvReports         CWVReport[]
+
+  @@unique([siteId, slug])
+}
+
+model Page {
+  id              String     @id @default(cuid())
+  siteId          String
+  title           String
+  slug            String
+  contentJson     Json
+  contentHtml     String
+  status          PostStatus @default(DRAFT)
+  metaTitle       String?
+  metaDescription String?
+  canonicalUrl    String?
+  noIndex         Boolean    @default(false)
+  schemaMarkup    Json?
+  revisions       Json       @default("[]")
+  template        String     @default("default") @db.VarChar(50)
+  authorId        String
+  publishedAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  site            Site       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  author          User       @relation("PageAuthor", fields: [authorId], references: [id])
+  fieldValues     FieldValue[]
+
+  @@unique([siteId, slug])
+}
+
+model Media {
+  id           String   @id @default(cuid())
+  siteId       String
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  width        Int?
+  height       Int?
+  url          String
+  urlOriginal  String?
+  altText      String?
+  caption      String?
+  uploadedAt   DateTime @default(now())
+  site         Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+}
+
+model Tag {
+  id     String    @id @default(cuid())
+  siteId String
+  name   String
+  slug   String
+  site   Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  posts  PostTag[]
+
+  @@unique([siteId, slug])
+}
+
+model PostTag {
+  postId String
+  tagId  String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
+
+model Redirect {
+  id         String   @id @default(cuid())
+  siteId     String
+  fromPath   String
+  toPath     String
+  statusCode Int      @default(301)
+  isActive   Boolean  @default(true)
+  hits       Int      @default(0)
+  createdAt  DateTime @default(now())
+  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, fromPath])
+}
+
+model SeoSettings {
+  id                  String    @id @default(cuid())
+  siteId              String    @unique
+  siteName            String
+  siteUrl             String
+  defaultMetaTitle    String?
+  defaultMetaDesc     String?
+  defaultOgImage      String?
+  robotsTxt           String?
+  blockAiTrainingBots Boolean   @default(false)
+  googleVerification  String?
+  gscConnected        Boolean   @default(false)
+  gscPropertyId       String?
+  sitemapLastBuilt    DateTime?
+  publisherToken      String?
+  notifyEmail         String?
+  notifyOnPublish     Boolean   @default(false)
+  notifyOnBackup      Boolean   @default(true)
+  notifyOnErrors      Boolean   @default(true)
+  updatedAt           DateTime  @updatedAt
+  site                Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+}
+
+model FieldDefinition {
+  id             String      @id @default(cuid())
+  siteId         String
+  postType       PostType    @default(POST)
+  fieldKey       String      @db.VarChar(100)
+  fieldLabel     String      @db.VarChar(255)
+  fieldType      FieldType
+  fieldOptions   Json?
+  isRequired     Boolean     @default(false)
+  showInSchema   Boolean     @default(false)
+  schemaProperty String?
+  sortOrder      Int         @default(0)
+  createdAt      DateTime    @default(now())
+  site           Site        @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  fieldValues    FieldValue[]
+}
+
+model FieldValue {
+  id                String          @id @default(cuid())
+  postId            String?
+  pageId            String?
+  fieldDefinitionId String
+  value             String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  post              Post?           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  page              Page?           @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  fieldDefinition   FieldDefinition @relation(fields: [fieldDefinitionId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, fieldDefinitionId])
+  @@unique([pageId, fieldDefinitionId])
+}
+
+model SiteScheduleSettings {
+  id             String   @id @default(cuid())
+  siteId         String   @unique
+  maxPerDay      Int      @default(3)
+  preferredTimes Json     @default("[\"09:00\",\"14:00\",\"18:00\"]")
+  timezone       String   @default("Europe/Bucharest")
+  isActive       Boolean  @default(true)
+  updatedAt      DateTime @updatedAt
+  site           Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+}
+
+model SchedulerLog {
+  id          String          @id @default(cuid())
+  siteId      String
+  postId      String
+  scheduledAt DateTime
+  publishedAt DateTime?
+  status      SchedulerStatus
+  error       String?
+  createdAt   DateTime        @default(now())
+  site        Site            @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  post        Post            @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model BackupLog {
+  id        String       @id @default(cuid())
+  siteId    String
+  type      BackupType
+  status    BackupStatus
+  filePath  String?
+  fileSize  Int?
+  duration  Int?
+  error     String?
+  createdAt DateTime     @default(now())
+  site      Site         @relation(fields: [siteId], references: [id], onDelete: Cascade)
+}
+
+model ImportLog {
+  id        String   @id @default(cuid())
+  siteId    String
+  type      String   // 'wordpress'
+  fileName  String
+  options   Json
+  result    Json
+  createdAt DateTime @default(now())
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+}
+
+model CWVReport {
+  id        String   @id @default(cuid())
+  siteId    String
+  postId    String?
+  url       String
+  mobile    Json
+  desktop   Json
+  checkedAt DateTime @default(now())
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: SetNull)
+}
+
+model APIKey {
+  id          String    @id @default(cuid())
+  siteId      String?
+  name        String    @db.VarChar(255)
+  description String?   @db.VarChar(500)
+  keyHash     String    @db.VarChar(255)
+  keyPrefix   String    @db.VarChar(12)   // first 11 chars of key (sk- + 8 hex) for fast lookup
+  scopes      Json      @default("[]")
+  isActive    Boolean   @default(true)
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  site        Site?     @relation(fields: [siteId], references: [id], onDelete: SetNull)
+}
+
+model NotFoundLog {
+  id        String   @id @default(cuid())
+  siteId    String
+  path      String   @db.VarChar(2048)
+  referer   String?  @db.VarChar(2048)
+  hits      Int      @default(1)
+  firstSeen DateTime @default(now())
+  lastSeen  DateTime @default(now())
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, path])
+}

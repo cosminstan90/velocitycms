@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: velocitycms_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: velocitycms
+      POSTGRES_USER: cms_user
+      POSTGRES_PASSWORD: cms_pass
+      POSTGRES_MULTIPLE_DATABASES: velocitycms,umami
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cms_user -d velocitycms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: velocitycms_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: velocitycms_umami
+    ports:
+      - "3001:3000"
+    environment:
+      DATABASE_URL: postgresql://cms_user:cms_pass@postgres:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: umami-app-secret-change-me
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: velocitycms_app
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://cms_user:cms_pass@postgres:5432/velocitycms
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - ./media:/app/public/media/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+
+volumes:
+  postgres_data:

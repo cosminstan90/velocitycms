@@ -1,0 +1,75 @@
+# docker-compose.cloudpanel.yml — CloudPanel VPS production overrides
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.cloudpanel.yml up -d
+#
+# Differences from docker-compose.prod.yml:
+#  - NO nginx container   → CloudPanel's nginx is the front-facing reverse proxy
+#  - NO certbot container → CloudPanel manages Let's Encrypt SSL automatically
+#  - nextjs binds to 127.0.0.1:3000 only (not publicly accessible)
+#  - umami  binds to 127.0.0.1:3001 only
+#
+# CloudPanel setup:
+#  1. Create site: divet.ro → type "Reverse Proxy" → target http://127.0.0.1:3000
+#  2. Issue SSL via CloudPanel UI (Let's Encrypt)
+#  3. Paste nginx/cloudpanel-rate-limits.conf into /etc/nginx/conf.d/
+#  4. Paste nginx/cloudpanel-vhost-directives.conf into the site's "Nginx Directives" tab
+
+version: '3.8'
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    restart: always
+    # No external port — only accessible within Docker network
+    ports: []
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+
+  # ── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    restart: always
+    ports: []
+    command: redis-server --requirepass ${REDIS_PASSWORD:-} --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  # ── Umami analytics ─────────────────────────────────────────────────────────
+  # Accessible at http://127.0.0.1:3001 locally.
+  # Optional: create a second CloudPanel site (e.g. analytics.divet.ro) → Reverse Proxy → 127.0.0.1:3001
+  umami:
+    restart: always
+    ports:
+      - "127.0.0.1:3001:3000"
+
+  # ── Next.js app ─────────────────────────────────────────────────────────────
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: velocitycms:latest
+    restart: always
+    # Bind to localhost only — CloudPanel nginx proxies here from the public internet
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cms_user}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:-velocitycms}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379
+    env_file:
+      - .env.prod
+    volumes:
+      - media_uploads:/app/public/media/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  media_uploads:

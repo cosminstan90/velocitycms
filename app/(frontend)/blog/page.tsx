@@ -1,0 +1,107 @@
+import { prisma } from '@/lib/prisma'
+import CategoryTemplate from '@/components/frontend/CategoryTemplate'
+import type { Metadata } from 'next'
+
+export const revalidate = 3600
+
+const POSTS_PER_PAGE = 12
+
+type Props = {
+  searchParams: Promise<{ page?: string }>
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = await prisma.seoSettings.findFirst()
+  const siteName = seo?.siteName ?? 'Site'
+  return {
+    title: `Blog | ${siteName}`,
+    description: seo?.defaultMetaDesc ?? undefined,
+    openGraph: {
+      title: `Blog | ${siteName}`,
+      description: seo?.defaultMetaDesc ?? undefined,
+      images: seo?.defaultOgImage ? [{ url: seo.defaultOgImage }] : [],
+    },
+  }
+}
+
+export default async function BlogPage({ searchParams }: Props) {
+  const { page: pageParam } = await searchParams
+  const currentPage = Math.max(1, parseInt(pageParam ?? '1', 10))
+  const skip = (currentPage - 1) * POSTS_PER_PAGE
+
+  const site = await prisma.site.findFirst({ where: { isActive: true } })
+  const seo = site
+    ? await prisma.seoSettings.findFirst({ where: { siteId: site.id } })
+    : null
+
+  const [posts, totalCount] = await Promise.all([
+    prisma.post.findMany({
+      where: { status: 'PUBLISHED', siteId: site?.id },
+      take: POSTS_PER_PAGE,
+      skip,
+      orderBy: { publishedAt: 'desc' },
+      include: {
+        author: { select: { name: true, email: true } },
+        category: { select: { name: true, slug: true } },
+      },
+    }),
+    prisma.post.count({
+      where: { status: 'PUBLISHED', siteId: site?.id },
+    }),
+  ])
+
+  // Fetch featured images separately (no Prisma relation on featuredImageId)
+  const imageIds = posts.map((p) => p.featuredImageId).filter((id): id is string => !!id)
+  const mediaItems =
+    imageIds.length > 0
+      ? await prisma.media.findMany({
+          where: { id: { in: imageIds } },
+          select: { id: true, url: true, altText: true, width: true, height: true },
+        })
+      : []
+  const mediaMap = new Map(mediaItems.map((m) => [m.id, m]))
+
+  const mappedPosts = posts.map((p) => {
+    const media = p.featuredImageId ? (mediaMap.get(p.featuredImageId) ?? null) : null
+    return {
+      ...p,
+      featuredImage: media
+        ? { url: media.url, altText: media.altText ?? null, width: media.width ?? null, height: media.height ?? null }
+        : null,
+      author: p.author ?? null,
+      category: p.category ?? null,
+    }
+  })
+
+  const siteData = {
+    siteName: seo?.siteName ?? site?.name ?? 'Site',
+    siteUrl: seo?.siteUrl ?? `http://${site?.domain ?? 'localhost'}`,
+    defaultOgImage: seo?.defaultOgImage ?? null,
+  }
+
+  // Fake "Blog" category object to satisfy CategoryTemplate
+  const blogCategory = {
+    id: 'blog',
+    name: 'Blog',
+    slug: 'blog',
+    description: null,
+    metaTitle: null,
+    metaDesc: null,
+    siteId: site?.id ?? '',
+    parentId: null,
+    createdAt: new Date(),
+  }
+
+  const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE)
+
+  return (
+    <CategoryTemplate
+      category={blogCategory}
+      posts={mappedPosts}
+      subcategories={[]}
+      site={siteData}
+      seoSettings={seo ?? null}
+      pagination={{ currentPage, totalPages, totalCount }}
+    />
+  )
+}
