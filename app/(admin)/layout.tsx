@@ -1,16 +1,16 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import { connection } from 'next/server'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import AdminHeader from '@/components/admin/AdminHeader'
-
-export const dynamic = 'force-dynamic'
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  await connection()
   const session = await auth()
   if (!session?.user) redirect('/login')
 

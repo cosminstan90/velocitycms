@@ -1,8 +1,7 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
-
-export const dynamic = 'force-dynamic'
+import { connection } from 'next/server'
 import Link from 'next/link'
 import {
   FileText, Globe, Image, HardDrive, Plus, BarChart2,
@@ -46,6 +45,7 @@ function GeoScore({ score }: { score: number | null }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
+  await connection()
   const session = await auth()
   if (!session?.user) redirect('/login')
 
