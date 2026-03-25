@@ -2,6 +2,9 @@ import Link from 'next/link'
 import { headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 
+// This page uses headers() and live DB queries — never pre-render at build time
+export const dynamic = 'force-dynamic'
+
 async function log404(path: string, referer: string | null) {
   try {
     const site = await prisma.site.findFirst({

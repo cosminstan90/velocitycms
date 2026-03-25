@@ -25,6 +25,15 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
+# Dummy connection strings so Prisma/Redis modules initialise without
+# crashing during static analysis. The real values are injected at
+# runtime via .env.prod / docker-compose. No actual connections are
+# made during the build — only module-level singletons are evaluated.
+ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
+ENV REDIS_URL=redis://localhost:6379
+ENV AUTH_SECRET=build-time-placeholder-secret-32chars!!
+ENV NEXTAUTH_URL=http://localhost:3000
+
 # Generate Prisma client before build
 RUN npx prisma generate
 
