@@ -1,0 +1,47 @@
+# Dependencies — installed inside Docker, never copied from host
+node_modules
+.npm
+
+# Next.js build output
+.next
+out
+
+# Local env files — secrets must never enter the image
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# Dev tooling
+.eslintcache
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# Docker itself
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Deploy scripts (not needed in image)
+deploy*.sh
+backup-before-deploy.sh
+
+# Backups
+backups/
+
+# Local media uploads (mounted as Docker volume in production)
+public/media/uploads/*
+!public/media/uploads/.gitkeep
