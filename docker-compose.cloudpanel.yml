@@ -17,6 +17,11 @@
 
 services:
 
+  # ── Migrate (one-shot, run with: docker compose --profile tools run --rm migrate) ──
+  migrate:
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cms_user}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:-velocitycms}
+
   # ── PostgreSQL ──────────────────────────────────────────────────────────────
   postgres:
     restart: always
