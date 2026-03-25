@@ -16,6 +16,9 @@ const execAsync = promisify(exec)
 
 const BACKUP_PATH = process.env.BACKUP_PATH ?? '/backups'
 
+// Turbopack requires a statically-scoped base path to avoid full-project tracing
+const BACKUP_BASE = BACKUP_PATH
+
 function parseDatabaseUrl(url: string) {
   const u = new URL(url)
   return {
@@ -51,8 +54,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Security: ensure the file is within BACKUP_PATH (no path traversal)
-  const resolved = path.resolve(body.backupFile)
-  const backupResolved = path.resolve(BACKUP_PATH)
+  const resolved = path.resolve(BACKUP_BASE, path.basename(body.backupFile))
+  const backupResolved = path.resolve(BACKUP_BASE)
 
   if (!resolved.startsWith(backupResolved + path.sep) && resolved !== backupResolved) {
     return NextResponse.json({ error: 'Invalid backupFile path' }, { status: 400 })

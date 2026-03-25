@@ -1,15 +1,13 @@
-/**
- * GET /api/scheduler/run
- *
- * Cron endpoint — publishes all posts whose scheduledAt <= now().
- * Protected by X-Cron-Secret header (matches CRON_SECRET env var).
- *
- * Add to server crontab:
- *   */5 * * * * curl -s -H "X-Cron-Secret: YOUR_CRON_SECRET" \
- *     https://yourdomain.com/api/scheduler/run >> /var/log/velocitycms-scheduler.log 2>&1
- *
- * Response: { published: number, errors: string[] }
- */
+// GET /api/scheduler/run
+//
+// Cron endpoint — publishes all posts whose scheduledAt <= now().
+// Protected by X-Cron-Secret header (matches CRON_SECRET env var).
+//
+// Add to server crontab (every minute):
+//   * * * * * curl -s -H "X-Cron-Secret: YOUR_CRON_SECRET" \
+//     https://yourdomain.com/api/scheduler/run >> /var/log/velocitycms-scheduler.log 2>&1
+//
+// Response: { published: number, errors: string[] }
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
