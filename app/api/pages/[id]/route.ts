@@ -74,7 +74,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   })
 
   try {
-    revalidateTag(`page-${id}`)
+    revalidateTag(`page-${id}`, { expire: 0 })
     revalidatePath('/', 'page')
     revalidatePath(`/${updated.slug}`, 'page')
   } catch {

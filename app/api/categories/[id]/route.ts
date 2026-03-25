@@ -42,7 +42,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   })
 
   try {
-    revalidateTag(`category-${id}`)
+    revalidateTag(`category-${id}`, { expire: 0 })
     revalidatePath('/', 'page')
     revalidatePath(`/${updated.slug}`, 'page')
     if (updated.parentId) {

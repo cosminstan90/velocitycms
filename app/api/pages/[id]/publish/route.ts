@@ -20,8 +20,8 @@ export async function POST(req: NextRequest, { params }: Params) {
   })
 
   try {
-    revalidateTag('homepage')
-    revalidateTag(`page-${id}`)
+    revalidateTag('homepage', { expire: 0 })
+    revalidateTag(`page-${id}`, { expire: 0 })
     revalidatePath('/', 'page')
     revalidatePath(`/${page.slug}`, 'page')
   } catch {

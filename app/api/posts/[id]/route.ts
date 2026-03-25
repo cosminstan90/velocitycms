@@ -114,12 +114,12 @@ export async function PUT(req: NextRequest, { params }: Params) {
   })
 
   try {
-    revalidateTag('homepage')
-    revalidateTag('posts')
-    revalidateTag(`post-${id}`)
-    revalidateTag(`post-${updated.slug}`)
+    revalidateTag('homepage', { expire: 0 })
+    revalidateTag('posts', { expire: 0 })
+    revalidateTag(`post-${id}`, { expire: 0 })
+    revalidateTag(`post-${updated.slug}`, { expire: 0 })
     if (updated.categoryId) {
-      revalidateTag(`category-${updated.categoryId}`)
+      revalidateTag(`category-${updated.categoryId}`, { expire: 0 })
     }
 
     revalidatePath('/', 'page')

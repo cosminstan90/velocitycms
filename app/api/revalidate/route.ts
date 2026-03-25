@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   try {
     // Tag-based invalidation (works with unstable_cache)
     if (tag) {
-      revalidateTag(tag)
+      revalidateTag(tag, { expire: 0 })
       revalidated.push(`tag:${tag}`)
     }
 

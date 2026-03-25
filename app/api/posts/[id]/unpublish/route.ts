@@ -23,12 +23,12 @@ export async function POST(req: NextRequest, { params }: Params) {
   })
 
   try {
-    revalidateTag('homepage')
-    revalidateTag('posts')
-    revalidateTag(`post-${id}`)
-    revalidateTag(`post-${post.slug}`)
+    revalidateTag('homepage', { expire: 0 })
+    revalidateTag('posts', { expire: 0 })
+    revalidateTag(`post-${id}`, { expire: 0 })
+    revalidateTag(`post-${post.slug}`, { expire: 0 })
     if (post.categoryId) {
-      revalidateTag(`category-${post.categoryId}`)
+      revalidateTag(`category-${post.categoryId}`, { expire: 0 })
     }
 
     revalidatePath('/', 'page')

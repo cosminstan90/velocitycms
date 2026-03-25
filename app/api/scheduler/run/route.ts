@@ -63,15 +63,15 @@ export async function GET(req: NextRequest) {
 
       // ── ISR invalidation ─────────────────────────────────────────────────
       try {
-        revalidateTag('homepage')
-        revalidateTag('posts')
-        revalidateTag(`post-${post.id}`)
-        revalidateTag(`post-${post.slug}`)
+        revalidateTag('homepage', { expire: 0 })
+        revalidateTag('posts', { expire: 0 })
+        revalidateTag(`post-${post.id}`, { expire: 0 })
+        revalidateTag(`post-${post.slug}`, { expire: 0 })
         revalidatePath('/', 'page')
         revalidatePath('/blog', 'page')
 
         if (post.category) {
-          revalidateTag(`category-${post.categoryId}`)
+          revalidateTag(`category-${post.categoryId}`, { expire: 0 })
           if (post.category.parent) {
             revalidatePath(`/${post.category.parent.slug}`, 'page')
             revalidatePath(`/${post.category.parent.slug}/${post.category.slug}`, 'page')
