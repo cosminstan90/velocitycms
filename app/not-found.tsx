@@ -1,9 +1,7 @@
 import Link from 'next/link'
 import { headers } from 'next/headers'
+import { connection } from 'next/server'
 import { prisma } from '@/lib/prisma'
-
-// This page uses headers() and live DB queries — never pre-render at build time
-export const dynamic = 'force-dynamic'
 
 async function log404(path: string, referer: string | null) {
   try {
@@ -31,6 +29,7 @@ async function log404(path: string, referer: string | null) {
 }
 
 export default async function NotFound() {
+  await connection()
   const hdrs = await headers()
   const path    = hdrs.get('x-pathname') ?? '/'
   const referer = hdrs.get('referer') ?? null

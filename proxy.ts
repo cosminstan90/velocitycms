@@ -40,6 +40,7 @@ export default auth(async (req) => {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/') ||
     pathname.startsWith('/admin') ||
+    pathname === '/login' ||
     pathname === '/favicon.ico' ||
     /\.(?:ico|png|jpg|jpeg|gif|svg|webp|css|js|woff2?)$/.test(pathname)
 
