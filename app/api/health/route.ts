@@ -1,26 +1,29 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
+import { redis } from '@/lib/redis/client'
 
-const prisma = new PrismaClient()
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  let dbStatus = 'ok'
+  let redisStatus = 'ok'
+
   try {
     await prisma.$queryRaw`SELECT 1`
-    return NextResponse.json({
-      status: 'ok',
-      db: 'connected',
-      version: '1.0.0',
-      timestamp: new Date(),
-    })
   } catch {
-    return NextResponse.json(
-      {
-        status: 'error',
-        db: 'disconnected',
-        version: '1.0.0',
-        timestamp: new Date(),
-      },
-      { status: 503 }
-    )
+    dbStatus = 'error'
   }
+
+  try {
+    await redis.ping()
+  } catch {
+    redisStatus = 'error'
+  }
+
+  const status = dbStatus === 'ok' && redisStatus === 'ok' ? 'ok' : 'degraded'
+
+  return NextResponse.json(
+    { status, db: dbStatus, redis: redisStatus },
+    { status: status === 'ok' ? 200 : 503 },
+  )
 }
