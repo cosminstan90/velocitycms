@@ -4,7 +4,7 @@ import { generateCategorySchema, generatePageSchema } from '@/lib/seo/schema-gen
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-export const revalidate = 86400
+export const dynamic = 'force-dynamic'
 
 const POSTS_PER_PAGE = 12
 

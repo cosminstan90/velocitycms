@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import CategoryTemplate from '@/components/frontend/CategoryTemplate'
 import type { Metadata } from 'next'
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 const POSTS_PER_PAGE = 12
 

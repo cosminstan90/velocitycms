@@ -17,7 +17,7 @@ import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 const POSTS_PER_PAGE = 12
 

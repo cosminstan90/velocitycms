@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { headers } from 'next/headers'
-import { connection } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 async function log404(path: string, referer: string | null) {
@@ -29,7 +28,6 @@ async function log404(path: string, referer: string | null) {
 }
 
 export default async function NotFound() {
-  await connection()
   const hdrs = await headers()
   const path    = hdrs.get('x-pathname') ?? '/'
   const referer = hdrs.get('referer') ?? null
