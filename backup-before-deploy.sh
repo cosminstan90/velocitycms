@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+COMPOSE="docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.cloudpanel.yml"
 BACKUP_DIR="${BACKUP_PATH:-./backups}/pre-deploy"
 TIMESTAMP="$(date '+%Y%m%d-%H%M%S')"
 FILENAME="pre-deploy-${TIMESTAMP}.sql.gz"

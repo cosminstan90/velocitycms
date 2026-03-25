@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-COMPOSE="docker compose -f docker-compose.yml -f docker-compose.cloudpanel.yml"
+COMPOSE="docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.cloudpanel.yml"
 SKIP_PULL=false
 
 for arg in "$@"; do
