@@ -1,7 +1,6 @@
 'use client'
-export const dynamic = 'force-dynamic'
 
-
+import { useState, useCallback, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import {
   Upload, Search, Trash2, Copy, Check, X, Edit2, Filter,

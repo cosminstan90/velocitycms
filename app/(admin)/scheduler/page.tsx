@@ -1,30 +1,18 @@
 'use client'
-export const dynamic = 'force-dynamic'
-
 
 /**
-
  * /admin/scheduler
-
  *
-
  * Content scheduling dashboard.
-
  *
-
  * Tabs:
-
  *  - Calendar  — monthly grid with colored post dots; click month < > to navigate
-
  *  - List      — table: post title, scheduled/published at, category, author, status, cancel action
-
  *  - Week      — 7-column layout showing slots used vs available per day
-
  *  - Settings  — maxPerDay slider, preferred times list, timezone select, active toggle
-
  */
 
-
+import { useCallback, useEffect, useState } from 'react'
 import {
   Calendar, List, LayoutGrid, Settings2, ChevronLeft, ChevronRight,
   Loader2, Clock, Globe, XCircle, Plus, Trash2, CheckCircle2, AlertCircle,
