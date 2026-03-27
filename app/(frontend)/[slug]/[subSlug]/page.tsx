@@ -10,8 +10,7 @@
  *   [subSlug] = subcategory or article slug (was [slug])
  */
 import { prisma } from '@/lib/prisma'
-import ArticleTemplate from '@/components/frontend/ArticleTemplate'
-import CategoryTemplate from '@/components/frontend/CategoryTemplate'
+import { ArticleDispatcher, CategoryDispatcher } from '@/components/frontend/TemplateDispatcher'
 import { generatePostSchema, generateCategorySchema } from '@/lib/seo/schema-generator'
 import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import type { Metadata } from 'next'
@@ -37,6 +36,7 @@ async function getSiteData(siteId: string) {
     siteName: seo?.siteName ?? site?.name ?? 'Site',
     siteUrl: seo?.siteUrl ?? `http://${site?.domain ?? 'localhost'}`,
     defaultOgImage: seo?.defaultOgImage ?? null,
+    template: site?.template ?? 'default',
     seo,
   }
 }
@@ -155,7 +155,7 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
 
   if (subCategory) {
     const parentCategory = await prisma.category.findFirst({ where: { slug: categorySlug }, select: { name: true, slug: true } })
-    const { siteName, siteUrl, defaultOgImage, seo } = await getSiteData(subCategory.siteId)
+    const { siteName, siteUrl, defaultOgImage, template, seo } = await getSiteData(subCategory.siteId)
 
     const [rawPosts, totalCount] = await Promise.all([
       prisma.post.findMany({
@@ -177,7 +177,8 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
     return (
       <>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }} />
-        <CategoryTemplate
+        <CategoryDispatcher
+          template={template}
           category={subCategory}
           subcategories={subCategory.children}
           posts={posts as any}
@@ -202,7 +203,7 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
 
   if (!post) notFound()
 
-  const { siteName, siteUrl, defaultOgImage, seo } = await getSiteData(post.siteId)
+  const { siteName, siteUrl, defaultOgImage, template, seo } = await getSiteData(post.siteId)
   const featuredImage = await fetchFeaturedImage(post.featuredImageId)
 
   // Related posts: same category, exclude current
@@ -228,7 +229,8 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }} />
-      <ArticleTemplate
+      <ArticleDispatcher
+        template={template}
         post={{ ...post, featuredImage, author: post.author ?? null, category: post.category ?? null }}
         relatedPosts={relatedPosts as any}
         site={{ siteName, siteUrl }}

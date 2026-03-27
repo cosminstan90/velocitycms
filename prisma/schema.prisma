@@ -74,6 +74,7 @@ model Site {
   timezone         String                @default("Europe/Bucharest")
   language         String                @default("ro") @db.VarChar(5)
   isActive         Boolean               @default(true)
+  template         String                @default("default") @db.VarChar(50)
   createdAt        DateTime              @default(now())
   userAccess       UserSiteAccess[]
   categories       Category[]

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import HomepageTemplate from '@/components/frontend/HomepageTemplate'
+import { HomepageDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 
 export const revalidate = 1800
@@ -90,7 +90,8 @@ export default async function HomePage() {
   })
 
   return (
-    <HomepageTemplate
+    <HomepageDispatcher
+      template={site?.template ?? 'default'}
       latestPosts={mappedPosts}
       categories={categories}
       site={siteData}

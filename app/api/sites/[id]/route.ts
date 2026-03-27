@@ -20,7 +20,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { name, domain, description, timezone, language, isActive } = body
+  const { name, domain, description, timezone, language, template, isActive } = body
 
   const updates: any = {}
   if (name !== undefined) updates.name = name
@@ -28,6 +28,7 @@ export async function PUT(req: NextRequest) {
   if (description !== undefined) updates.description = description
   if (timezone !== undefined) updates.timezone = timezone
   if (language !== undefined) updates.language = language
+  if (template !== undefined) updates.template = template
   if (isActive !== undefined) updates.isActive = isActive
 
   if (!Object.keys(updates).length) {

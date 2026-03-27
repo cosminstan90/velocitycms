@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import CategoryTemplate from '@/components/frontend/CategoryTemplate'
+import { CategoryDispatcher } from '@/components/frontend/TemplateDispatcher'
 import { generateCategorySchema, generatePageSchema } from '@/lib/seo/schema-generator'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -154,7 +154,8 @@ export default async function SlugPage({ params, searchParams }: Props) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }}
         />
-        <CategoryTemplate
+        <CategoryDispatcher
+          template={site?.template ?? 'default'}
           category={category}
           posts={mappedPosts}
           subcategories={category.children}

@@ -54,6 +54,21 @@ services:
       - tools
     restart: "no"
 
+  db-push:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    command: node node_modules/prisma/build/index.js db push --accept-data-loss
+    environment:
+      DATABASE_URL: postgresql://cms_user:cms_pass@postgres:5432/velocitycms
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - tools
+    restart: "no"
+
   nextjs:
     build:
       context: .

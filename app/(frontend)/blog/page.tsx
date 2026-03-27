@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import CategoryTemplate from '@/components/frontend/CategoryTemplate'
+import { CategoryDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -115,7 +115,8 @@ export default async function BlogPage({ searchParams }: Props) {
   const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE)
 
   return (
-    <CategoryTemplate
+    <CategoryDispatcher
+      template={site?.template ?? 'default'}
       category={blogCategory}
       posts={mappedPosts}
       subcategories={[]}

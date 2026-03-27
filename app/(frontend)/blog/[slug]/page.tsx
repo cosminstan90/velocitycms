@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import ArticleTemplate from '@/components/frontend/ArticleTemplate'
+import { ArticleDispatcher } from '@/components/frontend/TemplateDispatcher'
 import { generatePostSchema } from '@/lib/seo/schema-generator'
 import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import type { Metadata } from 'next'
@@ -163,7 +163,8 @@ export default async function BlogPostPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }}
       />
-      <ArticleTemplate
+      <ArticleDispatcher
+        template={site?.template ?? 'default'}
         post={{
           ...post,
           featuredImage: featuredImage

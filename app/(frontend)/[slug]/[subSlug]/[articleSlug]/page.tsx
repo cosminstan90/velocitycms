@@ -8,7 +8,7 @@
  *   [articleSlug] = article slug
  */
 import { prisma } from '@/lib/prisma'
-import ArticleTemplate from '@/components/frontend/ArticleTemplate'
+import { ArticleDispatcher } from '@/components/frontend/TemplateDispatcher'
 import { generatePostSchema } from '@/lib/seo/schema-generator'
 import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import type { Metadata } from 'next'
@@ -29,6 +29,7 @@ async function getSiteData(siteId: string) {
     siteName: seo?.siteName ?? site?.name ?? 'Site',
     siteUrl: seo?.siteUrl ?? `http://${site?.domain ?? 'localhost'}`,
     defaultOgImage: seo?.defaultOgImage ?? null,
+    template: site?.template ?? 'default',
     seo,
   }
 }
@@ -107,7 +108,7 @@ export default async function SubCategoryPostPage({ params }: Props) {
 
   if (!post) notFound()
 
-  const { siteName, siteUrl, defaultOgImage, seo } = await getSiteData(post.siteId)
+  const { siteName, siteUrl, defaultOgImage, template, seo } = await getSiteData(post.siteId)
 
   const featuredImage = post.featuredImageId
     ? await prisma.media.findUnique({ where: { id: post.featuredImageId }, select: { url: true, altText: true, width: true, height: true } })
@@ -160,7 +161,8 @@ export default async function SubCategoryPostPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }}
       />
-      <ArticleTemplate
+      <ArticleDispatcher
+        template={template}
         post={{
           ...post,
           featuredImage: featuredImage

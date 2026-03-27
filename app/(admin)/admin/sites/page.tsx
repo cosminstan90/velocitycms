@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Plus, Pencil, Trash2, Users, Globe, Type, CheckCircle2, XCircle } from 'lucide-react'
 
+const TEMPLATES = [
+  { id: 'default', label: 'Default — Modern cu hero section și grid' },
+  { id: 'minimal', label: 'Minimal — Curat, text-first, fără distrageri' },
+]
+
 interface SiteCard {
   id: string
   name: string
@@ -10,6 +15,7 @@ interface SiteCard {
   description?: string
   timezone: string
   language: string
+  template: string
   isActive: boolean
   postCount: number
   mediaCount: number
@@ -28,7 +34,7 @@ export default function SitesPage() {
   const [error, setError] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editSite, setEditSite] = useState<SiteCard | null>(null)
-  const [form, setForm] = useState({ name: '', domain: '', timezone: 'Europe/Bucharest', language: 'ro', description: '' })
+  const [form, setForm] = useState({ name: '', domain: '', timezone: 'Europe/Bucharest', language: 'ro', description: '', template: 'default' })
 
   const isCreate = editSite === null
 
@@ -65,6 +71,7 @@ export default function SitesPage() {
       timezone: site.timezone ?? 'Europe/Bucharest',
       language: site.language ?? 'ro',
       description: site.description ?? '',
+      template: site.template ?? 'default',
     })
     setIsModalOpen(true)
   }
@@ -84,6 +91,7 @@ export default function SitesPage() {
         timezone: form.timezone,
         language: form.language,
         description: form.description,
+        template: form.template,
       }
 
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -170,6 +178,10 @@ export default function SitesPage() {
                 </div>
               </div>
 
+              <div className="mt-3 text-xs text-slate-500">
+                Template: <span className="text-slate-300 font-medium capitalize">{site.template ?? 'default'}</span>
+              </div>
+
               <div className="mt-4 flex items-center gap-2">
                 <button onClick={() => openEdit(site)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded border border-slate-600 text-xs"> <Pencil size={12} /> Editare</button>
                 <button onClick={() => window.open(`/admin/sites/${site.id}/users`, '_blank')} className="inline-flex items-center gap-1 px-3 py-1.5 rounded border border-slate-600 text-xs"> <Users size={12} /> Utilizatori</button>
@@ -192,6 +204,12 @@ export default function SitesPage() {
               <input value={form.timezone} onChange={(e) => setForm((prev) => ({ ...prev, timezone: e.target.value }))} className="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm" />
               <label className="block text-xs font-medium text-slate-300">Limbă</label>
               <input value={form.language} onChange={(e) => setForm((prev) => ({ ...prev, language: e.target.value }))} className="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm" />
+              <label className="block text-xs font-medium text-slate-300">Template frontend</label>
+              <select value={form.template} onChange={(e) => setForm((prev) => ({ ...prev, template: e.target.value }))} className="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm">
+                {TEMPLATES.map((t) => (
+                  <option key={t.id} value={t.id}>{t.label}</option>
+                ))}
+              </select>
               <label className="block text-xs font-medium text-slate-300">Descriere</label>
               <textarea value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} className="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm" rows={3} />
             </div>

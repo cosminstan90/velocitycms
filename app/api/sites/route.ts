@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const accesses = await prisma.userSiteAccess.findMany({
     where: { userId: session.user.id },
     include: {
-      site: { select: { id: true, name: true, domain: true, description: true, timezone: true, language: true, isActive: true, createdAt: true } },
+      site: { select: { id: true, name: true, domain: true, description: true, timezone: true, language: true, template: true, isActive: true, createdAt: true } },
     },
     orderBy: { site: { name: 'asc' } },
   })
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { name, domain, description, timezone = 'Europe/Bucharest', language = 'ro', isActive = true } = body
+  const { name, domain, description, timezone = 'Europe/Bucharest', language = 'ro', template = 'default', isActive = true } = body
   if (!name || !domain) {
     return NextResponse.json({ error: 'name and domain required' }, { status: 400 })
   }
@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
       description: description ?? null,
       timezone,
       language,
+      template,
       isActive,
     },
   })
