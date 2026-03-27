@@ -16,7 +16,7 @@ export interface SchemaPost {
   publishedAt: Date | string | null
   updatedAt: Date | string
   createdAt: Date | string
-  author: { name: string | null; email: string } | null
+  author: { name: string | null; email: string; slug?: string | null } | null
   featuredImage: { url: string; altText: string | null } | null
   category: { name: string; slug: string } | null
   noIndex: boolean
@@ -166,7 +166,7 @@ function buildArticleSchema(
       author: {
         '@type': 'Person',
         name: post.author.name ?? post.author.email,
-        url: resolveUrl(site, `/author/${post.author.email}`),
+        ...(post.author.slug && { url: resolveUrl(site, `/autor/${post.author.slug}`) }),
       },
     }),
     publisher: {

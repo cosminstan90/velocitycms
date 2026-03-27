@@ -97,7 +97,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Try article in root category
   const post = await prisma.post.findFirst({
     where: { slug, status: 'PUBLISHED', category: { slug: categorySlug, parentId: null } },
-    include: { author: { select: { name: true, email: true } }, category: { select: { name: true, slug: true } } },
+    include: { author: { select: { name: true, email: true, slug: true } }, category: { select: { name: true, slug: true } } },
   })
 
   if (!post) return { title: 'Pagină negăsită' }
@@ -195,7 +195,7 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
   const post = await prisma.post.findFirst({
     where: { slug, status: 'PUBLISHED', category: { slug: categorySlug, parentId: null } },
     include: {
-      author: { select: { name: true, email: true } },
+      author: { select: { name: true, email: true, slug: true, title: true, bio: true, photo: true, website: true } },
       category: { select: { name: true, slug: true } },
       tags: { include: { tag: { select: { id: true, name: true, slug: true } } } },
     },
@@ -220,7 +220,7 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
     contentJson: post.contentJson as Record<string, unknown>,
     metaTitle: post.metaTitle ?? null, metaDescription: post.metaDescription ?? null,
     publishedAt: post.publishedAt ?? null, updatedAt: post.updatedAt, createdAt: post.createdAt,
-    author: post.author ? { name: post.author.name ?? null, email: post.author.email } : null,
+    author: post.author ? { name: post.author.name ?? null, email: post.author.email, slug: post.author.slug ?? null } : null,
     featuredImage: featuredImage ? { url: featuredImage.url, altText: featuredImage.altText } : null,
     category: post.category ?? null, noIndex: post.noIndex, canonicalUrl: post.canonicalUrl ?? null,
   }

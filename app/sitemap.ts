@@ -91,6 +91,32 @@ export default async function sitemap({
       })
     }
 
+    // Tag pages (priority 0.5)
+    const tags = await prisma.tag.findMany({ select: { slug: true } })
+    for (const tag of tags) {
+      entries.push({
+        url: `${siteUrl}/eticheta/${tag.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.5,
+      })
+    }
+
+    // Author pages (priority 0.6 — EEAT value)
+    const authors = await prisma.user.findMany({
+      where: { slug: { not: null } },
+      select: { slug: true },
+    })
+    for (const author of authors) {
+      if (!author.slug) continue
+      entries.push({
+        url: `${siteUrl}/autor/${author.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.6,
+      })
+    }
+
     return entries
   }
 

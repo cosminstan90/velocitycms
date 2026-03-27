@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       status: 'PUBLISHED',
       category: { slug: subCategorySlug, parent: { slug: categorySlug } },
     },
-    include: { author: { select: { name: true, email: true } } },
+    include: { author: { select: { name: true, email: true, slug: true } } },
   })
 
   if (!post) return { title: 'Articol negăsit' }
@@ -100,7 +100,7 @@ export default async function SubCategoryPostPage({ params }: Props) {
       category: { slug: subCategorySlug, parent: { slug: categorySlug } },
     },
     include: {
-      author: { select: { name: true, email: true } },
+      author: { select: { name: true, email: true, slug: true, title: true, bio: true, photo: true, website: true } },
       category: { select: { name: true, slug: true } },
       tags: { include: { tag: { select: { id: true, name: true, slug: true } } } },
     },
@@ -149,7 +149,7 @@ export default async function SubCategoryPostPage({ params }: Props) {
     contentJson: post.contentJson as Record<string, unknown>,
     metaTitle: post.metaTitle ?? null, metaDescription: post.metaDescription ?? null,
     publishedAt: post.publishedAt ?? null, updatedAt: post.updatedAt, createdAt: post.createdAt,
-    author: post.author ? { name: post.author.name ?? null, email: post.author.email } : null,
+    author: post.author ? { name: post.author.name ?? null, email: post.author.email, slug: post.author.slug ?? null } : null,
     featuredImage: featuredImage ? { url: featuredImage.url, altText: featuredImage.altText ?? null } : null,
     category: post.category ?? null, noIndex: post.noIndex, canonicalUrl: post.canonicalUrl ?? null,
   }

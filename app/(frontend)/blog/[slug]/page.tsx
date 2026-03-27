@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await prisma.post.findFirst({
     where: { slug, status: 'PUBLISHED', categoryId: null },
     include: {
-      author: { select: { name: true, email: true } },
+      author: { select: { name: true, email: true, slug: true } },
       category: { select: { name: true, slug: true } },
     },
   })
@@ -73,7 +73,7 @@ export default async function BlogPostPage({ params }: Props) {
   const post = await prisma.post.findFirst({
     where: { slug, status: 'PUBLISHED', categoryId: null },
     include: {
-      author: { select: { name: true, email: true } },
+      author: { select: { name: true, email: true, slug: true, title: true, bio: true, photo: true, website: true } },
       category: { select: { name: true, slug: true } },
       tags: { select: { tag: { select: { id: true, name: true, slug: true } } } },
     },
@@ -146,7 +146,7 @@ export default async function BlogPostPage({ params }: Props) {
     publishedAt: post.publishedAt ?? null,
     updatedAt: post.updatedAt,
     createdAt: post.createdAt,
-    author: post.author ? { name: post.author.name ?? null, email: post.author.email } : null,
+    author: post.author ? { name: post.author.name ?? null, email: post.author.email, slug: post.author.slug ?? null } : null,
     featuredImage: featuredImage
       ? { url: featuredImage.url, altText: featuredImage.altText ?? null }
       : null,

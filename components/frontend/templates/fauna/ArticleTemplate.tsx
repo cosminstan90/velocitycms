@@ -10,12 +10,6 @@
  *   - Table of contents (shown when ≥ 3 H2 headings)
  *   - 2-column layout on desktop: content (2/3) + sticky sidebar (1/3)
  *   - Ad slots: below header image, mid-sidebar, after content
- *
- * Schema TODO (EEAT enhancements to add when User model is expanded):
- *   User.bio         String?    — 1-2 sentence author description
- *   User.photo       String?    — URL to author headshot
- *   User.title       String?    — e.g. "Veterinar", "Crescător autorizat"
- *   User.social      String?    — LinkedIn / personal site URL
  */
 
 import Image from 'next/image'
@@ -33,7 +27,7 @@ interface ArticleTemplateProps {
     metaTitle: string | null
     publishedAt: Date | string | null
     updatedAt: Date | string
-    author: { name: string | null; email: string } | null
+    author: { name: string | null; email: string; slug?: string | null; title?: string | null; bio?: string | null; photo?: string | null; website?: string | null } | null
     category: { name: string; slug: string } | null
     featuredImage: {
       url: string
@@ -249,17 +243,31 @@ export default function FaunaArticleTemplate({
           <div className="flex flex-wrap items-center gap-4 py-4 border-y border-gray-200">
             {/* Author mini-card */}
             <div className="flex items-center gap-3">
-              {/* Avatar — replace with <Image> when User.photo is added */}
-              <div
-                className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm"
-                aria-hidden="true"
-              >
-                {authorInitials}
+              {/* Avatar */}
+              <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden shadow-sm">
+                {post.author?.photo ? (
+                  <Image
+                    src={resolveImageUrl(post.author.photo, site.siteUrl)}
+                    width={40}
+                    height={40}
+                    alt={authorName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-sm font-bold" aria-hidden="true">
+                    {authorInitials}
+                  </div>
+                )}
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-900 leading-tight">{authorName}</p>
-                {/* TODO: render User.title here when field is added, e.g. "Veterinar, 10 ani experiență" */}
-                <p className="text-xs text-gray-400 leading-tight">Contribuitor</p>
+                {post.author?.slug ? (
+                  <Link href={`/autor/${post.author.slug}`} className="text-sm font-bold text-gray-900 leading-tight hover:text-amber-700 transition-colors">
+                    {authorName}
+                  </Link>
+                ) : (
+                  <p className="text-sm font-bold text-gray-900 leading-tight">{authorName}</p>
+                )}
+                <p className="text-xs text-gray-400 leading-tight">{post.author?.title ?? 'Contribuitor'}</p>
               </div>
             </div>
 
@@ -414,25 +422,39 @@ export default function FaunaArticleTemplate({
                 Despre autor
               </p>
               <div className="flex items-start gap-5">
-                {/* Avatar circle — replace with <Image> when User.photo is added to schema */}
-                <div
-                  className="flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xl font-black shadow-md"
-                  aria-hidden="true"
-                >
-                  {authorInitials}
+                {/* Avatar */}
+                <div className="flex-shrink-0 w-16 h-16 rounded-2xl overflow-hidden shadow-md">
+                  {post.author?.photo ? (
+                    <Image
+                      src={resolveImageUrl(post.author.photo, site.siteUrl)}
+                      width={64}
+                      height={64}
+                      alt={authorName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xl font-black" aria-hidden="true">
+                      {authorInitials}
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-extrabold text-gray-900 text-lg leading-tight">{authorName}</p>
-                  {/* TODO: show User.title here — e.g. "Medic Veterinar · 12 ani experiență" */}
-                  <p className="text-sm text-amber-600 font-semibold mb-2">Contribuitor · {site.siteName}</p>
-
-                  {/* TODO: show User.bio here when field is added to schema */}
-                  <p className="text-sm text-gray-500 leading-relaxed">
-                    Autor pasionat de animale, scrie articole documentate bazate pe surse veterinare
-                    și experiență directă cu rasele descrise.
+                  {post.author?.slug ? (
+                    <Link href={`/autor/${post.author.slug}`} className="font-extrabold text-gray-900 text-lg leading-tight hover:text-amber-700 transition-colors">
+                      {authorName}
+                    </Link>
+                  ) : (
+                    <p className="font-extrabold text-gray-900 text-lg leading-tight">{authorName}</p>
+                  )}
+                  <p className="text-sm text-amber-600 font-semibold mb-2">
+                    {post.author?.title ?? 'Contribuitor'} · {site.siteName}
                   </p>
 
-                  {/* EEAT signals */}
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    {post.author?.bio ?? 'Autor pasionat de animale, scrie articole documentate bazate pe surse veterinare și experiență directă cu rasele descrise.'}
+                  </p>
+
+                  {/* EEAT signals + external link */}
                   <div className="flex flex-wrap gap-2 mt-3">
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-full">
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -446,6 +468,19 @@ export default function FaunaArticleTemplate({
                       </svg>
                       Articole documentate
                     </span>
+                    {post.author?.website && (
+                      <a
+                        href={post.author.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-50 border border-gray-200 text-gray-600 text-xs font-semibold rounded-full hover:bg-gray-100 transition-colors"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        Website
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>

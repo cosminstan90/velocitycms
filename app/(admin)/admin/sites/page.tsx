@@ -60,7 +60,7 @@ export default function SitesPage() {
 
   function openCreate() {
     setEditSite(null)
-    setForm({ name: '', domain: '', timezone: 'Europe/Bucharest', language: 'ro', description: '' })
+    setForm({ name: '', domain: '', timezone: 'Europe/Bucharest', language: 'ro', description: '', template: 'default' })
     setIsModalOpen(true)
   }
 

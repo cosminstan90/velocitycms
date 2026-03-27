@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { CategoryDispatcher } from '@/components/frontend/TemplateDispatcher'
+import StaticPageTemplate from '@/components/frontend/shared/StaticPageTemplate'
 import { generateCategorySchema, generatePageSchema } from '@/lib/seo/schema-generator'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -199,10 +200,11 @@ export default async function SlugPage({ params, searchParams }: Props) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }}
         />
-        <article className="prose mx-auto max-w-3xl px-4 py-8">
-          <h1>{page.title}</h1>
-          <div dangerouslySetInnerHTML={{ __html: page.contentHtml }} />
-        </article>
+        <StaticPageTemplate
+          template={site?.template ?? 'default'}
+          page={{ title: page.title, contentHtml: page.contentHtml }}
+          site={{ siteName: siteData.siteName, siteUrl: siteData.siteUrl }}
+        />
       </>
     )
   }
