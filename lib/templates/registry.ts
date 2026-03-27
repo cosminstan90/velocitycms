@@ -15,6 +15,11 @@ export const TEMPLATES: TemplateInfo[] = [
     name: 'Minimal',
     description: 'Design curat, text-first, fără distrageri — ideal pentru publicații de nișă.',
   },
+  {
+    id: 'fauna',
+    name: 'Fauna',
+    description: 'Design editorial pentru animale și rase — optimizat pentru EEAT, reclame și SEO.',
+  },
 ]
 
 export const TEMPLATE_IDS = TEMPLATES.map((t) => t.id)

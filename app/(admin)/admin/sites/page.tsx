@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2, Users, Globe, Type, CheckCircle2, XCircle } from 
 const TEMPLATES = [
   { id: 'default', label: 'Default — Modern cu hero section și grid' },
   { id: 'minimal', label: 'Minimal — Curat, text-first, fără distrageri' },
+  { id: 'fauna',   label: 'Fauna — Editorial pentru animale, EEAT + reclame' },
 ]
 
 interface SiteCard {
