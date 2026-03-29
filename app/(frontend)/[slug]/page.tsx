@@ -101,6 +101,13 @@ export default async function SlugPage({ params, searchParams }: Props) {
       defaultOgImage: seo?.defaultOgImage ?? null,
     }
 
+    // Fetch all root categories for navigation
+    const navCategories = await prisma.category.findMany({
+      where: { siteId: category.siteId, parentId: null },
+      include: { _count: { select: { posts: true } } },
+      orderBy: { name: 'asc' },
+    })
+
     const [posts, totalCount] = await Promise.all([
       prisma.post.findMany({
         where: { status: 'PUBLISHED', categoryId: category.id },
@@ -163,6 +170,7 @@ export default async function SlugPage({ params, searchParams }: Props) {
           site={siteData}
           seoSettings={seo ?? null}
           pagination={{ currentPage, totalPages, totalCount }}
+          categories={navCategories}
         />
       </>
     )

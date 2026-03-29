@@ -114,7 +114,7 @@ function buildWebSiteSchema(site: SchemaSite) {
     inLanguage: 'ro-RO',
     potentialAction: {
       '@type': 'SearchAction',
-      target: { '@type': 'EntryPoint', urlTemplate: `${site.siteUrl}/?s={search_term_string}` },
+      target: { '@type': 'EntryPoint', urlTemplate: `${site.siteUrl}/cautare?q={search_term_string}` },
       'query-input': 'required name=search_term_string',
     },
   }

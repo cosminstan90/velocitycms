@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import TagPageTemplate from '@/components/frontend/shared/TagPageTemplate'
+import { TagDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
@@ -85,15 +85,27 @@ export default async function TagPage({ params, searchParams }: Props) {
   const posts = rawPosts.map((p) => ({
     ...p,
     featuredImage: p.featuredImageId ? (mediaMap.get(p.featuredImageId) ?? null) : null,
+    author: p.author ?? null,
+    category: p.category ?? null,
   }))
 
+  let navCategories: any[] = []
+  try {
+    navCategories = await prisma.category.findMany({
+      where: { siteId: siteId!, parentId: null },
+      include: { _count: { select: { posts: true } } },
+      orderBy: { name: 'asc' },
+    })
+  } catch { /* no-op */ }
+
   return (
-    <TagPageTemplate
+    <TagDispatcher
       template={template}
       tag={tag}
       posts={posts}
       pagination={{ currentPage, totalPages: Math.ceil(totalCount / POSTS_PER_PAGE), totalCount }}
       site={{ siteName, siteUrl }}
+      categories={navCategories}
     />
   )
 }

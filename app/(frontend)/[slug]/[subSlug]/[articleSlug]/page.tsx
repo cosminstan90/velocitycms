@@ -110,6 +110,12 @@ export default async function SubCategoryPostPage({ params }: Props) {
 
   const { siteName, siteUrl, defaultOgImage, template, seo } = await getSiteData(post.siteId)
 
+  const navCategories = await prisma.category.findMany({
+    where: { siteId: post.siteId, parentId: null },
+    include: { _count: { select: { posts: true } } },
+    orderBy: { name: 'asc' },
+  })
+
   const featuredImage = post.featuredImageId
     ? await prisma.media.findUnique({ where: { id: post.featuredImageId }, select: { url: true, altText: true, width: true, height: true } })
     : null
@@ -176,6 +182,7 @@ export default async function SubCategoryPostPage({ params }: Props) {
         subCategory={subCategory}
         breadcrumbExtra={parentCategory ? [{ name: parentCategory.name, href: `/${categorySlug}` }] : []}
         seoSettings={seo}
+        categories={navCategories}
       />
     </>
   )

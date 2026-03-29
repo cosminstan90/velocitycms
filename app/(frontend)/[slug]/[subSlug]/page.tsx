@@ -157,6 +157,12 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
     const parentCategory = await prisma.category.findFirst({ where: { slug: categorySlug }, select: { name: true, slug: true } })
     const { siteName, siteUrl, defaultOgImage, template, seo } = await getSiteData(subCategory.siteId)
 
+    const navCategories = await prisma.category.findMany({
+      where: { siteId: subCategory.siteId, parentId: null },
+      include: { _count: { select: { posts: true } } },
+      orderBy: { name: 'asc' },
+    })
+
     const [rawPosts, totalCount] = await Promise.all([
       prisma.post.findMany({
         where: { status: 'PUBLISHED', categoryId: subCategory.id },
@@ -186,6 +192,7 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
           site={{ siteName, siteUrl }}
           parentCategory={parentCategory ?? null}
           seoSettings={seo}
+          categories={navCategories}
         />
       </>
     )
@@ -205,6 +212,12 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
 
   const { siteName, siteUrl, defaultOgImage, template, seo } = await getSiteData(post.siteId)
   const featuredImage = await fetchFeaturedImage(post.featuredImageId)
+
+  const navCategories2 = await prisma.category.findMany({
+    where: { siteId: post.siteId, parentId: null },
+    include: { _count: { select: { posts: true } } },
+    orderBy: { name: 'asc' },
+  })
 
   // Related posts: same category, exclude current
   const rawRelated = await prisma.post.findMany({
@@ -235,6 +248,7 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
         relatedPosts={relatedPosts as any}
         site={{ siteName, siteUrl }}
         seoSettings={seo}
+        categories={navCategories2}
       />
     </>
   )

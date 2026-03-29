@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import AuthorPageTemplate from '@/components/frontend/shared/AuthorPageTemplate'
+import { AuthorDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
@@ -24,6 +24,7 @@ async function getSiteData() {
     template: site?.template ?? 'default',
     siteName: seo?.siteName ?? site?.name ?? 'Site',
     siteUrl: seo?.siteUrl ?? `http://${site?.domain ?? 'localhost'}`,
+    seo,
   }
 }
 
@@ -58,7 +59,7 @@ export default async function AuthorPage({ params, searchParams }: Props) {
   const currentPage = Math.max(1, parseInt(pageParam ?? '1', 10))
   const skip = (currentPage - 1) * POSTS_PER_PAGE
 
-  const { siteId, template, siteName, siteUrl } = await getSiteData()
+  const { siteId, template, siteName, siteUrl, seo } = await getSiteData()
   if (!siteId) notFound()
 
   const author = await prisma.user.findUnique({ where: { slug } })
@@ -85,10 +86,21 @@ export default async function AuthorPage({ params, searchParams }: Props) {
   const posts = rawPosts.map((p) => ({
     ...p,
     featuredImage: p.featuredImageId ? (mediaMap.get(p.featuredImageId) ?? null) : null,
+    author: null,
+    category: p.category ?? null,
   }))
 
+  let navCategories: any[] = []
+  try {
+    navCategories = await prisma.category.findMany({
+      where: { siteId: siteId!, parentId: null },
+      include: { _count: { select: { posts: true } } },
+      orderBy: { name: 'asc' },
+    })
+  } catch { /* no-op */ }
+
   return (
-    <AuthorPageTemplate
+    <AuthorDispatcher
       template={template}
       author={{
         name: author.name,
@@ -101,6 +113,8 @@ export default async function AuthorPage({ params, searchParams }: Props) {
       posts={posts}
       pagination={{ currentPage, totalPages: Math.ceil(totalCount / POSTS_PER_PAGE), totalCount }}
       site={{ siteName, siteUrl }}
+      categories={navCategories}
+      seoSettings={seo}
     />
   )
 }

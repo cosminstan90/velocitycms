@@ -183,13 +183,13 @@ export default function AuthorPageTemplate({ template, author, posts, pagination
                 {posts.map((post) => (
                   <article key={post.id} className={`${t.cardBg} rounded-2xl border ${t.cardBorder} overflow-hidden shadow-sm hover:shadow-md transition-shadow group`}>
                     {post.featuredImage && (
-                      <Link href={getPostUrl(post)} className="block aspect-[16/9] overflow-hidden bg-gray-100">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                      <Link href={getPostUrl(post)} className="block aspect-[16/9] overflow-hidden bg-gray-100 relative">
+                        <Image
                           src={resolveUrl(post.featuredImage.url, site.siteUrl)}
+                          fill
                           alt={post.featuredImage.altText ?? post.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                       </Link>
                     )}

@@ -99,6 +99,15 @@ export default async function BlogPage({ searchParams }: Props) {
     defaultOgImage: seo?.defaultOgImage ?? null,
   }
 
+  let navCategories: any[] = []
+  try {
+    navCategories = await prisma.category.findMany({
+      where: { siteId: site?.id, parentId: null },
+      include: { _count: { select: { posts: true } } },
+      orderBy: { name: 'asc' },
+    })
+  } catch { /* no-op */ }
+
   // Fake "Blog" category object to satisfy CategoryTemplate
   const blogCategory = {
     id: 'blog',
@@ -123,6 +132,7 @@ export default async function BlogPage({ searchParams }: Props) {
       site={siteData}
       seoSettings={seo ?? null}
       pagination={{ currentPage, totalPages, totalCount }}
+      categories={navCategories}
     />
   )
 }

@@ -90,6 +90,12 @@ export default async function BlogPostPage({ params }: Props) {
     defaultOgImage: seo?.defaultOgImage ?? null,
   }
 
+  const navCategories = await prisma.category.findMany({
+    where: { siteId: post.siteId, parentId: null },
+    include: { _count: { select: { posts: true } } },
+    orderBy: { name: 'asc' },
+  })
+
   // Fetch featured image separately
   const featuredImage = post.featuredImageId
     ? await prisma.media.findUnique({
@@ -176,6 +182,7 @@ export default async function BlogPostPage({ params }: Props) {
         relatedPosts={mappedRelatedPosts}
         site={siteData}
         seoSettings={seo ?? null}
+        categories={navCategories}
       />
     </>
   )
