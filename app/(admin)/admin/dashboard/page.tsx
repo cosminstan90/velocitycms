@@ -204,7 +204,7 @@ export default async function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {recentPosts.map((post) => (
+                {(recentPosts as Array<{ id: string; title: string; status: string; updatedAt: Date; slug: string; geoScore: number | null; category: { name: string } | null; author: { name: string | null } | null }>).map((post) => (
                   <tr key={post.id} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
                     <td className="px-5 py-3 text-white max-w-[200px]">
                       <Link href={`/admin/posts/${post.id}`} className="hover:text-violet-400 transition truncate block">
