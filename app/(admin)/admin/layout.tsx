@@ -21,7 +21,7 @@ export default async function AdminLayout({
   })
 
   const siteStats = await Promise.all(
-    allSites.map(async (access) => {
+    allSites.map(async (access: typeof allSites[number]) => {
       const siteId = access.site.id
       const [postCount, mediaCount] = await prisma.$transaction([
         prisma.post.count({ where: { siteId } }),
