@@ -238,11 +238,42 @@ function ImportModal({ onClose, onImported }: { onClose: () => void; onImported:
 }
 
 // ─── 404 Monitor Tab ──────────────────────────────────────────────────────────
+
+type UrlStatus = { status: number | null; redirected: boolean; finalUrl: string | null }
+
+function StatusBadge({ info, checking }: { info?: UrlStatus; checking?: boolean }) {
+  if (checking) return <span className="text-xs text-gray-500 animate-pulse">verifică...</span>
+  if (!info) return <span className="text-xs text-gray-600">—</span>
+  if (info.status === null) return <span className="text-xs text-gray-500">timeout</span>
+  if (info.status === 200) return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-green-900/40 text-green-400 border border-green-700">
+      ✓ Live ({info.status})
+    </span>
+  )
+  if (info.status === 404) return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-red-900/40 text-red-400 border border-red-700">
+      ✗ 404
+    </span>
+  )
+  if (info.status >= 300 && info.status < 400) return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-amber-900/40 text-amber-400 border border-amber-700">
+      → {info.status}
+    </span>
+  )
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-gray-700 text-gray-400 border border-gray-600">
+      {info.status}
+    </span>
+  )
+}
+
 function NotFoundTab({ onCreateRedirect }: { onCreateRedirect: (path: string) => void }) {
-  const [logs, setLogs]   = useState<NotFoundLog[]>([])
-  const [total, setTotal] = useState(0)
-  const [page, setPage]   = useState(1)
+  const [logs, setLogs]       = useState<NotFoundLog[]>([])
+  const [total, setTotal]     = useState(0)
+  const [page, setPage]       = useState(1)
   const [loading, setLoading] = useState(true)
+  const [statuses, setStatuses] = useState<Record<string, UrlStatus>>({})
+  const [checking, setChecking] = useState<Set<string>>(new Set())
 
   const loadLogs = useCallback(async (pg: number) => {
     setLoading(true)
@@ -251,6 +282,7 @@ function NotFoundTab({ onCreateRedirect }: { onCreateRedirect: (path: string) =>
       const data = await res.json()
       setLogs(data.logs ?? [])
       setTotal(data.total ?? 0)
+      setStatuses({})
     } finally {
       setLoading(false)
     }
@@ -266,14 +298,67 @@ function NotFoundTab({ onCreateRedirect }: { onCreateRedirect: (path: string) =>
     loadLogs(1)
   }
 
+  async function checkAll() {
+    if (logs.length === 0) return
+    const paths = logs.map((l) => l.path)
+    setChecking(new Set(paths))
+    try {
+      const res = await fetch('/api/check-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paths }),
+      })
+      const data = await res.json()
+      const map: Record<string, UrlStatus> = {}
+      for (const r of data.results) map[r.path] = r
+      setStatuses(map)
+    } finally {
+      setChecking(new Set())
+    }
+  }
+
+  async function checkOne(path: string) {
+    setChecking((s) => new Set(s).add(path))
+    try {
+      const res = await fetch('/api/check-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paths: [path] }),
+      })
+      const data = await res.json()
+      if (data.results?.[0]) {
+        setStatuses((s) => ({ ...s, [path]: data.results[0] }))
+      }
+    } finally {
+      setChecking((s) => { const n = new Set(s); n.delete(path); return n })
+    }
+  }
+
+  const liveCount = Object.values(statuses).filter((s) => s.status === 200).length
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-white font-semibold">Monitor 404</h2>
-          <p className="text-gray-400 text-sm mt-0.5">{total} URL-uri cu eroare 404, ordonate după frecvență</p>
+          <p className="text-gray-400 text-sm mt-0.5">
+            {total} URL-uri înregistrate
+            {liveCount > 0 && (
+              <span className="ml-2 text-green-400 font-semibold">{liveCount} sunt live acum!</span>
+            )}
+          </p>
         </div>
         <div className="flex gap-2">
+          {logs.length > 0 && (
+            <button
+              onClick={checkAll}
+              disabled={checking.size > 0}
+              className="flex items-center gap-1.5 px-3 py-2 bg-indigo-700/30 hover:bg-indigo-700/50 text-indigo-300 border border-indigo-700/50 rounded-lg text-sm disabled:opacity-50"
+            >
+              <Search className="w-4 h-4" />
+              {checking.size > 0 ? 'Verifică...' : 'Verifică toate'}
+            </button>
+          )}
           <button
             onClick={() => loadLogs(page)}
             className="flex items-center gap-1.5 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-sm"
@@ -310,6 +395,7 @@ function NotFoundTab({ onCreateRedirect }: { onCreateRedirect: (path: string) =>
             <thead>
               <tr className="border-b border-gray-700 bg-gray-800/50">
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-400 uppercase">URL (404)</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-400 uppercase">Status real</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-400 uppercase hidden md:table-cell">Referer</th>
                 <th className="text-right px-4 py-3 text-xs font-medium text-gray-400 uppercase">Cereri</th>
                 <th className="text-right px-4 py-3 text-xs font-medium text-gray-400 uppercase hidden sm:table-cell">Ultima</th>
@@ -317,37 +403,54 @@ function NotFoundTab({ onCreateRedirect }: { onCreateRedirect: (path: string) =>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
-              {logs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-800/30 transition-colors">
-                  <td className="px-4 py-3">
-                    <span className="text-red-400 text-sm font-mono">{log.path}</span>
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    <span className="text-gray-500 text-xs truncate max-w-xs block">
-                      {log.referer ?? '—'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className={`text-sm font-mono font-bold ${log.hits > 10 ? 'text-red-400' : log.hits > 3 ? 'text-amber-400' : 'text-gray-300'}`}>
-                      {log.hits}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right hidden sm:table-cell">
-                    <span className="text-gray-500 text-xs">
-                      {new Date(log.lastSeen).toLocaleDateString('ro-RO')}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => onCreateRedirect(log.path)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-700/50 rounded-lg text-xs font-medium whitespace-nowrap"
-                    >
-                      <Plus className="w-3 h-3" />
-                      Creează redirect
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {logs.map((log) => {
+                const status = statuses[log.path]
+                const isLive = status?.status === 200
+                return (
+                  <tr key={log.id} className={`transition-colors ${isLive ? 'bg-green-900/10 hover:bg-green-900/20' : 'hover:bg-gray-800/30'}`}>
+                    <td className="px-4 py-3">
+                      <a
+                        href={log.path}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-red-400 text-sm font-mono hover:text-red-300 hover:underline inline-flex items-center gap-1"
+                      >
+                        {log.path}
+                        <ExternalLink className="w-3 h-3 opacity-50" />
+                      </a>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => checkOne(log.path)}
+                        className="flex items-center gap-1.5"
+                        title="Verifică acum"
+                      >
+                        <StatusBadge info={status} checking={checking.has(log.path)} />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      <span className="text-gray-500 text-xs truncate max-w-xs block">{log.referer ?? '—'}</span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`text-sm font-mono font-bold ${log.hits > 10 ? 'text-red-400' : log.hits > 3 ? 'text-amber-400' : 'text-gray-300'}`}>
+                        {log.hits}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right hidden sm:table-cell">
+                      <span className="text-gray-500 text-xs">{new Date(log.lastSeen).toLocaleDateString('ro-RO')}</span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => onCreateRedirect(log.path)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-700/50 rounded-lg text-xs font-medium whitespace-nowrap"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Redirect
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
