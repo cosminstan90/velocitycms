@@ -210,3 +210,226 @@
 .progress-bar-offset {
   top: 4rem; /* = h-16 = 64px */
 }
+
+/* DiVet design system */
+.divet-shell,
+.divet-shell[data-theme='light'],
+.divet-shell[data-theme='system'] {
+  --dv-bg: #f3ecdf;
+  --dv-bg-strong: #e6dbc8;
+  --dv-surface: rgba(255, 249, 240, 0.86);
+  --dv-surface-strong: #fbf6ee;
+  --dv-contrast: #102219;
+  --dv-text: #173127;
+  --dv-muted: #5d6c63;
+  --dv-muted-strong: #3d4c43;
+  --dv-border: rgba(16, 34, 25, 0.12);
+  --dv-border-strong: rgba(16, 34, 25, 0.22);
+  --dv-accent: #c77b2d;
+  --dv-accent-strong: #9b5725;
+  --dv-accent-soft: rgba(199, 123, 45, 0.12);
+  --dv-forest: #245840;
+  --dv-forest-soft: rgba(36, 88, 64, 0.12);
+  --dv-shadow: 0 28px 80px rgba(17, 34, 24, 0.12);
+  background:
+    radial-gradient(circle at top left, rgba(199, 123, 45, 0.16), transparent 30%),
+    radial-gradient(circle at top right, rgba(36, 88, 64, 0.15), transparent 28%),
+    linear-gradient(180deg, rgba(255, 249, 240, 0.35), transparent 24%),
+    var(--dv-bg);
+  color: var(--dv-text);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.divet-shell[data-theme='dark'] {
+  --dv-bg: #09130f;
+  --dv-bg-strong: #112019;
+  --dv-surface: rgba(15, 29, 22, 0.82);
+  --dv-surface-strong: #14231b;
+  --dv-contrast: #f2eadb;
+  --dv-text: #edf3ee;
+  --dv-muted: #a4b3aa;
+  --dv-muted-strong: #d8e1da;
+  --dv-border: rgba(237, 243, 238, 0.11);
+  --dv-border-strong: rgba(237, 243, 238, 0.2);
+  --dv-accent: #dc9b5d;
+  --dv-accent-strong: #f0b278;
+  --dv-accent-soft: rgba(220, 155, 93, 0.14);
+  --dv-forest: #7bb190;
+  --dv-forest-soft: rgba(123, 177, 144, 0.14);
+  --dv-shadow: 0 36px 90px rgba(0, 0, 0, 0.38);
+}
+
+@media (prefers-color-scheme: dark) {
+  .divet-shell[data-theme='system'] {
+    --dv-bg: #09130f;
+    --dv-bg-strong: #112019;
+    --dv-surface: rgba(15, 29, 22, 0.82);
+    --dv-surface-strong: #14231b;
+    --dv-contrast: #f2eadb;
+    --dv-text: #edf3ee;
+    --dv-muted: #a4b3aa;
+    --dv-muted-strong: #d8e1da;
+    --dv-border: rgba(237, 243, 238, 0.11);
+    --dv-border-strong: rgba(237, 243, 238, 0.2);
+    --dv-accent: #dc9b5d;
+    --dv-accent-strong: #f0b278;
+    --dv-accent-soft: rgba(220, 155, 93, 0.14);
+    --dv-forest: #7bb190;
+    --dv-forest-soft: rgba(123, 177, 144, 0.14);
+    --dv-shadow: 0 36px 90px rgba(0, 0, 0, 0.38);
+  }
+}
+
+.divet-display {
+  font-family: var(--font-fraunces), Georgia, serif;
+}
+
+.divet-card {
+  border: 1px solid var(--dv-border);
+  background: color-mix(in srgb, var(--dv-surface-strong) 88%, transparent);
+  box-shadow: var(--dv-shadow);
+  backdrop-filter: blur(22px);
+}
+
+.divet-card-soft {
+  border: 1px solid var(--dv-border);
+  background: color-mix(in srgb, var(--dv-surface) 78%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.divet-chip {
+  border: 1px solid var(--dv-border);
+  background: color-mix(in srgb, var(--dv-surface) 75%, transparent);
+  color: var(--dv-muted-strong);
+}
+
+.divet-button {
+  background: linear-gradient(135deg, var(--dv-accent), var(--dv-accent-strong));
+  color: #fff8f0;
+  box-shadow: 0 18px 38px rgba(155, 87, 37, 0.18);
+}
+
+.divet-button:hover {
+  filter: brightness(1.05);
+}
+
+.divet-button-ghost {
+  border: 1px solid var(--dv-border-strong);
+  background: color-mix(in srgb, var(--dv-surface) 76%, transparent);
+  color: var(--dv-text);
+}
+
+.divet-input {
+  border: 1px solid var(--dv-border);
+  background: color-mix(in srgb, var(--dv-surface-strong) 92%, transparent);
+  color: var(--dv-text);
+}
+
+.divet-input::placeholder {
+  color: var(--dv-muted);
+}
+
+.divet-kicker {
+  color: var(--dv-accent-strong);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.divet-prose {
+  color: var(--dv-muted-strong);
+  font-size: 1.06rem;
+  line-height: 1.85;
+}
+
+.divet-prose > * + * {
+  margin-top: 1.1em;
+}
+
+.divet-prose h2,
+.divet-prose h3,
+.divet-prose h4 {
+  color: var(--dv-text);
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.divet-prose h2 {
+  font-size: clamp(1.65rem, 1.35rem + 1.1vw, 2.35rem);
+  margin-top: 2.2em;
+  margin-bottom: 0.55em;
+}
+
+.divet-prose h3 {
+  font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.7rem);
+  margin-top: 1.8em;
+  margin-bottom: 0.45em;
+}
+
+.divet-prose p,
+.divet-prose ul,
+.divet-prose ol,
+.divet-prose blockquote,
+.divet-prose table,
+.divet-prose figure {
+  margin-top: 1.05em;
+  margin-bottom: 1.05em;
+}
+
+.divet-prose a {
+  color: var(--dv-accent-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.divet-prose strong {
+  color: var(--dv-text);
+}
+
+.divet-prose blockquote {
+  border-left: 3px solid var(--dv-accent);
+  padding: 0.6rem 0 0.6rem 1rem;
+  color: var(--dv-text);
+  background: color-mix(in srgb, var(--dv-accent-soft) 52%, transparent);
+  border-radius: 0 1.25rem 1.25rem 0;
+}
+
+.divet-prose ul,
+.divet-prose ol {
+  padding-left: 1.35rem;
+}
+
+.divet-prose li + li {
+  margin-top: 0.45em;
+}
+
+.divet-prose img {
+  border-radius: 1.5rem;
+  border: 1px solid var(--dv-border);
+}
+
+.divet-prose hr {
+  border: 0;
+  border-top: 1px solid var(--dv-border);
+  margin: 2rem 0;
+}
+
+.divet-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid var(--dv-border);
+}
+
+.divet-prose th,
+.divet-prose td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--dv-border);
+  text-align: left;
+}
+
+.divet-prose th {
+  color: var(--dv-text);
+  background: color-mix(in srgb, var(--dv-forest-soft) 48%, transparent);
+}

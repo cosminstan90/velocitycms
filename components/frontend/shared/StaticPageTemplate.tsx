@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { getTheme } from './theme'
+import DivetLayout from '../templates/divet/DivetLayout'
+import type { NavCategoryItem } from '../templates/divet/utils'
 
 export interface StaticPageProps {
   template: string
@@ -8,10 +10,74 @@ export interface StaticPageProps {
     contentHtml: string
   }
   site: { siteName: string; siteUrl: string }
+  categories?: NavCategoryItem[]
 }
 
-export default function StaticPageTemplate({ template, page, site }: StaticPageProps) {
+function extractLead(html: string): string | null {
+  const match = html.match(/<p[^>]*>(.*?)<\/p>/i)
+  if (!match?.[1]) return null
+
+  const text = match[1]
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  return text ? text.slice(0, 220) : null
+}
+
+export default function StaticPageTemplate({ template, page, site, categories = [] }: StaticPageProps) {
   const t = getTheme(template)
+  const lead = extractLead(page.contentHtml)
+
+  if (template === 'divet') {
+    return (
+      <DivetLayout site={site} categories={categories}>
+        <section className="border-b border-[color:var(--dv-border)] px-4 py-10 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <nav aria-label="Breadcrumb" className="mb-8">
+              <ol className="flex flex-wrap items-center gap-2 text-xs text-[color:var(--dv-muted)]">
+                <li><Link href="/" className="transition-colors hover:text-[color:var(--dv-contrast)]">{site.siteName}</Link></li>
+                <li aria-hidden="true">/</li>
+                <li className="text-[color:var(--dv-muted-strong)]" aria-current="page">{page.title}</li>
+              </ol>
+            </nav>
+
+            <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-end">
+              <div className="max-w-2xl">
+                <p className="divet-kicker text-[11px] font-semibold">Pagina statica</p>
+                <h1 className="divet-display mt-4 text-5xl leading-[0.95] text-[color:var(--dv-contrast)] sm:text-6xl lg:text-[4.9rem]">
+                  {page.title}
+                </h1>
+                {lead && (
+                  <p className="mt-5 max-w-xl text-base leading-8 text-[color:var(--dv-muted-strong)] sm:text-lg">
+                    {lead}
+                  </p>
+                )}
+              </div>
+
+              <div className="divet-card-soft rounded-[34px] p-7 sm:p-8">
+                <p className="divet-kicker text-[11px] font-semibold">De ce arata asa</p>
+                <div className="mt-4 space-y-4 text-sm leading-8 text-[color:var(--dv-muted-strong)]">
+                  <p>Si paginile statice trebuie sa para parte din aceeasi publicatie, nu o iesire brusca intr-un layout generic.</p>
+                  <p>De aceea pastreaza acelasi shell, aceeasi tipografie si acelasi ritm de lectura ca restul experientei DiVet.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-4xl">
+            <article className="rounded-[34px] border border-[color:var(--dv-border)] bg-[color:var(--dv-surface-strong)] px-6 py-8 sm:px-8 sm:py-10">
+              <div className="divet-prose max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: page.contentHtml }} />
+              </div>
+            </article>
+          </div>
+        </section>
+      </DivetLayout>
+    )
+  }
 
   return (
     <div className={`min-h-screen ${t.pageBg}`} style={{ fontFamily: t.fontFamily }}>

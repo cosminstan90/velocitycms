@@ -87,6 +87,23 @@ const themes: Record<string, TemplateTheme> = {
     fontFamily: '"Inter", system-ui, -apple-system, sans-serif',
     proseClass: 'prose-amber',
   },
+  divet: {
+    pageBg: 'bg-[#f3ecdf]',
+    navBg: 'bg-[#fff7ef]/95 backdrop-blur',
+    navBorder: 'border-[#d8cbb7]',
+    navLogo: 'text-[#173127]',
+    accentBg: 'bg-[#c77b2d]',
+    accentText: 'text-white',
+    accentHoverBg: 'hover:bg-[#9b5725]',
+    accentHoverText: 'hover:text-[#9b5725]',
+    cardBg: 'bg-[#fffaf3]',
+    cardBorder: 'border-[#d8cbb7]',
+    headingHover: 'group-hover:text-[#9b5725]',
+    pillBg: 'bg-[#efe0cd]',
+    pillText: 'text-[#7e5125]',
+    fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
+    proseClass: 'prose-stone',
+  },
 }
 
 export function getTheme(template: string): TemplateTheme {

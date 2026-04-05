@@ -7,6 +7,7 @@ const TEMPLATES = [
   { id: 'default', label: 'Default — Modern cu hero section și grid' },
   { id: 'minimal', label: 'Minimal — Curat, text-first, fără distrageri' },
   { id: 'fauna',   label: 'Fauna — Editorial pentru animale, EEAT + reclame' },
+  { id: 'divet', label: 'DiVet — Enciclopedie premium, friendly-editorial, light + dark' },
 ]
 
 interface SiteCard {
