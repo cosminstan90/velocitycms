@@ -9,12 +9,18 @@
 
 import DefaultHomepage from './templates/default/HomepageTemplate'
 import MinimalHomepage from './templates/minimal/HomepageTemplate'
+import DivetHomepage from './templates/divet/HomepageTemplate'
 
 import DefaultArticle from './templates/default/ArticleTemplate'
 import MinimalArticle from './templates/minimal/ArticleTemplate'
+import DivetArticle from './templates/divet/ArticleTemplate'
 
 import DefaultCategory from './templates/default/CategoryTemplate'
 import MinimalCategory from './templates/minimal/CategoryTemplate'
+import DivetCategory from './templates/divet/CategoryTemplate'
+import DivetComparison from './templates/divet/ComparisonTemplate'
+import DivetAuthor from './templates/divet/AuthorTemplate'
+import DivetTag from './templates/divet/TagTemplate'
 import FaunaHomepage    from './templates/fauna/HomepageTemplate'
 import FaunaArticle     from './templates/fauna/ArticleTemplate'
 import FaunaCategory    from './templates/fauna/CategoryTemplate'
@@ -22,6 +28,7 @@ import FaunaComparison  from './templates/fauna/ComparisonTemplate'
 import FaunaAuthor      from './templates/fauna/AuthorTemplate'
 import FaunaTag         from './templates/fauna/TagTemplate'
 import FaunaSearch      from './templates/fauna/SearchTemplate'
+import DivetSearch      from './templates/divet/SearchTemplate'
 
 import AuthorShared from './shared/AuthorPageTemplate'
 import TagShared    from './shared/TagPageTemplate'
@@ -35,6 +42,7 @@ type HomepageProps = React.ComponentProps<typeof DefaultHomepage>
 
 export function HomepageDispatcher({ template, ...props }: HomepageProps & { template: string }) {
   switch (template) {
+    case 'divet':   return <DivetHomepage   {...props} />
     case 'minimal': return <MinimalHomepage {...props} />
     case 'fauna':   return <FaunaHomepage   {...props} />
     default:        return <DefaultHomepage {...props} />
@@ -51,6 +59,7 @@ type ArticleDispatcherProps = ArticleProps & {
 
 export function ArticleDispatcher({ template, categories, ...props }: ArticleDispatcherProps) {
   switch (template) {
+    case 'divet':   return <DivetArticle   {...props} categories={categories} />
     case 'minimal': return <MinimalArticle {...props} />
     case 'fauna':   return <FaunaArticle   {...props} categories={categories} />
     default:        return <DefaultArticle {...props} />
@@ -67,6 +76,7 @@ type CategoryDispatcherProps = CategoryProps & {
 
 export function CategoryDispatcher({ template, categories, ...props }: CategoryDispatcherProps) {
   switch (template) {
+    case 'divet':   return <DivetCategory   {...props} categories={categories} />
     case 'minimal': return <MinimalCategory {...props} />
     case 'fauna':   return <FaunaCategory   {...props} categories={categories} />
     default:        return <DefaultCategory {...props} />
@@ -79,6 +89,7 @@ type ComparisonProps = React.ComponentProps<typeof FaunaComparison>
 
 export function ComparisonDispatcher({ template, ...props }: ComparisonProps & { template: string }) {
   switch (template) {
+    case 'divet':   return <DivetComparison {...props} />
     case 'fauna':   return <FaunaComparison {...props} />
     default:        return <FaunaComparison {...props} />
   }
@@ -94,6 +105,7 @@ type AuthorDispatcherProps = Omit<AuthorFaunaProps, 'categories'> & {
 
 export function AuthorDispatcher({ template, categories, ...props }: AuthorDispatcherProps) {
   switch (template) {
+    case 'divet': return <DivetAuthor {...props} categories={categories} />
     case 'fauna': return <FaunaAuthor {...props} categories={categories} />
     default:      return <AuthorShared template={template} {...props} />
   }
@@ -109,6 +121,7 @@ type TagDispatcherProps = Omit<TagFaunaProps, 'categories'> & {
 
 export function TagDispatcher({ template, categories, ...props }: TagDispatcherProps) {
   switch (template) {
+    case 'divet': return <DivetTag {...props} categories={categories} />
     case 'fauna': return <FaunaTag {...props} categories={categories} />
     default:      return <TagShared template={template} {...props} />
   }
@@ -123,6 +136,8 @@ type SearchDispatcherProps = Omit<SearchFaunaProps, 'categories'> & {
 }
 
 export function SearchDispatcher({ template, categories, ...props }: SearchDispatcherProps) {
-  // Search always uses the fauna template (no default/minimal variant yet)
-  return <FaunaSearch {...props} categories={categories} />
+  switch (template) {
+    case 'divet': return <DivetSearch {...props} categories={categories} />
+    default:      return <FaunaSearch {...props} categories={categories} />
+  }
 }

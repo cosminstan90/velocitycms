@@ -184,6 +184,11 @@ export default async function SlugPage({ params, searchParams }: Props) {
   if (page) {
     const site = await prisma.site.findUnique({ where: { id: page.siteId } })
     const seo = await prisma.seoSettings.findFirst({ where: { siteId: page.siteId } })
+    const navCategories = await prisma.category.findMany({
+      where: { siteId: page.siteId, parentId: null },
+      include: { _count: { select: { posts: true } } },
+      orderBy: { name: 'asc' },
+    })
     const siteData = {
       siteName: seo?.siteName ?? site?.name ?? 'Site',
       siteUrl: seo?.siteUrl ?? `http://${site?.domain ?? 'localhost'}`,
@@ -212,6 +217,7 @@ export default async function SlugPage({ params, searchParams }: Props) {
           template={site?.template ?? 'default'}
           page={{ title: page.title, contentHtml: page.contentHtml }}
           site={{ siteName: siteData.siteName, siteUrl: siteData.siteUrl }}
+          categories={navCategories}
         />
       </>
     )
