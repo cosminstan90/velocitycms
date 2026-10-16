@@ -18,6 +18,21 @@ export interface CanonicalSite {
 }
 
 /**
+ * Calea relativa a unui articol (fara domeniu).
+ * - fara categorie:       /blog/[postSlug]
+ * - categorie radacina:   /[categorySlug]/[postSlug]
+ * - subcategorie:         /[parentSlug]/[categorySlug]/[postSlug]
+ */
+export function buildPostPath(
+  post: Pick<CanonicalPost, 'slug'>,
+  category?: CanonicalCategory | null
+): string {
+  if (!category) return `/blog/${post.slug}`
+  if (category.parent) return `/${category.parent.slug}/${category.slug}/${post.slug}`
+  return `/${category.slug}/${post.slug}`
+}
+
+/**
  * Build the canonical URL for a post.
  * - If post.canonicalUrl is set, return it as-is (supports cross-posting / syndication).
  * - Posts without a category are under /blog/[slug].
@@ -32,10 +47,7 @@ export function buildCanonicalUrl(
   if (post.canonicalUrl) return post.canonicalUrl
 
   const base = site.siteUrl.replace(/\/$/, '')
-
-  if (!category) return `${base}/blog/${post.slug}`
-  if (category.parent) return `${base}/${category.parent.slug}/${category.slug}/${post.slug}`
-  return `${base}/${category.slug}/${post.slug}`
+  return `${base}${buildPostPath(post, category)}`
 }
 
 /**
