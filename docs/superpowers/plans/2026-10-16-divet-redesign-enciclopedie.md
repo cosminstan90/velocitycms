@@ -1438,6 +1438,117 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ---
 
+### Task 12b: `buildPostPath` — calea unui articol, cu părinte
+
+**Files:**
+- Modify: `lib/seo/canonical-builder.ts`
+- Create: `lib/seo/canonical-builder.test.ts`
+
+Descoperit la execuție: backend-ul (revalidare în scheduler și publish/unpublish, sitemap, canonical) tratează deja `category.parent`, dar **template-urile de frontend compun linkul unui articol ca `/${post.category.slug}/${post.slug}`**, fără părinte. Pentru o fișă din subcategorie asta dă `/rase/labrador` (404) în loc de `/caini/rase/labrador`. În plus, interogările aduc `category: { name, slug }` fără `parent`, deci template-ul nici n-ar avea din ce să-l construiască. `buildCanonicalUrl` face deja logica corectă, dar întoarce URL absolut; template-urile au nevoie de cale relativă.
+
+- [ ] **Step 1: Scrie testele**
+
+Create `lib/seo/canonical-builder.test.ts`:
+
+```ts
+import { describe, it, expect } from 'vitest'
+import { buildPostPath, buildCanonicalUrl } from './canonical-builder'
+
+describe('buildPostPath', () => {
+  it('fara categorie: /blog/{slug}', () => {
+    expect(buildPostPath({ slug: 'labrador' })).toBe('/blog/labrador')
+  })
+
+  it('categorie radacina: /{cat}/{slug}', () => {
+    expect(buildPostPath({ slug: 'labrador' }, { slug: 'caini' })).toBe('/caini/labrador')
+  })
+
+  it('subcategorie: /{parinte}/{cat}/{slug}', () => {
+    expect(buildPostPath({ slug: 'labrador' }, { slug: 'rase', parent: { slug: 'caini' } })).toBe(
+      '/caini/rase/labrador',
+    )
+  })
+
+  it('parent null inseamna radacina', () => {
+    expect(buildPostPath({ slug: 'labrador' }, { slug: 'caini', parent: null })).toBe('/caini/labrador')
+  })
+})
+
+describe('buildCanonicalUrl (regresie dupa refactor)', () => {
+  it('foloseste canonicalUrl cand exista', () => {
+    expect(
+      buildCanonicalUrl({ slug: 'x', canonicalUrl: 'https://alt.ro/x' }, { siteUrl: 'https://divet.ro' }),
+    ).toBe('https://alt.ro/x')
+  })
+
+  it('URL absolut pe trei niveluri si taie slash-ul final din siteUrl', () => {
+    expect(
+      buildCanonicalUrl(
+        { slug: 'labrador' },
+        { siteUrl: 'https://divet.ro/' },
+        { slug: 'rase', parent: { slug: 'caini' } },
+      ),
+    ).toBe('https://divet.ro/caini/rase/labrador')
+  })
+})
+```
+
+- [ ] **Step 2: Rulează ca să confirmi că pică**
+
+```bash
+npm test
+```
+
+Expected: FAIL — `buildPostPath is not a function` (importul lipsește).
+
+- [ ] **Step 3: Implementează**
+
+În `lib/seo/canonical-builder.ts` adaugă, înainte de `buildCanonicalUrl`:
+
+```ts
+/**
+ * Calea relativa a unui articol (fara domeniu).
+ * - fara categorie:       /blog/[postSlug]
+ * - categorie radacina:   /[categorySlug]/[postSlug]
+ * - subcategorie:         /[parentSlug]/[categorySlug]/[postSlug]
+ */
+export function buildPostPath(
+  post: Pick<CanonicalPost, 'slug'>,
+  category?: CanonicalCategory | null
+): string {
+  if (!category) return `/blog/${post.slug}`
+  if (category.parent) return `/${category.parent.slug}/${category.slug}/${post.slug}`
+  return `/${category.slug}/${post.slug}`
+}
+```
+
+Și în `buildCanonicalUrl` înlocuiește cele trei linii finale (`if (!category) … return …`) cu:
+
+```ts
+  return `${base}${buildPostPath(post, category)}`
+```
+
+- [ ] **Step 4: Rulează testele**
+
+```bash
+npm test
+```
+
+Expected: PASS — 6 teste noi, fără regresii.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add lib/seo/canonical-builder.ts lib/seo/canonical-builder.test.ts
+git commit -m "feat: buildPostPath - calea relativa a unui articol, cu parinte
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+```
+
+> **Consecință pentru Tasks 14–17.** Orice pagină care alimentează un template `divet` cu articole trebuie (a) să selecteze `category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } }` și (b) să calculeze `href` cu `buildPostPath`, nu prin concatenare. `ArticleCard` primește deja `href` gata calculat. Template-urile `fauna`, `default` și `minimal` **nu se modifică** (legacy); riscul la rollback pe `fauna` e descris la Task 22.
+
+---
+
 ### Task 13: Componentele de date ale fișei
 
 **Files:**
