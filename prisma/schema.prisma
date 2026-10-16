@@ -119,6 +119,8 @@ model Category {
   metaTitle   String?
   metaDesc    String?
   parentId    String?
+  sortOrder   Int        @default(0)
+  showInNav   Boolean    @default(true)
   createdAt   DateTime   @default(now())
   site        Site       @relation(fields: [siteId], references: [id], onDelete: Cascade)
   parent      Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
