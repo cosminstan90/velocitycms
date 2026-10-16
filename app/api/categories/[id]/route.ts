@@ -3,6 +3,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/slugify'
+import { NAVIGATION_TAG } from '@/lib/navigation'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -21,15 +22,13 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (body.slug) slug = slugify(body.slug)
   else if (name && name !== category.name) slug = slugify(name)
 
-  // Check slug uniqueness (excluding self)
-  if (slug !== category.slug) {
+  // Check slug uniqueness among siblings (excluding self) when slug or parent changes
+  const targetParentId = (parentId !== undefined ? parentId : category.parentId) || null
+  const parentChanged = targetParentId !== (category.parentId ?? null)
+
+  if (slug !== category.slug || parentChanged) {
     const conflict = await prisma.category.findFirst({
-      where: {
-        siteId: category.siteId,
-        slug,
-        parentId: (parentId !== undefined ? parentId : category.parentId) || null,
-        id: { not: id },
-      },
+      where: { siteId: category.siteId, slug, parentId: targetParentId, id: { not: id } },
     })
     if (conflict) return NextResponse.json({ error: 'Slug already exists in this category level' }, { status: 409 })
   }
@@ -42,12 +41,13 @@ export async function PUT(req: NextRequest, { params }: Params) {
       ...(description !== undefined && { description }),
       ...(metaTitle !== undefined && { metaTitle }),
       ...(metaDesc !== undefined && { metaDesc }),
-      ...(parentId !== undefined && { parentId: parentId ?? null }),
+      ...(parentId !== undefined && { parentId: parentId || null }),
     },
   })
 
   try {
     revalidateTag(`category-${id}`, { expire: 0 })
+    revalidateTag(NAVIGATION_TAG, { expire: 0 })
     revalidatePath('/', 'page')
     revalidatePath(`/${updated.slug}`, 'page')
     if (updated.parentId) {
@@ -77,6 +77,21 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     )
   }
 
+  const childCount = await prisma.category.count({ where: { parentId: id } })
+  if (childCount > 0) {
+    return NextResponse.json(
+      { error: `Cannot delete: ${childCount} subcategorie(s) under this category`, childCount },
+      { status: 409 }
+    )
+  }
+
   await prisma.category.delete({ where: { id } })
+
+  try {
+    revalidateTag(NAVIGATION_TAG, { expire: 0 })
+  } catch {
+    // ignore in dev
+  }
+
   return NextResponse.json({ success: true })
 }
