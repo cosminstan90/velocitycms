@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "DiVet", template: "%s | DiVet" },
+  title: "DiVet",
   description: "Enciclopedia animalelor din România",
 };
 
