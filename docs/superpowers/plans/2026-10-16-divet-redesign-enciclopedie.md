@@ -1271,6 +1271,8 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ### Task 11: Componentele de navigație
 
+> **Executat ca 11a + 11b** (commit-uri `745c04d`, `f79d26c`, `fbd69d4`). 11a: `fetchRecentPostsByGroup` / `getRecentPostsByGroup` + `toGroupPost` (interogare per grup, nu „ultimele N din tot site-ul grupate în memorie"). 11b: `DivetHeader` (server), `DivetNav` (client), `DivetMegaPanel`, `DivetLayout` rescris ca **server component async** care își aduce singur navigația (apelurile vechi `<DivetLayout site categories seoSettings activeCategory>` rămân valide; `categories` și `seoSettings` sunt ignorate; `activeGroup` are prioritate). Panourile sunt în DOM și ascunse prin CSS. Hover doar pentru `pointerType === 'mouse'`, focus doar `:focus-visible`, fără handler global. Scurtătura Cmd+K din layout-ul vechi a fost eliminată. Verificat în browser (desktop 1024px, mobil 375px, hover real). Blocurile de mai jos sunt forma inițială; sursa de adevăr sunt fișierele commitate.
+
 **Files:**
 - Create: `components/frontend/templates/divet/DivetHeader.tsx`
 - Create: `components/frontend/templates/divet/DivetNav.tsx`
@@ -1681,6 +1683,13 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ## Faza 5 — Paginile
 
 ### Task 15: `ArticleTemplate` — fișa de animal
+
+> **De ținut cont la rescriere (descoperit la Task 11b):**
+> - **Bara de progres a lectorului** (`DivetProgressBar`, folosită de `ArticleTemplate`) e poziționată de `.progress-bar-offset { top: 4rem }` din `globals.css`, care presupunea un antet lipicios de 64px. Noul antet **nu e lipicios** (scrolează cu pagina): bara apare ca o dungă gri groasă sub antet. Fie se mută la `top: 0`, fie se scoate; decide la rescriere.
+> - **`DivetLayout` primește `activeGroup`** (slug-ul grupului rădăcină) — trimite-l în loc de `activeCategory`, care e slug-ul frunzei și e ambiguu când un slug de subcategorie se repetă între grupuri (`rase`).
+> - **Breadcrumb-ul vechi** duplică nivelul („Acasă › Rase de câini › Rase de câini › Câini › …"): se reconstruiește din `category.parent` + `category`.
+> - Linkurile către articole se compun cu `buildPostPath`, iar interogarea aduce `category: { select: { name, slug, parent: { select: { name, slug } } } }` (vezi Task 12b).
+> - FAQ-ul vizibil vine din `contentJson` (vezi Task 19), nu din `contentHtml`.
 
 **Files:**
 - Modify: `components/frontend/templates/divet/ArticleTemplate.tsx` (rescriere, azi 662 de linii)
