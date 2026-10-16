@@ -347,10 +347,12 @@ cu:
 
 ```tsx
 export const metadata: Metadata = {
-  title: { default: "DiVet", template: "%s | DiVet" },
+  title: "DiVet",
   description: "Enciclopedia animalelor din România",
 };
 ```
+
+> **Fără `title.template`.** Zece pagini de frontend își adaugă deja `| ${siteName}` la un titlu de tip string (`[slug]`, `[subSlug]`, `[articleSlug]`, `blog`, `comparatie`). Un `template: "%s | DiVet"` pe layout-ul rădăcină s-ar aplica peste ele și ar produce „Labrador | Divet | DiVet". `title: "DiVet"` e doar valoarea implicită pentru paginile fără titlu propriu.
 
 Și pe elementul `<html>`, schimbă `lang="en"` în `lang="ro"`.
 
