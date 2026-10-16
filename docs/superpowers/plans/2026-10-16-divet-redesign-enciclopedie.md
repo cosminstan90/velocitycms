@@ -589,6 +589,12 @@ const DEFS: Def[] = [
 ]
 // FAQ-ul NU e un camp: publisher-ul primeste `faqItems` si il adauga ca nod `faqBlock`
 // in continutul TipTap; schema FAQPage e generata de lib/seo/schema-generator.ts.
+//
+// NOTA (verificata la executie, commit ffc9f94): `fieldOptions` pentru SELECT NU e un array
+// simplu de string-uri. Adminul si editorul folosesc un SIR JSON de obiecte {value,label}:
+// CustomFieldsPanel.tsx:124 face JSON.parse(def.fieldOptions as string), iar API-ul scrie
+// JSON.stringify(...) (field-definitions/route.ts:92). Scriptul commitat are un helper
+// `toOptions()` care produce acest format; blocul de cod de aici arata forma initiala, gresita.
 
 async function main() {
   const domain = process.env.SEED_SITE_DOMAIN ?? 'divet.ro'
@@ -1036,6 +1042,8 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 
 ### Task 9: `lib/navigation.ts` — arborele, cu teste
 
+> **Executat ca două fișiere (commit `5a5435d`), nu unul.** Logica pură (`CategoryRow`, `NavGroup`, `buildNavTree`) e în `lib/navigation-tree.ts`, cu testele în `lib/navigation-tree.test.ts` (7 teste); `lib/navigation.ts` conține doar accesul la date și cache-ul (`getNavigation`, `NAVIGATION_TAG`) și re-exportă tipurile. Motiv: un test pentru o funcție de sortare nu trebuie să importe `@/lib/prisma` și `next/cache`. Componentele importă tipurile din `@/lib/navigation`. Blocurile de cod de mai jos arată forma inițială; **sursa de adevăr sunt fișierele commitate.** `unstable_cache` e confirmat în docs-urile locale ca încă suportat în această versiune (le recomandă pe `use cache`, care cere flag-ul Cache Components, neactivat aici).
+
 **Files:**
 - Create: `lib/navigation.ts`
 - Modify: `lib/navigation.test.ts` (înlocuiește testul de setup)
@@ -1214,14 +1222,17 @@ grep -n "export async function \(POST\|PUT\|PATCH\|DELETE\)" app/api/categories/
 În fiecare handler găsit, după scrierea reușită în bază și înainte de `return`, adaugă:
 
 ```ts
-revalidateTag('navigation')
+revalidateTag(NAVIGATION_TAG, { expire: 0 })
 ```
 
-Cu importul la începutul fișierului:
+Cu importurile la începutul fișierului:
 
 ```ts
 import { revalidateTag } from 'next/cache'
+import { NAVIGATION_TAG } from '@/lib/navigation'
 ```
+
+> **Semnătura din această versiune de Next** (`node_modules/next/dist/docs/01-app/03-api-reference/04-functions/revalidateTag.md`): `revalidateTag(tag: string, profile: string | { expire?: number })`. Forma cu un singur argument e depreciată și merge doar cu erorile TypeScript suprimate. `'max'` (recomandat în general) are semantică stale-while-revalidate: următoarea vizită primește meniul vechi. Pentru modificări din admin, rare, unde vrei să vezi imediat rezultatul, se folosește `{ expire: 0 }`. Valoarea tag-ului vine din constanta `NAVIGATION_TAG` exportată de `lib/navigation.ts`, ca invalidarea și cache-ul să nu poată diverge. Caută și alte apeluri existente `revalidateTag(` cu un singur argument în repo și **raportează-le**, fără să le repari.
 
 - [ ] **Step 2b: Repară garda de conflict din `PUT` (lăsată deschisă de Task 8b)**
 
