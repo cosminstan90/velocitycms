@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { buildNavTree, toGroupPost, type CategoryRow, type RecentPostRow } from './navigation-tree'
+import {
+  buildNavTree, toGroupPost, findActiveGroupSlug,
+  type CategoryRow, type RecentPostRow, type NavGroup,
+} from './navigation-tree'
 
 const row = (p: Partial<CategoryRow>): CategoryRow => ({
   id: 'x', name: 'X', slug: 'x', parentId: null, sortOrder: 0, showInNav: true, ...p,
@@ -85,5 +88,39 @@ describe('toGroupPost', () => {
   it('articol fara categorie: /blog', () => {
     const row: RecentPostRow = { title: 'Stire', slug: 'stire', category: null }
     expect(toGroupPost(row)).toEqual({ title: 'Stire', href: '/blog/stire' })
+  })
+})
+
+describe('findActiveGroupSlug', () => {
+  const groups: NavGroup[] = [
+    { id: 'a', name: 'Câini', slug: 'caini', href: '/caini', children: [
+      { id: 'a1', name: 'Rase', slug: 'rase', href: '/caini/rase' },
+      { id: 'a2', name: 'Dresaj', slug: 'dresaj', href: '/caini/dresaj' },
+    ] },
+    { id: 'b', name: 'Pisici', slug: 'pisici', href: '/pisici', children: [
+      { id: 'b1', name: 'Rase', slug: 'rase', href: '/pisici/rase' },
+    ] },
+  ]
+
+  it('null/undefined/gol -> null', () => {
+    expect(findActiveGroupSlug(groups, null)).toBeNull()
+    expect(findActiveGroupSlug(groups, undefined)).toBeNull()
+    expect(findActiveGroupSlug(groups, '')).toBeNull()
+  })
+
+  it('slug de grup -> acel grup', () => {
+    expect(findActiveGroupSlug(groups, 'pisici')).toBe('pisici')
+  })
+
+  it('slug de subcategorie -> grupul parinte', () => {
+    expect(findActiveGroupSlug(groups, 'dresaj')).toBe('caini')
+  })
+
+  it('slug de subcategorie repetat in mai multe grupuri -> primul grup (limitare cunoscuta)', () => {
+    expect(findActiveGroupSlug(groups, 'rase')).toBe('caini')
+  })
+
+  it('slug necunoscut -> null', () => {
+    expect(findActiveGroupSlug(groups, 'nu-exista')).toBeNull()
   })
 })
