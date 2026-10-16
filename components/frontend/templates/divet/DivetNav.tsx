@@ -73,9 +73,18 @@ export default function DivetNav({
               <li
                 key={group.id}
                 className="flex items-stretch"
-                onMouseEnter={() => open(group.id)}
-                onMouseLeave={scheduleClose}
-                onFocus={() => open(group.id)}
+                // Hover doar cu mouse-ul: pe touch, atingerea emuleaza mouseenter si ar deschide
+                // panoul chiar inainte ca `click` sa-l inchida din nou. Focusul deschide doar
+                // cand vine de la tastatura (:focus-visible), nu la atingere.
+                onPointerEnter={(e) => {
+                  if (e.pointerType === 'mouse') open(group.id)
+                }}
+                onPointerLeave={(e) => {
+                  if (e.pointerType === 'mouse') scheduleClose()
+                }}
+                onFocus={(e) => {
+                  if ((e.target as HTMLElement).matches(':focus-visible')) open(group.id)
+                }}
                 onBlur={(e) => {
                   if (!e.currentTarget.contains(e.relatedTarget as Node | null)) scheduleClose()
                 }}

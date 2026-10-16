@@ -37,7 +37,7 @@ export default function DivetHeader({ siteName }: { siteName: string }) {
               id="dv-q"
               name="q"
               type="search"
-              placeholder="Caută o specie, o rasă sau un simptom"
+              placeholder="Caută specii, rase, simptome"
               className="h-10 w-full rounded-[7px] border border-dv-border bg-dv-sunken pl-9 pr-3 text-dv-body text-dv-ink placeholder:text-dv-ink-subtle focus-visible:outline-2 focus-visible:outline-dv-accent"
             />
           </div>
