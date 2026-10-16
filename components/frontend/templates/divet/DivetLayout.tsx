@@ -51,16 +51,6 @@ export default function DivetLayout({
   const searchInputRef                  = useRef<HTMLInputElement>(null)
   const megaTimerRef                    = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Font import via style tag
-  useEffect(() => {
-    if (document.getElementById('divet-fonts')) return
-    const link = document.createElement('link')
-    link.id = 'divet-fonts'
-    link.rel = 'stylesheet'
-    link.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Lora:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap'
-    document.head.appendChild(link)
-  }, [])
-
   useEffect(() => { if (searchOpen) searchInputRef.current?.focus() }, [searchOpen])
 
   useEffect(() => {
