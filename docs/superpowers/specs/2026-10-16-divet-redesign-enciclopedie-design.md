@@ -221,6 +221,14 @@ Pagina `/index-a-z` e singura rută nouă. E importantă la scară: dă un punct
 
 ---
 
+### 5.4 Publisher-ul trebuie să cunoască ierarhia
+
+Descoperit la execuție. `receive/route.ts` știe doar categorii rădăcină: caută `findFirst({ siteId, slug: categorySlug })`, creează singur o categorie rădăcină dacă lipsește și construiește URL-ul ca `/${categorySlug}/${post.slug}`. Pentru ierarhia din §5.1 sunt trei lacune: (1) nu poate plasa o fișă într-o subcategorie, deci `/caini/rase/labrador-retriever` — rută care există — nu poate fi produs; (2) după ce slug-ul devine unic pe părinte, căutarea doar după slug e ambiguă; (3) o categorie creată automat dintr-o greșeală de tastare ar apărea în navigație.
+
+Decizie: payload-ul primește `subCategorySlug` opțional, retrocompatibil; rezolvarea merge pe ierarhie (`parentId`); categoriile create automat primesc `showInNav: false`; calea publică se construiește într-o funcție pură testată. Detalii în Task 8c din plan.
+
+---
+
 ## 6. Modelul de conținut
 
 ### 6.1 Configurarea câmpurilor
@@ -251,7 +259,9 @@ Stocate ca `SELECT` cu `fieldOptions` conținând exact aceste cinci valori. Bar
 
 ### 6.3 FAQ și schema
 
-Întrebările frecvente se stochează ca un câmp `TEXTAREA` cu JSON, randate de `FaqSection` și emise ca `FAQPage` în schema. `lib/seo/schema-generator.ts` citește deja `fieldDefinitions`; se extinde ca să emită și `FAQPage`, pe lângă schema existentă de articol.
+Întrebările frecvente **nu sunt un câmp**. Publisher-ul primește `faqItems` ca cheie separată în payload și o adaugă ca nod `faqBlock` în conținutul TipTap (`app/api/publisher/receive/route.ts`). `lib/seo/schema-generator.ts` generează deja `FAQPage` (și `BreadcrumbList`) din acest nod, deci nu se construiește parsare sau schemă nouă. Contribuția acestei etape se reduce la stilarea blocului `.faq-block` în template.
+
+> *Corectat la execuție.* Prima variantă a specului presupunea un `FieldDefinition` `faq` cu JSON și o componentă `FaqSection`. Citirea ghidului de conținut și a publisher-ului a arătat că mecanismul există deja.
 
 ---
 

@@ -481,7 +481,47 @@ ca bara să nu se afișeze deloc.
 `bun_cu_copiii` NU e un rating — rămâne `Da` / `Nu` și se afișează ca insignă.
 ```
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Actualizează regula 3 și payload-ul pentru noua taxonomie**
+
+Regula 3 din „Reguli obligatorii" listează categorii plate (`caini`, `pisici`, `pasari`, `pesti`, `reptile`, `rozatoare`, `iepuri`, `cai`). Înlocuiește-o cu:
+
+```markdown
+3. **`categorySlug` e grupul, `subCategorySlug` e subcategoria.** Folosește sluguri existente.
+   Grupuri: `caini`, `pisici`, `animale-mici`, `pasari`, `acvariu-terariu`, `salbatice`, `sanatate`.
+   `subCategorySlug` e opțional și trebuie să aparțină grupului ales (ex. `caini` + `rase`).
+   Fișele de rasă/specie merg într-o subcategorie (ex. `caini` + `rase` → URL `/caini/rase/labrador-retriever`).
+   Nu trimite `subCategorySlug` fără `categorySlug` (eroare 400).
+   Un slug care nu există se creează automat, dar **nu apare în meniul de navigație** până nu e
+   publicat din admin — deci o greșeală de tastare nu strică meniul, dar creează o categorie de curățat.
+```
+
+În exemplul de payload adaugă, după `"categorySlug": "caini",`:
+
+```json
+  "subCategorySlug": "rase",
+```
+
+și actualizează `"url"` din „Răspuns de succes" la `https://divet.ro/caini/rase/labrador-retriever`. În checklist, înlocuiește linia `categorySlug` dintr-o categorie existentă cu: `categorySlug` și `subCategorySlug` din taxonomia de mai sus.
+
+Tabelul de subcategorii valide (pentru referință în ghid):
+
+| Grup | `subCategorySlug` |
+|---|---|
+| `caini` | `rase`, `ingrijire`, `sanatate`, `dresaj`, `alimentatie` |
+| `pisici` | `rase`, `ingrijire`, `sanatate`, `comportament` |
+| `animale-mici` | `rozatoare`, `iepuri`, `dihori`, `arici` |
+| `pasari` | `papagali`, `canari`, `pasari-de-curte`, `pasari-salbatice` |
+| `acvariu-terariu` | `pesti-apa-dulce`, `pesti-marini`, `reptile`, `amfibieni`, `nevertebrate` |
+| `salbatice` | `mamifere`, `rapitoare`, `specii-protejate`, `fauna-romaniei` |
+| `sanatate` | `boli`, `vaccinare`, `parazitologie`, `urgente` |
+
+**Nu schimba** secțiunea FAQ: `faqItems` rămâne cheie separată în payload (publisher-ul îl transformă în nod `faqBlock`).
+
+- [ ] **Step 4: Actualizează secțiunea „Câmpuri custom — configurare inițială în admin"**
+
+Secțiunea spune acum să definești câmpurile manual din admin. Înlocuiește paragraful cu: câmpurile se creează automat de `scripts/seed-field-definitions.ts` (Task 8); `sortOrder` e în blocuri de 100 (specificații 100–199, profil comportamental 200–299, conservare 300–399); câmpurile 100–199 apar în placa de specificații, 200–299 în profilul comportamental; `tldr` apare în caseta „Pe scurt". Elimină mențiunea despre „strip-ul verde" și „grid 2 coloane" (design vechi).
+
+- [ ] **Step 5: Commit**
 
 ```bash
 git add AI_CONTENT_GUIDE.md
@@ -503,8 +543,12 @@ Create `scripts/seed-field-definitions.ts`:
 
 ```ts
 import { PrismaClient, FieldType } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
 
-const prisma = new PrismaClient()
+// Prisma 7 cere un adapter; la fel construiesc clientul lib/prisma.ts si prisma/seed.ts.
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
+})
 
 const RATING = ['Foarte scăzut', 'Scăzut', 'Mediu', 'Ridicat', 'Foarte ridicat']
 
@@ -542,13 +586,14 @@ const DEFS: Def[] = [
   { fieldKey: 'bun_cu_copiii', fieldLabel: 'Bun cu copiii', fieldType: 'SELECT', fieldOptions: ['Da', 'Nu'], sortOrder: 240 },
 
   { fieldKey: 'statut_conservare', fieldLabel: 'Statut de conservare', fieldType: 'SELECT', fieldOptions: ['LC', 'NT', 'VU', 'EN', 'CR', 'EW', 'EX'], sortOrder: 300 },
-
-  { fieldKey: 'faq', fieldLabel: 'Întrebări frecvente (JSON)', fieldType: 'TEXTAREA', sortOrder: 400 },
 ]
+// FAQ-ul NU e un camp: publisher-ul primeste `faqItems` si il adauga ca nod `faqBlock`
+// in continutul TipTap; schema FAQPage e generata de lib/seo/schema-generator.ts.
 
 async function main() {
-  const site = await prisma.site.findFirst({ where: { domain: 'divet.ro' } })
-  if (!site) throw new Error('Site-ul divet.ro nu exista in baza')
+  const domain = process.env.SEED_SITE_DOMAIN ?? 'divet.ro'
+  const site = await prisma.site.findFirst({ where: { domain } })
+  if (!site) throw new Error(`Site-ul ${domain} nu exista in baza`)
 
   for (const d of DEFS) {
     const existing = await prisma.fieldDefinition.findFirst({
@@ -586,22 +631,22 @@ Scriptul e idempotent: rulat de două ori, a doua oară actualizează în loc s�
 - [ ] **Step 2: Rulează**
 
 ```bash
-npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/seed-field-definitions.ts
+node --env-file=.env node_modules/ts-node/dist/bin.js --compiler-options '{"module":"CommonJS"}' scripts/seed-field-definitions.ts
 ```
 
-Expected: 22 de linii `creat: ...`.
+Expected: 19 linii `creat: ...`.
 
 - [ ] **Step 3: Rulează din nou ca să confirmi idempotența**
 
 ```bash
-npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/seed-field-definitions.ts
+node --env-file=.env node_modules/ts-node/dist/bin.js --compiler-options '{"module":"CommonJS"}' scripts/seed-field-definitions.ts
 ```
 
-Expected: 22 de linii `actualizat: ...`, niciun duplicat.
+Expected: 19 linii `actualizat: ...`, niciun duplicat.
 
 - [ ] **Step 4: Confirmă în admin**
 
-Deschide `/admin/settings/custom-fields`, verifică cele 22 de câmpuri și ordinea lor.
+Deschide `/admin/settings/custom-fields`, verifică cele 19 câmpuri și ordinea lor.
 
 - [ ] **Step 5: Commit**
 
@@ -627,8 +672,12 @@ Create `scripts/seed-categories.ts`:
 
 ```ts
 import { PrismaClient } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
 
-const prisma = new PrismaClient()
+// Prisma 7 cere un adapter; la fel construiesc clientul lib/prisma.ts si prisma/seed.ts.
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
+})
 
 type Group = { name: string; slug: string; sortOrder: number; children: string[][] }
 
@@ -683,8 +732,9 @@ async function upsert(
 }
 
 async function main() {
-  const site = await prisma.site.findFirst({ where: { domain: 'divet.ro' } })
-  if (!site) throw new Error('Site-ul divet.ro nu exista in baza')
+  const domain = process.env.SEED_SITE_DOMAIN ?? 'divet.ro'
+  const site = await prisma.site.findFirst({ where: { domain } })
+  if (!site) throw new Error(`Site-ul ${domain} nu exista in baza`)
 
   for (const g of GROUPS) {
     const parentId = await upsert(site.id, g.name, g.slug, g.sortOrder, null)
@@ -743,7 +793,7 @@ Expected: SQL-ul conține un `DROP INDEX` pe `(siteId, slug)` și un `CREATE UNI
 - [ ] **Step 3: Rulează**
 
 ```bash
-npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/seed-categories.ts
+node --env-file=.env node_modules/ts-node/dist/bin.js --compiler-options '{"module":"CommonJS"}' scripts/seed-categories.ts
 ```
 
 Expected: 7 grupuri + 30 de subcategorii create (`caini` apare ca `actualizat`, fiind deja în bază).
@@ -751,7 +801,7 @@ Expected: 7 grupuri + 30 de subcategorii create (`caini` apare ca `actualizat`, 
 - [ ] **Step 4: Rulează din nou pentru idempotență**
 
 ```bash
-npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/seed-categories.ts
+node --env-file=.env node_modules/ts-node/dist/bin.js --compiler-options '{"module":"CommonJS"}' scripts/seed-categories.ts
 ```
 
 Expected: toate liniile `actualizat:`, niciun duplicat.
@@ -771,6 +821,204 @@ git add scripts/seed-categories.ts prisma/
 git commit -m "feat: seed pentru cele sapte grupuri de navigatie si subcategoriile lor
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 8c: Publisher — subcategorii și categorii create automat fără să intre în meniu
+
+**Files:**
+- Create: `lib/publisher-paths.ts`
+- Create: `lib/publisher-paths.test.ts`
+- Modify: `app/api/publisher/receive/route.ts` (tipul payload-ului ~l.50-52, destructurarea ~l.102-105, rezolvarea categoriei l.122-133, `schema` ~l.231, revalidare și URL l.384-397)
+
+Descoperit la execuție, absent din spec: publisher-ul știe doar categorii rădăcină. La `route.ts:125` caută `findFirst({ siteId, slug: categorySlug })` și, dacă nu găsește, **creează singur o categorie rădăcină**, iar URL-ul public e `/${categorySlug}/${post.slug}`. Pentru ierarhia din §5.1 (articole în subcategorii, URL pe trei niveluri, care există deja ca rută) sunt trei lacune:
+
+1. nu poate plasa o fișă într-o subcategorie, deci URL-ul `/caini/rase/labrador-retriever` nu poate fi produs;
+2. după Task 8b slug-urile copil se repetă (`rase` sub Câini și sub Pisici), deci căutarea doar după slug devine ambiguă;
+3. o categorie creată automat dintr-o greșeală de tastare ar apărea **în navigație**, fiindcă `showInNav` are default `true`.
+
+**Contract.** Payload-ul primește `subCategorySlug?: string | null`, opțional, retrocompatibil: fără el, comportamentul pentru un apel existent rămâne identic (categorie rădăcină, URL pe două niveluri).
+
+- [ ] **Step 1: Scrie testele**
+
+Create `lib/publisher-paths.test.ts`:
+
+```ts
+import { describe, it, expect } from 'vitest'
+import { buildPublicPath, humanizeSlug } from './publisher-paths'
+
+describe('buildPublicPath', () => {
+  it('fara categorie merge in /blog', () => {
+    expect(buildPublicPath({ postSlug: 'labrador' })).toBe('/blog/labrador')
+  })
+
+  it('doar categorie radacina: doua niveluri', () => {
+    expect(buildPublicPath({ categorySlug: 'caini', postSlug: 'labrador' })).toBe('/caini/labrador')
+  })
+
+  it('categorie si subcategorie: trei niveluri', () => {
+    expect(
+      buildPublicPath({ categorySlug: 'caini', subCategorySlug: 'rase', postSlug: 'labrador' }),
+    ).toBe('/caini/rase/labrador')
+  })
+
+  it('ignora subcategoria cand lipseste categoria', () => {
+    expect(buildPublicPath({ subCategorySlug: 'rase', postSlug: 'labrador' })).toBe('/blog/labrador')
+  })
+
+  it('trateaza null ca lipsa', () => {
+    expect(
+      buildPublicPath({ categorySlug: 'caini', subCategorySlug: null, postSlug: 'labrador' }),
+    ).toBe('/caini/labrador')
+  })
+})
+
+describe('humanizeSlug', () => {
+  it('transforma slug-ul in nume cu majuscule', () => {
+    expect(humanizeSlug('caini-de-talie-mare')).toBe('Caini De Talie Mare')
+  })
+
+  it('un singur cuvant', () => {
+    expect(humanizeSlug('rase')).toBe('Rase')
+  })
+
+  it('sir gol', () => {
+    expect(humanizeSlug('')).toBe('')
+  })
+})
+```
+
+- [ ] **Step 2: Rulează ca să confirmi că pică**
+
+```bash
+npm test
+```
+
+Expected: FAIL — `Cannot find module './publisher-paths'`.
+
+- [ ] **Step 3: Scrie implementarea**
+
+Create `lib/publisher-paths.ts`:
+
+```ts
+export type PublicPathInput = {
+  categorySlug?: string | null
+  subCategorySlug?: string | null
+  postSlug: string
+}
+
+/**
+ * Calea publica a unui articol. Reflecta rutele din app/(frontend):
+ *   /blog/[slug]                      fara categorie
+ *   /[slug]/[subSlug]                 categorie radacina
+ *   /[slug]/[subSlug]/[articleSlug]   categorie radacina + subcategorie
+ */
+export function buildPublicPath({ categorySlug, subCategorySlug, postSlug }: PublicPathInput): string {
+  if (!categorySlug) return `/blog/${postSlug}`
+  if (!subCategorySlug) return `/${categorySlug}/${postSlug}`
+  return `/${categorySlug}/${subCategorySlug}/${postSlug}`
+}
+
+/** Numele afisat al unei categorii create automat dintr-un slug. */
+export function humanizeSlug(slug: string): string {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+```
+
+- [ ] **Step 4: Rulează testele**
+
+```bash
+npm test
+```
+
+Expected: PASS, 9 teste în total (1 de setup + 8 noi).
+
+- [ ] **Step 5: Leagă în `receive/route.ts`**
+
+Importă `buildPublicPath` și `humanizeSlug`. Apoi:
+
+1. Tipul payload-ului: lângă `categorySlug?: string | null` adaugă `subCategorySlug?: string | null`, și include-l în destructurarea de la ~l.102-105.
+2. Validare, imediat după verificarea `title/slug/contentHtml`: dacă `subCategorySlug` e setat dar `categorySlug` nu, răspunde `400` cu `{ error: 'subCategorySlug requires categorySlug' }`.
+3. Înlocuiește blocul „Find or create category" cu rezolvare pe ierarhie:
+
+```ts
+  // ── Find or create category (rădăcină + subcategorie opțională) ──────────
+  // Categoriile create automat primesc showInNav: false — altfel o greșeală de
+  // tastare în payload ar apărea în bara de navigație. Se publică în meniu din admin.
+  let categoryId: string | null = null
+  let leafCategory: { name: string; slug: string } | null = null
+  if (categorySlug) {
+    let root = await prisma.category.findFirst({
+      where: { siteId, slug: categorySlug, parentId: null },
+    })
+    if (!root) {
+      root = await prisma.category.create({
+        data: { siteId, slug: categorySlug, name: humanizeSlug(categorySlug), showInNav: false },
+      })
+    }
+    let leaf = root
+    if (subCategorySlug) {
+      let child = await prisma.category.findFirst({
+        where: { siteId, slug: subCategorySlug, parentId: root.id },
+      })
+      if (!child) {
+        child = await prisma.category.create({
+          data: {
+            siteId,
+            slug: subCategorySlug,
+            name: humanizeSlug(subCategorySlug),
+            parentId: root.id,
+            showInNav: false,
+          },
+        })
+      }
+      leaf = child
+    }
+    categoryId = leaf.id
+    leafCategory = { name: leaf.name, slug: leaf.slug }
+  }
+```
+
+4. La obiectul `category:` din `schema` (~l.231), înlocuiește `categorySlug ? { name: categorySlug, slug: categorySlug } : null` cu `leafCategory`.
+5. Revalidarea și `publicUrl` (~l.384-397) folosesc `buildPublicPath`:
+
+```ts
+  const publicPath = buildPublicPath({ categorySlug, subCategorySlug, postSlug: post.slug })
+  try {
+    revalidatePath(publicPath)
+    revalidatePath('/sitemap.xml')
+  } catch {
+    // Non-fatal in development
+  }
+
+  const publicUrl = `${siteData.siteUrl}${publicPath}`
+```
+
+(păstrează blocul `try/catch` și comentariul existent; elimină ramura `else` care revalida `/blog/...`, fiindcă `buildPublicPath` o acoperă).
+
+> **Notă pentru subagent:** există și alte apeluri `revalidatePath` / construcții de URL în același fișier sau în rute apropiate (de exemplu `app/api/posts/[id]/route.ts`). Caută cu `grep -n "revalidatePath\|categorySlug" app/api/publisher/receive/route.ts`. Modifică doar `receive/route.ts`; dacă găsești același tipar în altă rută, **raportează-l**, nu îl repara.
+
+- [ ] **Step 6: Verifică**
+
+```bash
+npx tsc --noEmit | grep -c "error TS"
+npm test
+```
+
+Expected: 0 erori de tip, 9 teste trec. Verificarea de integrare (publicarea efectivă a unei fișe cu `subCategorySlug`) se face la Task 21, cu bază de date și token de publisher.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add lib/publisher-paths.ts lib/publisher-paths.test.ts app/api/publisher/receive/route.ts
+git commit -m "feat: publisher accepta subCategorySlug, categoriile create automat nu intra in meniu
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```
 
 ---
