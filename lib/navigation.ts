@@ -1,8 +1,8 @@
 import { unstable_cache } from 'next/cache'
 import { prisma } from '@/lib/prisma'
-import { buildNavTree, type NavGroup } from '@/lib/navigation-tree'
+import { buildNavTree, toGroupPost, type GroupPost, type NavGroup, type RecentPostRow } from '@/lib/navigation-tree'
 
-export type { NavGroup, NavChild } from '@/lib/navigation-tree'
+export type { NavGroup, NavChild, GroupPost } from '@/lib/navigation-tree'
 
 export const NAVIGATION_TAG = 'navigation'
 
@@ -17,5 +17,44 @@ export function getNavigation(siteId: string): Promise<NavGroup[]> {
     },
     ['divet-nav', siteId],
     { revalidate: 1800, tags: [NAVIGATION_TAG] },
+  )()
+}
+
+export const POSTS_TAG = 'posts'
+const RECENT_PER_GROUP = 6
+
+/** Cele mai recente articole publicate din fiecare grup (radacina + subcategoriile ei), fara cache. */
+export async function fetchRecentPostsByGroup(
+  siteId: string,
+  groupIds: string[],
+): Promise<Record<string, GroupPost[]>> {
+  const entries = await Promise.all(
+    groupIds.map(async (groupId) => {
+      const rows: RecentPostRow[] = await prisma.post.findMany({
+        where: {
+          siteId,
+          status: 'PUBLISHED',
+          category: { OR: [{ id: groupId }, { parentId: groupId }] },
+        },
+        orderBy: { publishedAt: 'desc' },
+        take: RECENT_PER_GROUP,
+        select: {
+          title: true,
+          slug: true,
+          category: { select: { slug: true, parent: { select: { slug: true } } } },
+        },
+      })
+      return [groupId, rows.map(toGroupPost)] as const
+    }),
+  )
+  return Object.fromEntries(entries)
+}
+
+/** Aceeasi lista, cu cache; se invalideaza la modificarea categoriilor si la publicarea articolelor. */
+export function getRecentPostsByGroup(siteId: string, groupIds: string[]): Promise<Record<string, GroupPost[]>> {
+  return unstable_cache(
+    () => fetchRecentPostsByGroup(siteId, groupIds),
+    ['divet-nav-recent', siteId, ...groupIds],
+    { revalidate: 1800, tags: [NAVIGATION_TAG, POSTS_TAG] },
   )()
 }

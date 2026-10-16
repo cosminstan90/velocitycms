@@ -1,3 +1,5 @@
+import { buildPostPath } from './seo/canonical-builder'
+
 export type CategoryRow = {
   id: string
   name: string
@@ -34,4 +36,16 @@ export function buildNavTree(rows: CategoryRow[]): NavGroup[] {
         href: `/${root.slug}/${child.slug}`,
       })),
   }))
+}
+
+export type RecentPostRow = {
+  title: string
+  slug: string
+  category: { slug: string; parent: { slug: string } | null } | null
+}
+
+export type GroupPost = { title: string; href: string }
+
+export function toGroupPost(row: RecentPostRow): GroupPost {
+  return { title: row.title, href: buildPostPath({ slug: row.slug }, row.category) }
 }

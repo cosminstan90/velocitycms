@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildNavTree, type CategoryRow } from './navigation-tree'
+import { buildNavTree, toGroupPost, type CategoryRow, type RecentPostRow } from './navigation-tree'
 
 const row = (p: Partial<CategoryRow>): CategoryRow => ({
   id: 'x', name: 'X', slug: 'x', parentId: null, sortOrder: 0, showInNav: true, ...p,
@@ -60,5 +60,30 @@ describe('buildNavTree', () => {
 
   it('returneaza lista goala pentru intrare goala', () => {
     expect(buildNavTree([])).toEqual([])
+  })
+})
+
+describe('toGroupPost', () => {
+  it('articol intr-o subcategorie: href pe trei niveluri', () => {
+    const row: RecentPostRow = {
+      title: 'Labrador Retriever',
+      slug: 'labrador-retriever',
+      category: { slug: 'rase', parent: { slug: 'caini' } },
+    }
+    expect(toGroupPost(row)).toEqual({ title: 'Labrador Retriever', href: '/caini/rase/labrador-retriever' })
+  })
+
+  it('articol direct in categoria radacina: href pe doua niveluri', () => {
+    const row: RecentPostRow = {
+      title: 'Cum alegi primul caine',
+      slug: 'cum-alegi-primul-caine',
+      category: { slug: 'caini', parent: null },
+    }
+    expect(toGroupPost(row)).toEqual({ title: 'Cum alegi primul caine', href: '/caini/cum-alegi-primul-caine' })
+  })
+
+  it('articol fara categorie: /blog', () => {
+    const row: RecentPostRow = { title: 'Stire', slug: 'stire', category: null }
+    expect(toGroupPost(row)).toEqual({ title: 'Stire', href: '/blog/stire' })
   })
 })
