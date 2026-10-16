@@ -89,9 +89,23 @@ Scrie 2–4 propoziții. Fără markdown, HTML sau bullet points — text simplu
 | `inaltime` | Înălțimea la greabăn | `55–62 cm` |
 | `speranta_viata` | Ani de viață | `10–12 ani` |
 | `temperament` | Max 4 trăsături, separate prin virgulă | `Blând, inteligent, jucăuș, loial` |
-| `nivel_energie` | Scăzut / Mediu / Ridicat / Foarte ridicat | `Ridicat` |
-| `ingrijire_blana` | Scăzut / Mediu / Ridicat | `Mediu` |
+| `nivel_energie` | Scară de 5 trepte (vezi mai jos) | `Ridicat` |
+| `ingrijire_blana` | Scară de 5 trepte (vezi mai jos) | `Mediu` |
+| `usurinta_dresaj` | Scară de 5 trepte (vezi mai jos) | `Foarte ridicat` |
+| `toleranta_singuratate` | Scară de 5 trepte (vezi mai jos) | `Scăzut` |
 | `bun_cu_copiii` | Da / Nu | `Da` |
+
+### Scara de rating — valori permise
+
+Toate câmpurile de rating folosesc exact aceste cinci valori, cu diacritice:
+
+`Foarte scăzut` · `Scăzut` · `Mediu` · `Ridicat` · `Foarte ridicat`
+
+Nu folosi alte formulări („mare", „redus", „moderat"). Template-ul mapează
+aceste cinci valori pe bare de 20/40/60/80/100%. O valoare necunoscută face
+ca bara să nu se afișeze deloc.
+
+`bun_cu_copiii` NU e un rating — rămâne `Da` / `Nu` și se afișează ca insignă.
 
 ---
 
@@ -205,6 +219,7 @@ X-CMS-Token: {PUBLISHER_TOKEN}
   "title": "Labrador Retriever — Rasa Perfectă pentru Familie",
   "slug": "labrador-retriever",
   "categorySlug": "caini",
+  "subCategorySlug": "rase",
   "metaDescription": "Labrador Retriever este una dintre cele mai iubite rase de câini din lume. Află totul despre caracter, îngrijire, alimentație și sănătate.",
   "focusKeyword": "labrador retriever",
   "status": "published",
@@ -238,7 +253,7 @@ X-CMS-Token: {PUBLISHER_TOKEN}
 {
   "success": true,
   "postId": "clx...",
-  "url": "https://divet.ro/caini/labrador-retriever",
+  "url": "https://divet.ro/caini/rase/labrador-retriever",
   "scheduledAt": null,
   "revalidated": true
 }
@@ -252,12 +267,30 @@ X-CMS-Token: {PUBLISHER_TOKEN}
 
 1. **Nu inventa date** — dacă nu știi greutatea exactă a unui animal, omite câmpul `greutate`. Nu scrie valori aproximative fără bază.
 2. **Slug unic, lowercase, fără diacritice** — `labrador-retriever`, `bufnita-de-zapada`, `rechin-alb`. Fără spații, fără caractere speciale.
-3. **categorySlug trebuie să existe** — folosește slugurile exacte: `caini`, `pisici`, `pasari`, `pesti`, `reptile`, `rozatoare`, `iepuri`, `cai`. Dacă nu știi categoria, omite câmpul.
+3. **`categorySlug` e grupul, `subCategorySlug` e subcategoria.** Folosește sluguri existente.
+   Grupuri: `caini`, `pisici`, `animale-mici`, `pasari`, `acvariu-terariu`, `salbatice`, `sanatate`.
+   `subCategorySlug` e opțional și trebuie să aparțină grupului ales (ex. `caini` + `rase`).
+   Fișele de rasă/specie merg într-o subcategorie (ex. `caini` + `rase` → URL `/caini/rase/labrador-retriever`).
+   Nu trimite `subCategorySlug` fără `categorySlug` (eroare 400).
+   Un slug care nu există se creează automat, dar **nu apare în meniul de navigație** până nu e
+   publicat din admin — deci o greșeală de tastare nu strică meniul, dar creează o categorie de curățat.
 4. **Minim 3 secțiuni H2** — altfel cuprinsul nu apare în template.
 5. **tldr = text simplu** — fără bullet points, fără markdown, fără HTML.
 6. **faqItems = minim 3** — întrebări reale, răspunsuri concise.
 7. **metaDescription = 130–155 caractere** — afișat în Google, trebuie să convingă utilizatorul să dea click.
 8. **Nu duplica conținut** — verifică că slug-ul nu a mai fost publicat. Dacă actualizezi un articol existent, folosește același slug — CMS-ul face upsert automat.
+
+**Subcategorii valide pe grup:**
+
+| Grup | `subCategorySlug` |
+|---|---|
+| `caini` | `rase`, `ingrijire`, `sanatate`, `dresaj`, `alimentatie` |
+| `pisici` | `rase`, `ingrijire`, `sanatate`, `comportament` |
+| `animale-mici` | `rozatoare`, `iepuri`, `dihori`, `arici` |
+| `pasari` | `papagali`, `canari`, `pasari-de-curte`, `pasari-salbatice` |
+| `acvariu-terariu` | `pesti-apa-dulce`, `pesti-marini`, `reptile`, `amfibieni`, `nevertebrate` |
+| `salbatice` | `mamifere`, `rapitoare`, `specii-protejate`, `fauna-romaniei` |
+| `sanatate` | `boli`, `vaccinare`, `parazitologie`, `urgente` |
 
 ---
 
@@ -269,6 +302,7 @@ X-CMS-Token: {PUBLISHER_TOKEN}
   "title": "Bufnița de Zăpadă — Regele Alb al Arcticii",
   "slug": "bufnita-de-zapada",
   "categorySlug": "pasari",
+  "subCategorySlug": "pasari-salbatice",
   "metaDescription": "Bufnița de zăpadă (Bubo scandiacus) este una dintre cele mai mari bufnițe din lume. Descoperă habitatul, dieta și secretele acestui prădător arctic.",
   "focusKeyword": "bufnita de zapada",
   "status": "published",
@@ -309,22 +343,21 @@ X-CMS-Token: {PUBLISHER_TOKEN}
 
 ## Câmpuri custom — configurare inițială în admin
 
-Înainte de a publica primul articol, **definește câmpurile în admin:**
+Câmpurile se creează automat cu scriptul `scripts/seed-field-definitions.ts` — nu se definesc manual în admin.
+CMS-ul ignoră câmpurile necunoscute: dacă trimiți un `fieldKey` nedefinit nu apare eroare, dar valoarea nu se salvează.
 
-`Admin → Settings → Custom Fields → Add Field`
-
-Adaugă câmpurile de care ai nevoie per tip de animal. CMS-ul ignoră câmpurile necunoscute — nu produce erori dacă trimiți un `fieldKey` nedefinit, dar valorile nu vor fi salvate.
-
-**Ordinea** (`sortOrder`) determină ordinea în Fișa Tehnică din template:
-- `tldr` → nu apare în Fișă, ci în strip-ul verde de deasupra
-- Celelalte câmpuri → apar în ordinea `sortOrder` în grid 2 coloane
+**Ordinea** (`sortOrder`) este în blocuri de 100 și decide unde apare câmpul:
+- `tldr` (10) → caseta „Pe scurt", deasupra fișei
+- 100–199 → placa de specificații (origine, talie, greutate, înălțime, speranță de viață, temperament etc.)
+- 200–299 → profilul comportamental (scara de rating și `bun_cu_copiii`)
+- 300–399 → conservare (`statut_conservare`)
 
 ---
 
 ## Checklist înainte de trimitere
 
 - [ ] `slug` lowercase, fără diacritice, unic
-- [ ] `categorySlug` dintr-o categorie existentă
+- [ ] `categorySlug` (grup) și `subCategorySlug` din taxonomia de mai sus
 - [ ] `contentHtml` conține minim 3 secțiuni `<h2>`
 - [ ] `metaDescription` între 130–155 caractere
 - [ ] `tldr` text simplu, fără formatare
