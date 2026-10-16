@@ -15,6 +15,7 @@ import { addSpeakableSchema, getFaqItemCount } from '@/lib/seo/speakable-schema'
 import { serverHtmlToTiptapJson } from '@/lib/tiptap/server-html-parser'
 import { getSmartScheduledAt } from '@/lib/publisher/scheduler'
 import { revalidatePath } from 'next/cache'
+import { buildPublicPath, humanizeSlug } from '@/lib/publisher-paths'
 import fs from 'fs/promises'
 import { Prisma } from '@prisma/client'
 
@@ -50,6 +51,7 @@ export interface PublisherPayload {
   faqItems?: Array<{ question: string; answer: string }>
   focusKeyword?: string | null
   categorySlug?: string | null
+  subCategorySlug?: string | null
   status?: 'draft' | 'published'
   publisherPageId?: string | null
   publisherCampaign?: string | null
@@ -102,6 +104,7 @@ export async function POST(req: NextRequest) {
     faqItems = [],
     focusKeyword,
     categorySlug,
+    subCategorySlug,
     status: rawStatus = 'draft',
     publisherPageId,
     publisherCampaign,
@@ -118,19 +121,44 @@ export async function POST(req: NextRequest) {
   if (!title || !slug || !contentHtml) {
     return NextResponse.json({ error: 'title, slug, contentHtml required' }, { status: 400 })
   }
+  if (subCategorySlug && !categorySlug) {
+    return NextResponse.json({ error: 'subCategorySlug requires categorySlug' }, { status: 400 })
+  }
 
-  // ── Find or create category ──────────────────────────────────────────────
+  // ── Find or create category (rădăcină + subcategorie opțională) ──────────
+  // Categoriile create automat primesc showInNav: false — altfel o greșeală de
+  // tastare în payload ar apărea în bara de navigație. Se publică în meniu din admin.
   let categoryId: string | null = null
+  let leafCategory: { name: string; slug: string } | null = null
   if (categorySlug) {
-    let cat = await prisma.category.findFirst({ where: { siteId, slug: categorySlug } })
-    if (!cat) {
-      const name = categorySlug
-        .split('-')
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ')
-      cat = await prisma.category.create({ data: { siteId, slug: categorySlug, name } })
+    let root = await prisma.category.findFirst({
+      where: { siteId, slug: categorySlug, parentId: null },
+    })
+    if (!root) {
+      root = await prisma.category.create({
+        data: { siteId, slug: categorySlug, name: humanizeSlug(categorySlug), showInNav: false },
+      })
     }
-    categoryId = cat.id
+    let leaf = root
+    if (subCategorySlug) {
+      let child = await prisma.category.findFirst({
+        where: { siteId, slug: subCategorySlug, parentId: root.id },
+      })
+      if (!child) {
+        child = await prisma.category.create({
+          data: {
+            siteId,
+            slug: subCategorySlug,
+            name: humanizeSlug(subCategorySlug),
+            parentId: root.id,
+            showInNav: false,
+          },
+        })
+      }
+      leaf = child
+    }
+    categoryId = leaf.id
+    leafCategory = { name: leaf.name, slug: leaf.slug }
   }
 
   // ── Download + process featured image ───────────────────────────────────
@@ -228,7 +256,7 @@ export async function POST(req: NextRequest) {
       createdAt: now,
       author: null,
       featuredImage: null,
-      category: categorySlug ? { name: categorySlug, slug: categorySlug } : null,
+      category: leafCategory,
       noIndex: false,
       canonicalUrl: null,
     },
@@ -381,20 +409,15 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Revalidate public paths ─────────────────────────────────────────────
+  const publicPath = buildPublicPath({ categorySlug, subCategorySlug, postSlug: post.slug })
   try {
-    if (categorySlug) {
-      revalidatePath(`/${categorySlug}/${post.slug}`)
-    } else {
-      revalidatePath(`/blog/${post.slug}`)
-    }
+    revalidatePath(publicPath)
     revalidatePath('/sitemap.xml')
   } catch {
     // Non-fatal in development
   }
 
-  const publicUrl = categorySlug
-    ? `${siteData.siteUrl}/${categorySlug}/${post.slug}`
-    : `${siteData.siteUrl}/blog/${post.slug}`
+  const publicUrl = `${siteData.siteUrl}${publicPath}`
 
   return NextResponse.json(
     {
