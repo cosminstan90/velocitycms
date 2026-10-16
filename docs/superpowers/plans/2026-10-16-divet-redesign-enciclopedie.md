@@ -198,9 +198,6 @@ La finalul `app/globals.css`, adaugă un bloc nou:
   --color-dv-accent-soft: #E7F0EF;
   --color-dv-accent-on: #FFFFFF;
 
-  --font-dv-display: var(--font-dv-display-src), ui-sans-serif, system-ui, sans-serif;
-  --font-dv-body: var(--font-dv-body-src), ui-sans-serif, system-ui, sans-serif;
-
   --text-dv-display-xl: 52px;
   --text-dv-display-xl--line-height: 1.04;
   --text-dv-display-xl--letter-spacing: -0.035em;
@@ -221,6 +218,16 @@ La finalul `app/globals.css`, adaugă un bloc nou:
   --text-dv-label--letter-spacing: 0.1em;
 
   --shadow-dv-mega: 0 10px 24px rgba(16, 33, 43, 0.07);
+}
+
+/* Fonturile merg in `@theme inline`, NU in `@theme` simplu.
+   --font-dv-*-src sunt setate de next/font pe un <div> wrapper (Task 4), nu pe :root.
+   Intr-un @theme simplu, Tailwind emite variabila pe :root, unde var(--font-dv-*-src)
+   nu exista -> valoare invalida, iar fontul nu se aplica deloc, fara nicio eroare.
+   `inline` face ca var() sa se rezolve la locul de utilizare. */
+@theme inline {
+  --font-dv-display: var(--font-dv-display-src), ui-sans-serif, system-ui, sans-serif;
+  --font-dv-body: var(--font-dv-body-src), ui-sans-serif, system-ui, sans-serif;
 }
 ```
 
