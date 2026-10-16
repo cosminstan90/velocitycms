@@ -1820,6 +1820,12 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ### Task 19: Schema `FAQPage` și `BreadcrumbList`
 
+> **DE REȘCRIS ÎNAINTE DE EXECUȚIE — descoperiri care invalidează textul de mai jos.**
+> 1. `FAQPage` și `BreadcrumbList` sunt **deja generate** de `lib/seo/schema-generator.ts` (l.128 și l.200-214) din nodurile `faqBlock` ale `contentJson`. Nu se construiește `parseFaq` / `generateFaqSchema` / `FaqSection` pe un câmp `faq` (câmpul nu există).
+> 2. **FAQ-ul nu e vizibil pe pagină.** Template-urile randează exclusiv `post.contentHtml` (`divet/ArticleTemplate.tsx:539`); niciun cod din frontend nu randează `faqBlock` din `contentJson`. În fluxul publisher-ului, `contentHtml` vine brut din payload (fără FAQ), iar FAQ-ul stă doar în `contentJson`. Rezultat: schema `FAQPage` e emisă pentru conținut care nu se vede, iar Google cere ca datele structurate să corespundă conținutului vizibil. Pe deasupra, `FAQBlock.renderHTML` produce `['div', {innerHTML: …}]`, deci HTML-ul generat de editor poartă FAQ-ul într-un atribut `innerhtml`, fără text vizibil.
+> 3. **Task-ul real:** funcție pură `extractFaqItems(contentJson)` (cu teste) care citește nodurile `faqBlock` → `{ question, answer }[]`; componenta `FaqSection` (`<details>`/`<summary>`) alimentată de ea, randată în `ArticleTemplate` după corpul articolului; verificat că `FAQPage` din schemă și FAQ-ul vizibil conțin aceleași întrebări. Pagina de articol trebuie să paseze `contentJson` template-ului (azi pasează doar `contentHtml`). Atenție la dublare: dacă `contentHtml` conține deja un `.faq-block` (articole scrise în editor), acela e invizibil prin construcție și nu produce text duplicat, dar se verifică.
+> Textul de mai jos e forma inițială, pe un model de date greșit; **nu-l executa așa cum e.**
+
 **Files:**
 - Modify: `lib/seo/schema-generator.ts`
 - Create: `lib/seo/schema-generator.test.ts`

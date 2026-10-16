@@ -261,7 +261,7 @@ Stocate ca `SELECT` cu `fieldOptions` conținând exact aceste cinci valori. Bar
 
 Întrebările frecvente **nu sunt un câmp**. Publisher-ul primește `faqItems` ca cheie separată în payload și o adaugă ca nod `faqBlock` în conținutul TipTap (`app/api/publisher/receive/route.ts`). `lib/seo/schema-generator.ts` generează deja `FAQPage` (și `BreadcrumbList`) din acest nod, deci nu se construiește parsare sau schemă nouă. Contribuția acestei etape se reduce la stilarea blocului `.faq-block` în template.
 
-> *Corectat la execuție.* Prima variantă a specului presupunea un `FieldDefinition` `faq` cu JSON și o componentă `FaqSection`. Citirea ghidului de conținut și a publisher-ului a arătat că mecanismul există deja.
+> *Corectat la execuție (de două ori).* (1) Prima variantă presupunea un `FieldDefinition` `faq` cu JSON. Ghidul și publisher-ul arată că FAQ-ul vine ca `faqItems` și devine nod `faqBlock` în `contentJson`. (2) A doua variantă spunea că "mecanismul există deja" și rămânea doar stilarea. Corect doar pentru schema JSON-LD: template-urile randează exclusiv `contentHtml`, iar FAQ-ul din publisher stă doar în `contentJson`, deci **nu e vizibil pe pagină** deși `FAQPage` e emis în schemă. Datele structurate trebuie să corespundă conținutului vizibil, deci etapa include randarea vizibilă a FAQ-ului din `contentJson` (`extractFaqItems` + `FaqSection`), iar `FAQBlock.renderHTML` rămâne neatins.
 
 ---
 
