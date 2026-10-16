@@ -24,9 +24,14 @@ export async function PUT(req: NextRequest, { params }: Params) {
   // Check slug uniqueness (excluding self)
   if (slug !== category.slug) {
     const conflict = await prisma.category.findFirst({
-      where: { siteId: category.siteId, slug, id: { not: id } },
+      where: {
+        siteId: category.siteId,
+        slug,
+        parentId: (parentId !== undefined ? parentId : category.parentId) || null,
+        id: { not: id },
+      },
     })
-    if (conflict) return NextResponse.json({ error: 'Slug already exists for this site' }, { status: 409 })
+    if (conflict) return NextResponse.json({ error: 'Slug already exists in this category level' }, { status: 409 })
   }
 
   const updated = await prisma.category.update({

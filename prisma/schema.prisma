@@ -127,7 +127,7 @@ model Category {
   children    Category[] @relation("CategoryChildren")
   posts       Post[]
 
-  @@unique([siteId, slug])
+  @@unique([siteId, parentId, slug])
 }
 
 model Post {

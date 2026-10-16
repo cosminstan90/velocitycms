@@ -52,8 +52,8 @@ export async function POST(req: NextRequest) {
 
   const slug = body.slug ? slugify(body.slug) : slugify(name)
 
-  const existing = await prisma.category.findFirst({ where: { siteId, slug } })
-  if (existing) return NextResponse.json({ error: 'Slug already exists for this site' }, { status: 409 })
+  const existing = await prisma.category.findFirst({ where: { siteId, slug, parentId: parentId || null } })
+  if (existing) return NextResponse.json({ error: 'Slug already exists in this category level' }, { status: 409 })
 
   const category = await prisma.category.create({
     data: { siteId, name, slug, description, metaTitle, metaDesc, parentId: parentId ?? null },
