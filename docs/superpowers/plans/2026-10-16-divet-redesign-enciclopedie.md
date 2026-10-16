@@ -283,7 +283,7 @@ const body = Public_Sans({
 
 export default function FrontendLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`${display.variable} ${body.variable} font-dv-body bg-dv-bg text-dv-ink`}>
+    <div className={`${display.variable} ${body.variable}`}>
       {children}
     </div>
   )
@@ -291,6 +291,8 @@ export default function FrontendLayout({ children }: { children: React.ReactNode
 ```
 
 `latin-ext` e obligatoriu: subsetul `latin` nu acoperă complet ă, î, â, ș, ț.
+
+> **Layout-ul încarcă doar fonturile; nu aplică stil.** Acest layout învelește TOATE rutele de frontend, inclusiv pe cele randate cu template-ul `fauna` (cel live acum și plasa de siguranță la rollback). Dacă wrapper-ul ar purta `bg-dv-bg text-dv-ink font-dv-body`, noul stil s-ar scurge peste `fauna`. De aceea wrapper-ul definește doar variabilele CSS; clasele vizuale (`font-dv-body bg-dv-bg text-dv-ink`) le pune `DivetLayout` pe propriul element rădăcină (Task 11).
 
 - [ ] **Step 2: Elimină injectarea de la runtime**
 
@@ -304,13 +306,15 @@ grep -rn "fonts.googleapis" components/
 
 Expected: fără rezultat.
 
-- [ ] **Step 4: Pornește dev și confirmă diacriticele**
+- [ ] **Step 4: Verifică că fonturile sunt încărcate cu subsetul corect**
+
+Clasele vizuale nu sunt încă aplicate (vin în Task 11), deci aici verificăm încărcarea, nu randarea:
 
 ```bash
 npm run dev
 ```
 
-Deschide `http://localhost:3002/`, verifică în DevTools că fontul randat e Archivo/Public Sans și că „Înălțime la greabăn" afișează corect ă, î, ș, ț fără glife lipsă.
+Pe `http://localhost:3000/` (portul implicit `next dev`; `3002` e doar `next start`), în sursa HTML trebuie să existe un `<div>` cu clase care conțin ambele variabile (`__variable_...`), iar CSS-ul generat trebuie să conțină `@font-face` pentru Archivo și Public Sans cu `unicode-range` care acoperă `U+0102-0103` (ă), `U+0218-0219` (Ș, ș) și `U+021A-021B` (Ț, ț) — adică subsetul `latin-ext` e prezent. Verificarea vizuală a diacriticelor se face la Task 11, când `DivetLayout` aplică fontul.
 
 - [ ] **Step 5: Commit**
 
@@ -996,6 +1000,8 @@ Reguli obligatorii: zero valori hex — doar utilitare `dv-`; fiecare element in
 - [ ] **Step 2: Rescrie `DivetLayout.tsx` să le compună**
 
 `DivetLayout` primește `groups: NavGroup[]` ca prop, randează `DivetHeader` + `DivetNav` + `{children}` + footer. Elimină navigația hardcodată existentă și constantele hex de la liniile 8–16.
+
+Elementul rădăcină al `DivetLayout` poartă `min-h-screen font-dv-body bg-dv-bg text-dv-ink` — aici, nu în `app/(frontend)/layout.tsx` (vezi nota de la Task 4), ca stilul nou să nu se scurgă peste `fauna`. Tot aici se verifică vizual diacriticele: „Înălțime la greabăn", „Ștefan", „Țară" trebuie randate cu Archivo/Public Sans, fără glife lipsă sau fallback.
 
 - [ ] **Step 3: Verifică absența hexurilor**
 
