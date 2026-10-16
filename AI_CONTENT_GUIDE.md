@@ -363,6 +363,6 @@ CMS-ul ignoră câmpurile necunoscute: dacă trimiți un `fieldKey` nedefinit nu
 - [ ] `tldr` text simplu, fără formatare
 - [ ] `faqItems` minim 3 întrebări
 - [ ] `featuredImageUrl` URL Unsplash valid
-- [ ] `fieldValues` conțin doar câmpuri definite în admin
+- [ ] `fieldValues` conțin doar câmpurile din tabelele de mai sus (cele create de scriptul de seed)
 - [ ] Valorile câmpurilor sunt reale, verificate
 - [ ] `tags` sluguri lowercase, fără diacritice (ex. `caini-familie`, nu `Câini Familie`)
