@@ -404,21 +404,37 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 Motiv: ordinea alfabetică nu e ordinea potrivită într-un meniu — „Rase" trebuie prima, nu „Alimentație". `showInNav` permite categorii de organizare care nu merită loc în bară.
 
-- [ ] **Step 2: Generează migrarea**
+- [ ] **Step 2: Generează migrarea cu `migrate diff`, nu cu `migrate dev`**
+
+> **De ce nu `migrate dev`.** `prisma/migrations/0_init/migration.sql` conține zgomot de CLI în fișier (antetul „Loaded Prisma config…" la liniile 1–2 și caseta „Update available" la 479–485), rămas de la crearea baseline-ului cu `migrate diff --script > migration.sql`. Postgres nu poate executa fișierul, iar `migrate dev` îl rulează pe o bază „umbră" și ar pica. Fișierul **nu se editează**: producția îl are înregistrat ca aplicat (via `resolve`, cu checksum-ul unui șir gol, `e3b0c442…`, deci nepotrivit oricum), iar editarea lui ar adăuga risc fără beneficiu. Migrările noi se generează cu `migrate diff` și se aplică cu `migrate deploy`, exact cum le va aplica și producția la Task 22.
 
 ```bash
-npx prisma migrate dev --name category_nav
+mkdir -p prisma/migrations/20261016120000_category_nav
+git show HEAD:prisma/schema.prisma > /tmp/schema.before.prisma
+npx prisma migrate diff --from-schema /tmp/schema.before.prisma --to-schema prisma/schema.prisma --script \
+  | grep -v "^Loaded Prisma config" > prisma/migrations/20261016120000_category_nav/migration.sql
 ```
 
-Expected: migrare creată și aplicată, client regenerat.
+Fișierul rezultat trebuie să conțină **doar** SQL: nicio linie „Loaded Prisma config", nicio casetă `┌─│└`. Verifică: `grep -nE "^(Loaded|┌|│|└)" prisma/migrations/*_category_nav/migration.sql` nu returnează nimic. Conținutul așteptat: două `ALTER TABLE "Category" ADD COLUMN`.
+
+Apoi aplică-l local și regenerează clientul:
+
+```bash
+npx prisma migrate deploy
+npx prisma generate
+```
+
+Expected: „1 migration found … applied", client regenerat.
 
 - [ ] **Step 3: Verifică în bază**
 
 ```bash
-npx prisma studio
+"/c/Program Files/PostgreSQL/17/bin/psql.exe" -h 127.0.0.1 -p 5433 -U cms_user -d velocitycms -c '\d "Category"'
 ```
 
-Deschide tabelul `Category`, confirmă coloanele `sortOrder` și `showInNav`.
+Confirmă coloanele `sortOrder` și `showInNav`.
+
+> **Precondiție locală:** baza de pe `127.0.0.1:5433` are `0_init` marcat aplicat (`migrate resolve --applied 0_init`) și zero drift față de `schema.prisma`. Dacă o recreezi, pornește de la liniile 3–478 din `0_init/migration.sql`, nu de la tot fișierul.
 
 - [ ] **Step 4: Commit**
 
@@ -703,13 +719,20 @@ cu:
   @@unique([siteId, parentId, slug])
 ```
 
-Apoi generează migrarea:
+Apoi generează migrarea cu aceeași metodă ca la Task 6 (`migrate diff` + `migrate deploy`, **nu** `migrate dev` — vezi nota de la Task 6 Step 2). Schema „înainte" e cea de la commit-ul curent:
 
 ```bash
-npx prisma migrate dev --name category_slug_unique_per_parent
+mkdir -p prisma/migrations/20261016130000_category_slug_unique_per_parent
+git show HEAD:prisma/schema.prisma > /tmp/schema.before.prisma
+npx prisma migrate diff --from-schema /tmp/schema.before.prisma --to-schema prisma/schema.prisma --script \
+  | grep -v "^Loaded Prisma config" > prisma/migrations/20261016130000_category_slug_unique_per_parent/migration.sql
+npx prisma migrate deploy
+npx prisma generate
 ```
 
-Expected: migrare aplicată fără conflicte — baza are acum o singură categorie, deci nu există rânduri care să încalce noua constrângere.
+Expected: SQL-ul conține un `DROP INDEX` pe `(siteId, slug)` și un `CREATE UNIQUE INDEX` pe `(siteId, parentId, slug)`. Fișierul nu conține linii de CLI. Aplicarea trece fără conflicte — în producție există o singură categorie, deci niciun rând nu încalcă noua constrângere.
+
+> **Atenție la `NULL` în PostgreSQL.** Într-un index unic, două rânduri cu `parentId` `NULL` **nu** sunt considerate egale. Pe categoriile rădăcină (`parentId` = `NULL`), `@@unique([siteId, parentId, slug])` nu mai împiedică două grupuri cu același slug. Verifică și, dacă vrei garanția, adaugă în migrare un index parțial: `CREATE UNIQUE INDEX "Category_siteId_slug_root_key" ON "Category"("siteId","slug") WHERE "parentId" IS NULL;`. Seed-ul e idempotent prin `findFirst`, deci nu produce dubluri, dar adminul ar putea.
 
 > **De verificat după migrare:** orice cod care caută o categorie doar după `{ siteId, slug }` presupunea unicitate globală. Caută-l și adaugă `parentId` unde e nevoie:
 > ```bash
