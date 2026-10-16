@@ -103,6 +103,12 @@ export default async function SubCategoryPostPage({ params }: Props) {
       author: { select: { name: true, email: true, slug: true, title: true, bio: true, photo: true, website: true } },
       category: { select: { name: true, slug: true } },
       tags: { include: { tag: { select: { id: true, name: true, slug: true } } } },
+      fieldValues: {
+        include: {
+          fieldDefinition: { select: { fieldKey: true, fieldLabel: true, fieldType: true } },
+        },
+        orderBy: { fieldDefinition: { sortOrder: 'asc' } },
+      },
     },
   })
 
@@ -183,6 +189,7 @@ export default async function SubCategoryPostPage({ params }: Props) {
         breadcrumbExtra={parentCategory ? [{ name: parentCategory.name, href: `/${categorySlug}` }] : []}
         seoSettings={seo}
         categories={navCategories}
+        fieldValues={post.fieldValues}
       />
     </>
   )

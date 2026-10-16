@@ -61,6 +61,10 @@ export interface PublisherPayload {
   geoBreakdown?: Record<string, unknown> | null
   directAnswer?: string | null
   speakableSections?: string[] | null
+  /** Custom field values — cheia trebuie să corespundă unui FieldDefinition.fieldKey existent pe site */
+  fieldValues?: Array<{ fieldKey: string; value: string }>
+  /** Tag slugs — create if missing, then attach to post */
+  tags?: string[]
 }
 
 export async function POST(req: NextRequest) {
@@ -107,6 +111,8 @@ export async function POST(req: NextRequest) {
     geoBreakdown: providedGeoBreakdown = null,
     directAnswer: providedDirectAnswer = null,
     speakableSections: providedSpeakable = null,
+    fieldValues: rawFieldValues = [],
+    tags: rawTags = [],
   } = body
 
   if (!title || !slug || !contentHtml) {
@@ -320,6 +326,57 @@ export async function POST(req: NextRequest) {
         sourceType: 'publisher',
       },
       select: { id: true, slug: true },
+    })
+  }
+
+  // ── Upsert custom field values ──────────────────────────────────────────
+  if (rawFieldValues.length > 0) {
+    // Fetch all matching FieldDefinitions for this site in one query
+    const fieldKeys = rawFieldValues.map((fv) => fv.fieldKey)
+    const definitions = await prisma.fieldDefinition.findMany({
+      where: { siteId, fieldKey: { in: fieldKeys } },
+      select: { id: true, fieldKey: true },
+    })
+    const defMap = new Map(definitions.map((d) => [d.fieldKey, d.id]))
+
+    await Promise.all(
+      rawFieldValues
+        .filter((fv) => fv.value.trim() !== '' && defMap.has(fv.fieldKey))
+        .map((fv) =>
+          prisma.fieldValue.upsert({
+            where: { postId_fieldDefinitionId: { postId: post.id, fieldDefinitionId: defMap.get(fv.fieldKey)! } },
+            create: { postId: post.id, fieldDefinitionId: defMap.get(fv.fieldKey)!, value: fv.value },
+            update: { value: fv.value },
+          })
+        )
+    )
+  }
+
+  // ── Upsert tags and attach to post ─────────────────────────────────────
+  if (rawTags.length > 0) {
+    const cleanTags = rawTags.map((t) => t.trim().toLowerCase()).filter(Boolean)
+
+    // Upsert each tag by slug (create if missing), collect IDs
+    const tagRecords = await Promise.all(
+      cleanTags.map((slug) => {
+        const name = slug
+          .split('-')
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ')
+        return prisma.tag.upsert({
+          where: { siteId_slug: { siteId, slug } },
+          create: { siteId, slug, name },
+          update: {},
+          select: { id: true },
+        })
+      })
+    )
+
+    // Remove existing PostTag rows for this post, then insert fresh ones
+    await prisma.postTag.deleteMany({ where: { postId: post.id } })
+    await prisma.postTag.createMany({
+      data: tagRecords.map((t) => ({ postId: post.id, tagId: t.id })),
+      skipDuplicates: true,
     })
   }
 

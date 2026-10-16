@@ -16,7 +16,7 @@ import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 7200
 
 const POSTS_PER_PAGE = 12
 
@@ -205,6 +205,12 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
       author: { select: { name: true, email: true, slug: true, title: true, bio: true, photo: true, website: true } },
       category: { select: { name: true, slug: true } },
       tags: { include: { tag: { select: { id: true, name: true, slug: true } } } },
+      fieldValues: {
+        include: {
+          fieldDefinition: { select: { fieldKey: true, fieldLabel: true, fieldType: true } },
+        },
+        orderBy: { fieldDefinition: { sortOrder: 'asc' } },
+      },
     },
   })
 
@@ -249,6 +255,7 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
         site={{ siteName, siteUrl }}
         seoSettings={seo}
         categories={navCategories2}
+        fieldValues={post.fieldValues}
       />
     </>
   )
