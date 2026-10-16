@@ -2,38 +2,27 @@
 
 import { useEffect, useState } from 'react'
 
-const MOSS = '#4a8a4a'
-const GOLD = '#c4893a'
-
 export default function DivetProgressBar() {
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
     function update() {
-      const scrollTop  = window.scrollY
-      const docHeight  = document.documentElement.scrollHeight - window.innerHeight
-      if (docHeight > 0) setProgress(Math.min(100, (scrollTop / docHeight) * 100))
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight
+      setProgress(docHeight > 0 ? Math.min(100, Math.max(0, (window.scrollY / docHeight) * 100)) : 0)
     }
+    const frame = requestAnimationFrame(update)
     window.addEventListener('scroll', update, { passive: true })
-    return () => window.removeEventListener('scroll', update)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', update)
+    }
   }, [])
 
   return (
-    <div
-      className="fixed left-0 right-0 z-40"
-      style={{ top: '52px', height: '3px', backgroundColor: 'rgba(26,46,28,0.1)' }}
-      role="progressbar"
-      aria-valuenow={Math.round(progress)}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-label="Progres citire"
-    >
+    <div aria-hidden="true" className="fixed top-0 left-0 right-0 z-50 h-[3px] bg-dv-border/60">
       <div
-        className="h-full transition-[width] duration-100 ease-out"
-        style={{
-          width: `${progress}%`,
-          background: `linear-gradient(to right, ${MOSS}, ${GOLD})`,
-        }}
+        className="h-full bg-dv-accent transition-[width] duration-100 ease-out motion-reduce:transition-none"
+        style={{ width: `${progress}%` }}
       />
     </div>
   )
