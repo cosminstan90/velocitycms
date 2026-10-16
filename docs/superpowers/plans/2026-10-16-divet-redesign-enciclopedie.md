@@ -782,7 +782,16 @@ npx prisma generate
 
 Expected: SQL-ul conține un `DROP INDEX` pe `(siteId, slug)` și un `CREATE UNIQUE INDEX` pe `(siteId, parentId, slug)`. Fișierul nu conține linii de CLI. Aplicarea trece fără conflicte — în producție există o singură categorie, deci niciun rând nu încalcă noua constrângere.
 
-> **Atenție la `NULL` în PostgreSQL.** Într-un index unic, două rânduri cu `parentId` `NULL` **nu** sunt considerate egale. Pe categoriile rădăcină (`parentId` = `NULL`), `@@unique([siteId, parentId, slug])` nu mai împiedică două grupuri cu același slug. Verifică și, dacă vrei garanția, adaugă în migrare un index parțial: `CREATE UNIQUE INDEX "Category_siteId_slug_root_key" ON "Category"("siteId","slug") WHERE "parentId" IS NULL;`. Seed-ul e idempotent prin `findFirst`, deci nu produce dubluri, dar adminul ar putea.
+> **Atenție la `NULL` în PostgreSQL.** Într-un index unic, două rânduri cu `parentId` `NULL` **nu** sunt considerate egale. Pe categoriile rădăcină (`parentId` = `NULL`), `@@unique([siteId, parentId, slug])` nu mai împiedică în bază două grupuri cu același slug. **Nu adăugăm index parțial**: Prisma nu modelează indexuri parțiale, deci ar apărea la fiecare verificare de drift (`migrate diff`) ca o diferență permanentă. Garanția pe rădăcini rămâne la nivel de aplicație, în gărzile din Step 2b, iar seed-ul e idempotent prin `findFirst`.
+
+- [ ] **Step 2b: Aliniază gărzile de duplicat din API la `(siteId, parentId, slug)`**
+
+API-ul de categorii verifică deja duplicatele la nivel de aplicație, dar **la nivel de site** — ceea ce ar bloca din admin exact taxonomia aprobată (nu s-ar putea crea „rase" sub Pisici dacă există sub Câini). Două locuri:
+
+- `app/api/categories/route.ts` (POST, ~l.55-56): `prisma.category.findFirst({ where: { siteId, slug } })` → adaugă `parentId: parentId ?? null` în `where` (folosește variabila de părinte din corpul cererii; verifică cum se numește în fișier). Mesajul 409 devine `'Slug already exists in this category level'`.
+- `app/api/categories/[id]/route.ts` (PUT, ~l.26-29): conflictul se caută în același nivel de părinte, **excluzând categoria curentă** (`id: { not: id }`), folosind `parentId`-ul rezultat după actualizare (cel din corpul cererii dacă e trimis, altfel cel existent), cu `null` pentru rădăcină. Același mesaj 409.
+
+Nu schimba nimic altceva în aceste fișiere (invalidarea cache-ului de navigație vine la Task 10). Verifică manual, cu baza locală: creează prin API (sau direct cu un script scurt) două categorii cu același slug sub părinți diferiți (trebuie să reușească) și două cu același slug în același părinte (a doua trebuie să dea 409).
 
 > **De verificat după migrare:** orice cod care caută o categorie doar după `{ siteId, slug }` presupunea unicitate globală. Caută-l și adaugă `parentId` unde e nevoie:
 > ```bash
@@ -1213,6 +1222,26 @@ Cu importul la începutul fișierului:
 ```ts
 import { revalidateTag } from 'next/cache'
 ```
+
+- [ ] **Step 2b: Repară garda de conflict din `PUT` (lăsată deschisă de Task 8b)**
+
+În `app/api/categories/[id]/route.ts`, garda de duplicat rulează doar în `if (slug !== category.slug)`. Cât timp unicitatea era pe tot site-ul, asta era corect; acum nu mai e: o cerere care **mută** o categorie sub alt părinte, păstrându-i slug-ul, ocolește verificarea. Dacă părintele-țintă e o rădăcină, nici indexul din bază nu o prinde (`NULL` nu e egal cu `NULL`); dacă e un părinte real, apare ca eroare 500 din încălcarea indexului unic.
+
+Calculează părintele-țintă o singură dată și rulează garda când se schimbă **slug-ul sau părintele**:
+
+```ts
+  const targetParentId = (parentId !== undefined ? parentId : category.parentId) || null
+  const parentChanged = targetParentId !== (category.parentId ?? null)
+
+  if (slug !== category.slug || parentChanged) {
+    const conflict = await prisma.category.findFirst({
+      where: { siteId: category.siteId, slug, parentId: targetParentId, id: { not: id } },
+    })
+    if (conflict) return NextResponse.json({ error: 'Slug already exists in this category level' }, { status: 409 })
+  }
+```
+
+Tot aici, `data` de la `prisma.category.update` folosește `parentId ?? null`: un șir gol `""` ar ajunge în bază și ar încălca cheia străină. Normalizează la fel ca garda: `...(parentId !== undefined && { parentId: parentId || null })`. La fel în `route.ts` (POST), unde `create` folosește `parentId ?? null` în timp ce garda folosește `parentId || null`.
 
 - [ ] **Step 3: Verifică manual**
 
