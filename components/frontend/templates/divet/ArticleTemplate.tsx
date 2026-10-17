@@ -190,7 +190,7 @@ export default function ArticleTemplate({
                 ) : null}
               </div>
 
-              <h1 className="font-dv-display text-dv-display-xl tracking-tight text-balance">{post.title}</h1>
+              <h1 className="font-dv-display text-[34px] font-bold leading-[1.08] tracking-[-0.03em] text-balance sm:text-dv-display-xl">{post.title}</h1>
 
               {tldr ? (
                 <TldrCard text={tldr} />
