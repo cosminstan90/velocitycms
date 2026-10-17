@@ -50,12 +50,3 @@ export function toGroupPost(row: RecentPostRow): GroupPost {
   return { title: row.title, href: buildPostPath({ slug: row.slug }, row.category) }
 }
 
-/** Grupul activ pentru o categorie data prin slug (grup sau subcategorie). Un slug de subcategorie
- *  repetat in mai multe grupuri se rezolva la primul grup; paginile noi trimit direct grupul. */
-export function findActiveGroupSlug(groups: NavGroup[], activeCategory?: string | null): string | null {
-  if (!activeCategory) return null
-  const root = groups.find((g) => g.slug === activeCategory)
-  if (root) return root.slug
-  const parent = groups.find((g) => g.children.some((c) => c.slug === activeCategory))
-  return parent ? parent.slug : null
-}
