@@ -58,3 +58,19 @@ export function getRecentPostsByGroup(siteId: string, groupIds: string[]): Promi
     { revalidate: 1800, tags: [NAVIGATION_TAG, POSTS_TAG] },
   )()
 }
+
+/** Navigatia + articolele recente pe grup pentru site-ul activ; null daca nu exista site sau baza nu raspunde. */
+export async function getActiveNavigation(): Promise<{
+  groups: NavGroup[]
+  recentByGroup: Record<string, GroupPost[]>
+} | null> {
+  try {
+    const site = await prisma.site.findFirst({ where: { isActive: true }, select: { id: true } })
+    if (!site) return null
+    const groups = await getNavigation(site.id)
+    const recentByGroup = await getRecentPostsByGroup(site.id, groups.map((g) => g.id))
+    return { groups, recentByGroup }
+  } catch {
+    return null
+  }
+}
