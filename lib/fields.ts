@@ -57,3 +57,18 @@ export function splitFieldValues(values: FieldValueLike[]): SplitFields {
   }
   return out
 }
+
+const IUCN_LABELS: Record<string, string> = {
+  LC: 'Risc minim',
+  NT: 'Aproape amenințat',
+  VU: 'Vulnerabil',
+  EN: 'Periclitat',
+  CR: 'Critic periclitat',
+  EW: 'Dispărut din sălbăticie',
+  EX: 'Dispărut',
+}
+
+/** Eticheta romaneasca a unui cod IUCN (LC, NT, VU, EN, CR, EW, EX); null daca nu e recunoscut. */
+export function iucnLabel(code: string): string | null {
+  return IUCN_LABELS[code.trim().toUpperCase()] ?? null
+}

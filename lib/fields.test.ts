@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ratingToPercent, RATING_SCALE, splitFieldValues } from './fields'
+import { ratingToPercent, RATING_SCALE, splitFieldValues, iucnLabel } from './fields'
 
 describe('ratingToPercent', () => {
   it('mapeaza cele cinci trepte pe 20..100', () => {
@@ -87,5 +87,22 @@ describe('splitFieldValues', () => {
   it('propaga eticheta din definitie si taie valoarea', () => {
     const out = splitFieldValues([fv('inaltime', ' 55–62 cm ', 130, 'Înălțime')])
     expect(out.specs[0]).toEqual({ key: 'inaltime', label: 'Înălțime', value: '55–62 cm' })
+  })
+})
+
+describe('iucnLabel', () => {
+  it('mapeaza codurile IUCN pe etichete romanesti', () => {
+    expect(iucnLabel('LC')).toBe('Risc minim')
+    expect(iucnLabel('VU')).toBe('Vulnerabil')
+    expect(iucnLabel('CR')).toBe('Critic periclitat')
+  })
+
+  it('tolereaza spatii si litere mici', () => {
+    expect(iucnLabel(' en ')).toBe('Periclitat')
+  })
+
+  it('returneaza null pentru cod necunoscut', () => {
+    expect(iucnLabel('XX')).toBeNull()
+    expect(iucnLabel('')).toBeNull()
   })
 })
