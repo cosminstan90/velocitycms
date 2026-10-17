@@ -128,19 +128,12 @@ until curl -sf "http://127.0.0.1:$PORT/api/health" > /dev/null 2>&1; do
   sleep 2
 done
 
-echo "▶ Verificare pagini principale"
-FAILED=0
-for path in / /index-a-z /sitemap.xml; do
-  code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT$path" || true)"
-  if [ "$code" = "200" ]; then
-    echo "  ✓ $path  ($code)"
-  else
-    echo "  ✗ $path  ($code)"
-    FAILED=1
-  fi
-done
-if [ $FAILED -ne 0 ]; then
-  echo "✗ O pagina principala nu raspunde 200. Vezi: pm2 logs $PM2_APP"
+# Test de fum condus de sitemap: cate o pagina din fiecare tip de ruta (acasa, grupuri,
+# subcategorii, articole, etichete, autori...). O ruta stricata doar in productie (de ex.
+# o configurare de cache incompatibila cu searchParams, care da 500) trece de health check,
+# dar nu de acest test.
+if ! bash "$APP_DIR/scripts/smoke.sh" "http://127.0.0.1:$PORT" 30; then
+  echo "✗ Cel putin o pagina nu raspunde cum trebuie. Vezi: pm2 logs $PM2_APP"
   echo "  Revenire la codul anterior: git reset --hard $PREV_COMMIT && npm ci --include=dev && npm run build && pm2 reload $PM2_APP"
   exit 1
 fi

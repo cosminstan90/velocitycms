@@ -44,7 +44,7 @@ interface Faq { question: string; answer: string }
 interface SamplePost {
   slug: string
   title: string
-  category: string // 'parent/child' or 'parent'
+  category: string // 'parent/child', 'parent', or '' (fara categorie: URL /blog/<slug>)
   excerpt: string
   metaTitle: string
   metaDescription: string
@@ -478,6 +478,29 @@ const POSTS: SamplePost[] = [
       },
     ],
   },
+  {
+    slug: 'noutati-din-redactie',
+    title: 'Noutăți din redacție',
+    category: '',
+    excerpt: 'Ce am adăugat în enciclopedie luna aceasta: fișe noi, secțiuni noi și corecturi.',
+    metaTitle: 'Noutăți din redacție: ce am adăugat luna aceasta',
+    metaDescription: 'Fișe noi, secțiuni noi și corecturi aduse enciclopediei DiVet luna aceasta, într-un singur loc.',
+    fields: {},
+    sections: [
+      {
+        h: 'Fișe noi',
+        ps: ['Am adăugat fișe pentru mai multe rase de câini și pisici, cu aceleași secțiuni la toate, ca să le poți compara ușor.'],
+      },
+      {
+        h: 'Corecturi',
+        ps: ['Am corectat câteva intervale de greutate și am uniformizat scara de evaluare a comportamentului.'],
+      },
+      {
+        h: 'Ce urmează',
+        ps: ['Lucrăm la fișe pentru păsări și pești de acvariu, plus un ghid de prim ajutor pentru animalele de companie.'],
+      },
+    ],
+  },
 ]
 
 // ── Main ────────────────────────────────────────────────────────────────────
@@ -514,14 +537,18 @@ async function main() {
     if (p.metaDescription.length > 155)
       throw new Error(`metaDescription too long (${p.metaDescription.length}): ${p.slug}`)
 
-    const [rootSlug, childSlug] = p.category.split('/')
-    const root = await prisma.category.findFirst({ where: { siteId: site.id, parentId: null, slug: rootSlug } })
-    if (!root) throw new Error(`Root category not found: ${rootSlug}`)
-    let cat = root
-    if (childSlug) {
-      const child = await prisma.category.findFirst({ where: { siteId: site.id, parentId: root.id, slug: childSlug } })
-      if (!child) throw new Error(`Subcategory not found: ${p.category}`)
-      cat = child
+    let categoryId: string | null = null
+    if (p.category) {
+      const [rootSlug, childSlug] = p.category.split('/')
+      const root = await prisma.category.findFirst({ where: { siteId: site.id, parentId: null, slug: rootSlug } })
+      if (!root) throw new Error(`Root category not found: ${rootSlug}`)
+      let cat = root
+      if (childSlug) {
+        const child = await prisma.category.findFirst({ where: { siteId: site.id, parentId: root.id, slug: childSlug } })
+        if (!child) throw new Error(`Subcategory not found: ${p.category}`)
+        cat = child
+      }
+      categoryId = cat.id
     }
 
     const data = {
@@ -532,7 +559,7 @@ async function main() {
       status: 'PUBLISHED' as const,
       metaTitle: p.metaTitle,
       metaDescription: p.metaDescription,
-      categoryId: cat.id,
+      categoryId,
       authorId: author.id,
       featuredImageId: null,
       publishedAt: new Date(Date.now() - (i * 2 + 1) * DAY - i * 3600 * 1000),
