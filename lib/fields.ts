@@ -72,3 +72,14 @@ const IUCN_LABELS: Record<string, string> = {
 export function iucnLabel(code: string): string | null {
   return IUCN_LABELS[code.trim().toUpperCase()] ?? null
 }
+
+/** Cheile de camp afisate pe cardurile din liste, in ordinea afisarii. */
+export const CARD_META_KEYS = ['talie', 'greutate', 'speranta_viata'] as const
+
+/** Linia scurta de sub titlul unui card: "Mare · 25–36 kg · 10–12 ani". null daca nu exista nimic de aratat. */
+export function cardMeta(values: Array<{ value: string; fieldDefinition: { fieldKey: string } }>): string | null {
+  const parts = CARD_META_KEYS.map((key) => values.find((v) => v.fieldDefinition.fieldKey === key)?.value.trim()).filter(
+    (s): s is string => !!s,
+  )
+  return parts.length > 0 ? parts.join(' · ') : null
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ratingToPercent, RATING_SCALE, splitFieldValues, iucnLabel } from './fields'
+import { ratingToPercent, RATING_SCALE, splitFieldValues, iucnLabel, cardMeta } from './fields'
 
 describe('ratingToPercent', () => {
   it('mapeaza cele cinci trepte pe 20..100', () => {
@@ -104,5 +104,28 @@ describe('iucnLabel', () => {
   it('returneaza null pentru cod necunoscut', () => {
     expect(iucnLabel('XX')).toBeNull()
     expect(iucnLabel('')).toBeNull()
+  })
+})
+
+describe('cardMeta', () => {
+  const v = (fieldKey: string, value: string) => ({ value, fieldDefinition: { fieldKey } })
+
+  it('ordine fixa: talie, greutate, speranta_viata', () => {
+    expect(cardMeta([v('speranta_viata', '10–12 ani'), v('talie', 'Mare'), v('greutate', '25–36 kg')])).toBe(
+      'Mare · 25–36 kg · 10–12 ani',
+    )
+  })
+
+  it('omite campurile lipsa', () => {
+    expect(cardMeta([v('talie', 'Mare'), v('speranta_viata', '10–12 ani')])).toBe('Mare · 10–12 ani')
+  })
+
+  it('null cand nu exista niciun camp relevant', () => {
+    expect(cardMeta([])).toBeNull()
+    expect(cardMeta([v('origine', 'Regatul Unit')])).toBeNull()
+  })
+
+  it('ignora valorile goale si taie spatiile', () => {
+    expect(cardMeta([v('talie', '   '), v('greutate', ' 3 kg ')])).toBe('3 kg')
   })
 })
