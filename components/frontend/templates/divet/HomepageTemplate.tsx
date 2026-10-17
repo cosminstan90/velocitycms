@@ -1,12 +1,9 @@
 import Link from 'next/link'
 import DivetLayout from './DivetLayout'
-import ArticleCard from './ArticleCard'
+import PostGrid from './PostGrid'
 import EmptyState from './EmptyState'
 import SearchForm from './SearchForm'
 import { getActiveNavigation } from '@/lib/navigation'
-import { cardMeta } from '@/lib/fields'
-import { buildPostPath } from '@/lib/seo/canonical-builder'
-import { resolveImageUrl } from '../fauna/utils'
 
 interface HomepageTemplateProps {
   latestPosts: Array<{
@@ -101,22 +98,7 @@ export default async function DivetHomepage({ latestPosts, site, seoSettings }: 
               <h2 id="dv-home-latest" className="m-0 mb-5 font-dv-display text-[22px] font-semibold text-dv-ink">
                 Cele mai noi fișe
               </h2>
-              <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-3">
-                {latestPosts.map((p) => (
-                  <ArticleCard
-                    key={p.id}
-                    href={buildPostPath({ slug: p.slug }, p.category)}
-                    title={p.title}
-                    kicker={p.category?.name ?? null}
-                    meta={cardMeta(p.fieldValues ?? [])}
-                    image={
-                      p.featuredImage
-                        ? { url: resolveImageUrl(p.featuredImage.url, site.siteUrl), alt: p.featuredImage.altText ?? p.title }
-                        : null
-                    }
-                  />
-                ))}
-              </div>
+              <PostGrid posts={latestPosts} siteUrl={site.siteUrl} />
             </>
           ) : (
             <EmptyState

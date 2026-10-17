@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { AuthorDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { CARD_META_KEYS } from '@/lib/fields'
 
 export const revalidate = 3600
 
@@ -71,7 +72,13 @@ export default async function AuthorPage({ params, searchParams }: Props) {
       take: POSTS_PER_PAGE,
       skip,
       orderBy: { publishedAt: 'desc' },
-      include: { category: { select: { name: true, slug: true } } },
+      include: {
+        category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } },
+        fieldValues: {
+          where: { fieldDefinition: { fieldKey: { in: [...CARD_META_KEYS] } } },
+          select: { value: true, fieldDefinition: { select: { fieldKey: true } } },
+        },
+      },
     }),
     prisma.post.count({ where: { status: 'PUBLISHED', siteId: siteId!, authorId: author.id } }),
   ])

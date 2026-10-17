@@ -66,15 +66,15 @@ export default function DivetMegaPanel({
         ))}
 
         <div className="self-start rounded-[9px] bg-dv-accent-soft p-[18px]">
-          <p className="text-dv-label uppercase font-semibold text-dv-accent">Nu știi ce cauți?</p>
+          <p className="text-dv-label uppercase font-semibold text-dv-accent">Nu găsești ce cauți?</p>
           <p className="mb-4 mt-2 font-dv-display text-[17px] font-semibold text-dv-ink">
-            Compară două rase una lângă alta
+            Răsfoiește toate fișele în ordine alfabetică
           </p>
           <Link
-            href="/comparatie"
+            href="/index-a-z"
             className={`block rounded-md bg-dv-accent px-3 py-2 text-center text-[13px] font-semibold text-dv-accent-on ${focusRing}`}
           >
-            Deschide comparatorul
+            Deschide indexul
           </Link>
         </div>
       </div>

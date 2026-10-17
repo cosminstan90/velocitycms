@@ -1,11 +1,8 @@
 import DivetLayout from './DivetLayout'
 import Breadcrumbs from './Breadcrumbs'
-import ArticleCard from './ArticleCard'
+import PostGrid from './PostGrid'
 import EmptyState from './EmptyState'
 import SearchForm from './SearchForm'
-import { cardMeta } from '@/lib/fields'
-import { buildPostPath } from '@/lib/seo/canonical-builder'
-import { resolveImageUrl } from '../fauna/utils'
 
 interface PostItem {
   id: string
@@ -58,22 +55,7 @@ export default function DivetSearch({ query, results, totalCount, site }: DivetS
         ) : results.length > 0 ? (
           <section className="mt-8" aria-label="Rezultate">
             <p className="mt-0 mb-5 text-dv-meta text-dv-ink-muted">{countLine}</p>
-            <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-3">
-              {results.map((p) => (
-                <ArticleCard
-                  key={p.id}
-                  href={buildPostPath({ slug: p.slug }, p.category)}
-                  title={p.title}
-                  kicker={p.category?.name ?? null}
-                  meta={cardMeta(p.fieldValues ?? [])}
-                  image={
-                    p.featuredImage
-                      ? { url: resolveImageUrl(p.featuredImage.url, site.siteUrl), alt: p.featuredImage.altText ?? p.title }
-                      : null
-                  }
-                />
-              ))}
-            </div>
+            <PostGrid posts={results} siteUrl={site.siteUrl} />
           </section>
         ) : (
           <div className="mt-8">

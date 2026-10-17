@@ -8,12 +8,9 @@
 import Link from 'next/link'
 import DivetLayout from './DivetLayout'
 import Breadcrumbs from './Breadcrumbs'
-import ArticleCard from './ArticleCard'
+import PostGrid from './PostGrid'
 import EmptyState from './EmptyState'
 import Pagination from './Pagination'
-import { resolveImageUrl } from '../fauna/utils'
-import { buildPostPath } from '@/lib/seo/canonical-builder'
-import { cardMeta } from '@/lib/fields'
 
 interface CategoryTemplateProps {
   category: {
@@ -106,25 +103,7 @@ export default function DivetCategoryTemplate({
               action={{ label: 'Vezi toate articolele', href: '/index-a-z' }}
             />
           ) : (
-            <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-3">
-              {posts.map((post) => (
-                <ArticleCard
-                  key={post.id}
-                  href={buildPostPath({ slug: post.slug }, post.category)}
-                  title={post.title}
-                  kicker={post.category?.name ?? null}
-                  meta={cardMeta(post.fieldValues ?? [])}
-                  image={
-                    post.featuredImage
-                      ? {
-                          url: resolveImageUrl(post.featuredImage.url, site.siteUrl),
-                          alt: post.featuredImage.altText ?? post.title,
-                        }
-                      : null
-                  }
-                />
-              ))}
-            </div>
+            <PostGrid posts={posts} siteUrl={site.siteUrl} />
           )}
         </div>
 
