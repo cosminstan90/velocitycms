@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { HomepageDispatcher } from '@/components/frontend/TemplateDispatcher'
+import { CARD_META_KEYS } from '@/lib/fields'
 import type { Metadata } from 'next'
 
 export const revalidate = 1800
@@ -42,7 +43,11 @@ export default async function HomePage() {
       orderBy: { publishedAt: 'desc' },
       include: {
         author: { select: { name: true, email: true } },
-        category: { select: { name: true, slug: true } },
+        category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } },
+        fieldValues: {
+          where: { fieldDefinition: { fieldKey: { in: [...CARD_META_KEYS] } } },
+          select: { value: true, fieldDefinition: { select: { fieldKey: true } } },
+        },
       },
     })
 
