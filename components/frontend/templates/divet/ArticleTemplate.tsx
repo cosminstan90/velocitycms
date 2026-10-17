@@ -4,7 +4,7 @@
  * Server component. Campurile custom sunt impartite pe blocuri (lib/fields.ts):
  * tldr, specificatii, profil comportamental, conservare. Aside-ul (profil + cuprins)
  * apare doar cand are ce arata; altfel textul sta singur, centrat.
- * FAQ-ul e randat de un task ulterior.
+ * FAQ-ul e randat de FaqSection, din contentJson.
  */
 
 import Image from 'next/image'
@@ -17,10 +17,12 @@ import TldrCard from './TldrCard'
 import SpecGrid from './SpecGrid'
 import BehaviorProfile from './BehaviorProfile'
 import RelatedArticles from './RelatedArticles'
+import FaqSection from './FaqSection'
 import { resolveImageUrl, formatDateLong, getAuthorInitials } from '../fauna/utils'
 import { splitFieldValues, ratingToPercent, iucnLabel } from '@/lib/fields'
 import { extractToc, addHeadingIds, readingTimeMinutes } from '@/lib/article-html'
 import { buildPostPath } from '@/lib/seo/canonical-builder'
+import { extractFaqItems } from '@/lib/faq'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,6 +46,7 @@ interface ArticleTemplateProps {
     slug: string
     excerpt: string | null
     contentHtml: string
+    contentJson?: unknown
     metaTitle: string | null
     publishedAt: Date | string | null
     updatedAt: Date | string
@@ -141,14 +144,25 @@ export default function ArticleTemplate({
   const updated = new Date(post.updatedAt)
   const showUpdated = published !== null && updated.toISOString().slice(0, 10) !== published.toISOString().slice(0, 10)
 
+  const faqItems = extractFaqItems(post.contentJson)
+
   const author = post.author
   const hasImage = !!post.featuredImage
 
+  // [&_.faq-block]:hidden: FAQ-ul scris in editor lasa in contentHtml un .faq-block fara text
+  // vizibil (textul e in atributul innerhtml); FAQ-ul se randeaza din contentJson de FaqSection.
   const prose = (
     <div
-      className="prose max-w-none text-dv-body [--tw-prose-body:var(--color-dv-ink)] [--tw-prose-headings:var(--color-dv-ink)] [--tw-prose-links:var(--color-dv-accent)] [--tw-prose-bold:var(--color-dv-ink)] [--tw-prose-bullets:var(--color-dv-ink-subtle)] [--tw-prose-hr:var(--color-dv-border)] [--tw-prose-quotes:var(--color-dv-ink)] [--tw-prose-quote-borders:var(--color-dv-accent)] prose-headings:font-dv-display prose-headings:tracking-tight prose-h2:text-dv-heading-m prose-h2:scroll-mt-6 prose-a:font-medium [&>:first-child]:mt-0"
+      className="prose max-w-none text-dv-body [--tw-prose-body:var(--color-dv-ink)] [--tw-prose-headings:var(--color-dv-ink)] [--tw-prose-links:var(--color-dv-accent)] [--tw-prose-bold:var(--color-dv-ink)] [--tw-prose-bullets:var(--color-dv-ink-subtle)] [--tw-prose-hr:var(--color-dv-border)] [--tw-prose-quotes:var(--color-dv-ink)] [--tw-prose-quote-borders:var(--color-dv-accent)] prose-headings:font-dv-display prose-headings:tracking-tight prose-h2:text-dv-heading-m prose-h2:scroll-mt-6 prose-a:font-medium [&>:first-child]:mt-0 [&_.faq-block]:hidden"
       dangerouslySetInnerHTML={{ __html: html }}
     />
+  )
+
+  const main = (
+    <>
+      {prose}
+      <FaqSection items={faqItems} />
+    </>
   )
 
   return (
@@ -238,10 +252,10 @@ export default function ArticleTemplate({
                 <BehaviorProfile items={behavior} />
                 {toc.length >= 3 ? <DivetToc entries={toc} /> : null}
               </aside>
-              <div className="min-w-0">{prose}</div>
+              <div className="min-w-0">{main}</div>
             </div>
           ) : (
-            <div className="mx-auto w-full max-w-[720px]">{prose}</div>
+            <div className="mx-auto w-full max-w-[720px]">{main}</div>
           )}
 
           {post.tags.length > 0 ? (
