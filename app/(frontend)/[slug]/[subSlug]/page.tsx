@@ -15,6 +15,7 @@ import { generatePostSchema, generateCategorySchema } from '@/lib/seo/schema-gen
 import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { CARD_META_KEYS } from '@/lib/fields'
 
 export const revalidate = 7200
 
@@ -78,7 +79,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   // Try subcategory first
   const subCategory = await prisma.category.findFirst({
-    where: { slug, parent: { slug: categorySlug } },
+    where: { slug, parent: { slug: categorySlug, parentId: null } },
   })
 
   if (subCategory) {
@@ -149,12 +150,12 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
 
   // ── Case 1: Subcategory listing ──────────────────────────────────────────
   const subCategory = await prisma.category.findFirst({
-    where: { slug, parent: { slug: categorySlug } },
+    where: { slug, parent: { slug: categorySlug, parentId: null } },
     include: { children: { select: { id: true, name: true, slug: true, description: true, _count: { select: { posts: true } } } } },
   })
 
   if (subCategory) {
-    const parentCategory = await prisma.category.findFirst({ where: { slug: categorySlug }, select: { name: true, slug: true } })
+    const parentCategory = await prisma.category.findFirst({ where: { slug: categorySlug, parentId: null }, select: { name: true, slug: true } })
     const { siteName, siteUrl, defaultOgImage, template, seo } = await getSiteData(subCategory.siteId)
 
     const navCategories = await prisma.category.findMany({
@@ -169,7 +170,14 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
         take: POSTS_PER_PAGE,
         skip,
         orderBy: { publishedAt: 'desc' },
-        include: { author: { select: { name: true } }, category: { select: { name: true, slug: true } } },
+        include: {
+          author: { select: { name: true } },
+          category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } },
+          fieldValues: {
+            where: { fieldDefinition: { fieldKey: { in: [...CARD_META_KEYS] } } },
+            select: { value: true, fieldDefinition: { select: { fieldKey: true } } },
+          },
+        },
       }),
       prisma.post.count({ where: { status: 'PUBLISHED', categoryId: subCategory.id } }),
     ])

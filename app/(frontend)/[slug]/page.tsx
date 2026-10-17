@@ -4,6 +4,7 @@ import StaticPageTemplate from '@/components/frontend/shared/StaticPageTemplate'
 import { generateCategorySchema, generatePageSchema } from '@/lib/seo/schema-generator'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { CARD_META_KEYS } from '@/lib/fields'
 
 export const dynamic = 'force-dynamic'
 
@@ -110,16 +111,20 @@ export default async function SlugPage({ params, searchParams }: Props) {
 
     const [posts, totalCount] = await Promise.all([
       prisma.post.findMany({
-        where: { status: 'PUBLISHED', categoryId: category.id },
+        where: { status: 'PUBLISHED', category: { OR: [{ id: category.id }, { parentId: category.id }] } },
         take: POSTS_PER_PAGE,
         skip,
         orderBy: { publishedAt: 'desc' },
         include: {
           author: { select: { name: true, email: true } },
-          category: { select: { name: true, slug: true } },
+          category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } },
+          fieldValues: {
+            where: { fieldDefinition: { fieldKey: { in: [...CARD_META_KEYS] } } },
+            select: { value: true, fieldDefinition: { select: { fieldKey: true } } },
+          },
         },
       }),
-      prisma.post.count({ where: { status: 'PUBLISHED', categoryId: category.id } }),
+      prisma.post.count({ where: { status: 'PUBLISHED', category: { OR: [{ id: category.id }, { parentId: category.id }] } } }),
     ])
 
     const imageIds = posts.map((p) => p.featuredImageId).filter((id): id is string => !!id)

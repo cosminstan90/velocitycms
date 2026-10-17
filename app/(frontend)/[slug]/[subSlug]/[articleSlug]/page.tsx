@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     where: {
       slug,
       status: 'PUBLISHED',
-      category: { slug: subCategorySlug, parent: { slug: categorySlug } },
+      category: { slug: subCategorySlug, parent: { slug: categorySlug, parentId: null } },
     },
     include: { author: { select: { name: true, email: true, slug: true } } },
   })
@@ -97,7 +97,7 @@ export default async function SubCategoryPostPage({ params }: Props) {
     where: {
       slug,
       status: 'PUBLISHED',
-      category: { slug: subCategorySlug, parent: { slug: categorySlug } },
+      category: { slug: subCategorySlug, parent: { slug: categorySlug, parentId: null } },
     },
     include: {
       author: { select: { name: true, email: true, slug: true, title: true, bio: true, photo: true, website: true } },
@@ -155,7 +155,7 @@ export default async function SubCategoryPostPage({ params }: Props) {
   }))
 
   const parentCategory = await prisma.category.findFirst({
-    where: { slug: categorySlug },
+    where: { slug: categorySlug, parentId: null },
     select: { name: true, slug: true },
   })
 
