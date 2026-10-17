@@ -10,11 +10,13 @@
  *   [subSlug] = subcategory or article slug (was [slug])
  */
 import { prisma } from '@/lib/prisma'
+import { parsePageParam } from '@/lib/pagination'
 import { ArticleDispatcher, CategoryDispatcher } from '@/components/frontend/TemplateDispatcher'
 import { generatePostSchema, generateCategorySchema } from '@/lib/seo/schema-generator'
 import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { CARD_META_KEYS } from '@/lib/fields'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,7 +80,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   // Try subcategory first
   const subCategory = await prisma.category.findFirst({
-    where: { slug, parent: { slug: categorySlug } },
+    where: { slug, parent: { slug: categorySlug, parentId: null } },
   })
 
   if (subCategory) {
@@ -144,17 +146,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CategorySlugPage({ params, searchParams }: Props) {
   const { slug: categorySlug, subSlug: slug } = await params
   const { page: pageParam } = await searchParams
-  const currentPage = Math.max(1, parseInt(pageParam ?? '1', 10))
+  const currentPage = parsePageParam(pageParam)
   const skip = (currentPage - 1) * POSTS_PER_PAGE
 
   // ── Case 1: Subcategory listing ──────────────────────────────────────────
   const subCategory = await prisma.category.findFirst({
-    where: { slug, parent: { slug: categorySlug } },
+    where: { slug, parent: { slug: categorySlug, parentId: null } },
     include: { children: { select: { id: true, name: true, slug: true, description: true, _count: { select: { posts: true } } } } },
   })
 
   if (subCategory) {
-    const parentCategory = await prisma.category.findFirst({ where: { slug: categorySlug }, select: { name: true, slug: true } })
+    const parentCategory = await prisma.category.findFirst({ where: { slug: categorySlug, parentId: null }, select: { name: true, slug: true } })
     const { siteName, siteUrl, defaultOgImage, template, seo } = await getSiteData(subCategory.siteId)
 
     const navCategories = await prisma.category.findMany({
@@ -169,7 +171,14 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
         take: POSTS_PER_PAGE,
         skip,
         orderBy: { publishedAt: 'desc' },
-        include: { author: { select: { name: true } }, category: { select: { name: true, slug: true } } },
+        include: {
+          author: { select: { name: true } },
+          category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } },
+          fieldValues: {
+            where: { fieldDefinition: { fieldKey: { in: [...CARD_META_KEYS] } } },
+            select: { value: true, fieldDefinition: { select: { fieldKey: true } } },
+          },
+        },
       }),
       prisma.post.count({ where: { status: 'PUBLISHED', categoryId: subCategory.id } }),
     ])
@@ -177,7 +186,7 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
     const posts = await mapPostsWithImages(rawPosts as any)
     const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE)
 
-    const schemaCat = { id: subCategory.id, name: subCategory.name, slug: subCategory.slug, description: subCategory.description, metaTitle: subCategory.metaTitle, metaDesc: subCategory.metaDesc }
+    const schemaCat = { id: subCategory.id, name: subCategory.name, slug: subCategory.slug, description: subCategory.description, metaTitle: subCategory.metaTitle, metaDesc: subCategory.metaDesc, parent: parentCategory ? { name: parentCategory.name, slug: parentCategory.slug } : null }
     const schema = generateCategorySchema(schemaCat, { siteName, siteUrl, defaultOgImage })
 
     return (
@@ -203,8 +212,14 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
     where: { slug, status: 'PUBLISHED', category: { slug: categorySlug, parentId: null } },
     include: {
       author: { select: { name: true, email: true, slug: true, title: true, bio: true, photo: true, website: true } },
-      category: { select: { name: true, slug: true } },
+      category: { select: { id: true, name: true, slug: true, parent: { select: { id: true, name: true, slug: true } } } },
       tags: { include: { tag: { select: { id: true, name: true, slug: true } } } },
+      fieldValues: {
+        include: {
+          fieldDefinition: { select: { fieldKey: true, fieldLabel: true, fieldType: true, sortOrder: true } },
+        },
+        orderBy: { fieldDefinition: { sortOrder: 'asc' } },
+      },
     },
   })
 
@@ -219,12 +234,19 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
     orderBy: { name: 'asc' },
   })
 
-  // Related posts: same category, exclude current
+  // Related posts: other recent posts of the same group
+  const groupId = post.category?.parent?.id ?? post.category?.id
   const rawRelated = await prisma.post.findMany({
-    where: { status: 'PUBLISHED', categoryId: post.categoryId, id: { not: post.id } },
-    take: 3,
+    where: {
+      status: 'PUBLISHED',
+      id: { not: post.id },
+      ...(groupId
+        ? { category: { OR: [{ id: groupId }, { parentId: groupId }] } }
+        : { categoryId: post.categoryId }),
+    },
     orderBy: { publishedAt: 'desc' },
-    include: { author: { select: { name: true } }, category: { select: { name: true, slug: true } } },
+    take: 6,
+    include: { category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } } },
   })
   const relatedPosts = await mapPostsWithImages(rawRelated as any)
 
@@ -249,6 +271,7 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
         site={{ siteName, siteUrl }}
         seoSettings={seo}
         categories={navCategories2}
+        fieldValues={post.fieldValues}
       />
     </>
   )

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { auth } from '@/auth'
+import { NAVIGATION_TAG } from '@/lib/navigation'
 import { prisma } from '@/lib/prisma'
 import { getSiteIdFromRequest } from '@/lib/site'
 import { slugify } from '@/lib/slugify'
@@ -52,12 +54,18 @@ export async function POST(req: NextRequest) {
 
   const slug = body.slug ? slugify(body.slug) : slugify(name)
 
-  const existing = await prisma.category.findFirst({ where: { siteId, slug } })
-  if (existing) return NextResponse.json({ error: 'Slug already exists for this site' }, { status: 409 })
+  const existing = await prisma.category.findFirst({ where: { siteId, slug, parentId: parentId || null } })
+  if (existing) return NextResponse.json({ error: 'Slug already exists in this category level' }, { status: 409 })
 
   const category = await prisma.category.create({
-    data: { siteId, name, slug, description, metaTitle, metaDesc, parentId: parentId ?? null },
+    data: { siteId, name, slug, description, metaTitle, metaDesc, parentId: parentId || null },
   })
+
+  try {
+    revalidateTag(NAVIGATION_TAG, { expire: 0 })
+  } catch {
+    // ignore in dev
+  }
 
   return NextResponse.json({ category }, { status: 201 })
 }

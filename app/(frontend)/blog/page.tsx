@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { parsePageParam } from '@/lib/pagination'
 import { CategoryDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 
@@ -30,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function BlogPage({ searchParams }: Props) {
   const { page: pageParam } = await searchParams
-  const currentPage = Math.max(1, parseInt(pageParam ?? '1', 10))
+  const currentPage = parsePageParam(pageParam)
   const skip = (currentPage - 1) * POSTS_PER_PAGE
 
   let site = null

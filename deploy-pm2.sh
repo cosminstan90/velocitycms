@@ -1,99 +1,147 @@
 #!/usr/bin/env bash
-# deploy-pm2.sh — Zero-downtime deploy for VelocityCMS on CloudPanel VPS (PM2, no Docker)
+# deploy-pm2.sh — deploy VelocityCMS (divet.ro) pe VPS, cu PM2, fara Docker
 #
-# Usage:
-#   ./deploy-pm2.sh              # deploy latest main branch
-#   ./deploy-pm2.sh --skip-pull  # build from current working tree
+# Utilizare (pe server, in directorul aplicatiei):
+#   ./deploy-pm2.sh                # backup, git pull --ff-only (main), install, migrari, build, reload
+#   ./deploy-pm2.sh --skip-pull    # construieste din arborele curent
+#   ./deploy-pm2.sh --seed         # ruleaza si seed-urile idempotente (categorii + campuri):
+#                                  # necesar o singura data, la prima lansare a noului template
+#   ./deploy-pm2.sh --skip-backup  # NU e recomandat
 #
-# Requirements: Node.js 20+, PM2, PostgreSQL running, Redis running, git
+# Variabile (cu valorile implicite pentru divet.ro):
+#   APP_DIR=/home/divet.ro/htdocs/app   PM2_APP=velocitycms   PORT=3002   SEED_SITE_DOMAIN=divet.ro
 #
-# NOTE: This replaces deploy.sh (Docker) and deploy-cloudpanel.sh (Docker+CloudPanel).
-#       VelocityCMS runs as a PM2 process on port 3002. PostgreSQL and Redis run
-#       as system services — no Docker containers needed.
+# Cerinte: Node 20.6+ (seed-urile folosesc --env-file), PM2, PostgreSQL, git, curl.
+#
+# NU modifica ecosystem.config.js din repo: pe server are o modificare locala (cwd si
+# caile de loguri), iar un `git pull` care il schimba s-ar bloca.
+#
+# Atentie: `next build` scrie in .next, care e folosit si de procesul care ruleaza inca;
+# in cateva zeci de secunde, ultimele cereri pot primi erori. Pentru zero-downtime real
+# ar trebui build intr-un director separat si comutare; nu e cazul la acest trafic.
 
 set -euo pipefail
 
-APP_DIR="/home/velocitycms/htdocs/app"
+APP_DIR="${APP_DIR:-/home/divet.ro/htdocs/app}"
+PM2_APP="${PM2_APP:-velocitycms}"
+PORT="${PORT:-3002}"
+SEED_SITE_DOMAIN="${SEED_SITE_DOMAIN:-divet.ro}"
+
 SKIP_PULL=false
+SKIP_BACKUP=false
+RUN_SEEDS=false
 
 for arg in "$@"; do
   case $arg in
-    --skip-pull) SKIP_PULL=true ;;
-    *) echo "Unknown argument: $arg"; exit 1 ;;
+    --skip-pull)   SKIP_PULL=true ;;
+    --skip-backup) SKIP_BACKUP=true ;;
+    --seed)        RUN_SEEDS=true ;;
+    *) echo "Argument necunoscut: $arg"; exit 1 ;;
   esac
 done
 
 echo ""
 echo "════════════════════════════════════════════"
-echo "  VelocityCMS — PM2 Deploy"
+echo "  VelocityCMS — deploy PM2 ($PM2_APP)"
 echo "  $(date '+%Y-%m-%d %H:%M:%S %Z')"
 echo "════════════════════════════════════════════"
 echo ""
 
 cd "$APP_DIR"
-
-# ── 1. Pre-deploy backup ───────────────────────────────────────────────────────
-echo "▶ Step 1/6 — Pre-deploy backup..."
-bash backup-before-deploy.sh || {
-  echo "⚠  Backup failed. Deploy aborted for safety."
-  exit 1
-}
-echo "✓ Backup complete"
+PREV_COMMIT="$(git rev-parse --short HEAD)"
+echo "  Directorul:     $APP_DIR"
+echo "  Commit curent:  $(git log -1 --pretty='%h %s')"
 echo ""
 
-# ── 2. Pull latest code ────────────────────────────────────────────────────────
-if [ "$SKIP_PULL" = false ]; then
-  echo "▶ Step 2/6 — Pulling latest code..."
-  git pull --ff-only origin main
-  echo "✓ Code updated: $(git log -1 --pretty='%h %s')"
+# ── 1. Backup ──────────────────────────────────────────────────────────────────
+if [ "$SKIP_BACKUP" = false ]; then
+  echo "▶ Pasul 1 — backup baza de date"
+  APP_DIR="$APP_DIR" bash "$APP_DIR/backup-db.sh" || {
+    echo "⚠  Backup esuat. Deploy oprit, din precautie."
+    exit 1
+  }
 else
-  echo "▶ Step 2/6 — Skipping git pull (--skip-pull)"
+  echo "▶ Pasul 1 — backup SARIT (--skip-backup)"
 fi
 echo ""
 
-# ── 3. Install dependencies ────────────────────────────────────────────────────
-echo "▶ Step 3/6 — Installing dependencies..."
-npm ci --production=false
-echo "✓ Dependencies installed"
+# ── 2. Cod ─────────────────────────────────────────────────────────────────────
+if [ "$SKIP_PULL" = false ]; then
+  echo "▶ Pasul 2 — git pull (main, doar fast-forward)"
+  BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+  if [ "$BRANCH" != "main" ]; then
+    echo "✗ Esti pe '$BRANCH', nu pe 'main'. Deploy oprit."
+    exit 1
+  fi
+  git pull --ff-only origin main
+  echo "✓ Cod actualizat: $(git log -1 --pretty='%h %s')"
+else
+  echo "▶ Pasul 2 — git pull SARIT (--skip-pull)"
+fi
 echo ""
 
-# ── 4. Generate Prisma client + run migrations ────────────────────────────────
-echo "▶ Step 4/6 — Prisma generate + migrate..."
+# ── 3. Dependinte ──────────────────────────────────────────────────────────────
+echo "▶ Pasul 3 — dependinte"
+npm ci --include=dev
+echo "✓ Dependinte instalate"
+echo ""
+
+# ── 4. Prisma + migrari (+ seed-uri) ───────────────────────────────────────────
+echo "▶ Pasul 4 — Prisma generate + migrate deploy"
 npx prisma generate
 npx prisma migrate deploy
-echo "✓ Database up to date"
+echo "✓ Baza de date la zi"
+
+if [ "$RUN_SEEDS" = true ]; then
+  echo "  Seed-uri idempotente pentru $SEED_SITE_DOMAIN (categorii, campuri)..."
+  for s in seed-categories seed-field-definitions; do
+    SEED_SITE_DOMAIN="$SEED_SITE_DOMAIN" node --env-file=.env node_modules/ts-node/dist/bin.js \
+      --compiler-options '{"module":"CommonJS"}' "scripts/$s.ts"
+  done
+  echo "✓ Seed-uri rulate"
+fi
 echo ""
 
-# ── 5. Build Next.js ──────────────────────────────────────────────────────────
-echo "▶ Step 5/6 — Building Next.js..."
+# ── 5. Build ───────────────────────────────────────────────────────────────────
+echo "▶ Pasul 5 — build Next.js"
 npm run build
-echo "✓ Build complete"
+echo "✓ Build terminat"
 echo ""
 
-# ── 6. Reload PM2 (zero-downtime) ─────────────────────────────────────────────
-echo "▶ Step 6/6 — Reloading PM2 process..."
-# 'pm2 reload' does a graceful rolling restart with zero downtime
-pm2 reload velocitycms --update-env
+# ── 6. Reload PM2 ──────────────────────────────────────────────────────────────
+echo "▶ Pasul 6 — reload PM2 ($PM2_APP)"
+pm2 reload "$PM2_APP" --update-env
 pm2 save
-echo "✓ PM2 reloaded"
+echo "✓ PM2 reincarcat"
 echo ""
 
-# ── Health check ───────────────────────────────────────────────────────────────
-echo "▶ Waiting for health check (up to 30s)..."
+# ── Verificari dupa deploy ─────────────────────────────────────────────────────
+echo "▶ Health check (pana la 30 s)..."
 RETRIES=15
-until curl -sf http://127.0.0.1:3002/api/health > /dev/null 2>&1; do
+until curl -sf "http://127.0.0.1:$PORT/api/health" > /dev/null 2>&1; do
   RETRIES=$((RETRIES - 1))
   if [ $RETRIES -eq 0 ]; then
-    echo "✗ Health check failed. Check: pm2 logs velocitycms"
+    echo "✗ Health check esuat. Vezi: pm2 logs $PM2_APP"
+    echo "  Revenire la codul anterior: git reset --hard $PREV_COMMIT && npm ci --include=dev && npm run build && pm2 reload $PM2_APP"
     exit 1
   fi
   sleep 2
 done
 
+# Test de fum condus de sitemap: cate o pagina din fiecare tip de ruta (acasa, grupuri,
+# subcategorii, articole, etichete, autori...). O ruta stricata doar in productie (de ex.
+# o configurare de cache incompatibila cu searchParams, care da 500) trece de health check,
+# dar nu de acest test.
+if ! bash "$APP_DIR/scripts/smoke.sh" "http://127.0.0.1:$PORT" 30; then
+  echo "✗ Cel putin o pagina nu raspunde cum trebuie. Vezi: pm2 logs $PM2_APP"
+  echo "  Revenire la codul anterior: git reset --hard $PREV_COMMIT && npm ci --include=dev && npm run build && pm2 reload $PM2_APP"
+  exit 1
+fi
+
 echo ""
 echo "════════════════════════════════════════════"
-echo "  ✓ Deploy successful!"
-echo "  Commit: $(git log -1 --pretty='%h %s')"
-echo "  Time:   $(date '+%Y-%m-%d %H:%M:%S')"
+echo "  ✓ Deploy reusit"
+echo "  Commit: $(git log -1 --pretty='%h %s')   (anterior: $PREV_COMMIT)"
+echo "  Ora:    $(date '+%Y-%m-%d %H:%M:%S')"
 echo "════════════════════════════════════════════"
 echo ""

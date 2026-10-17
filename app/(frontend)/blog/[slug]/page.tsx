@@ -5,7 +5,7 @@ import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-export const revalidate = 7200
+export const dynamic = 'force-dynamic'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -74,8 +74,14 @@ export default async function BlogPostPage({ params }: Props) {
     where: { slug, status: 'PUBLISHED', categoryId: null },
     include: {
       author: { select: { name: true, email: true, slug: true, title: true, bio: true, photo: true, website: true } },
-      category: { select: { name: true, slug: true } },
+      category: { select: { id: true, name: true, slug: true, parent: { select: { id: true, name: true, slug: true } } } },
       tags: { select: { tag: { select: { id: true, name: true, slug: true } } } },
+      fieldValues: {
+        include: {
+          fieldDefinition: { select: { fieldKey: true, fieldLabel: true, fieldType: true, sortOrder: true } },
+        },
+        orderBy: { fieldDefinition: { sortOrder: 'asc' } },
+      },
     },
   })
 
@@ -112,11 +118,11 @@ export default async function BlogPostPage({ params }: Props) {
       categoryId: null,
       id: { not: post.id },
     },
-    take: 3,
+    take: 6,
     orderBy: { publishedAt: 'desc' },
     include: {
       author: { select: { name: true, email: true } },
-      category: { select: { name: true, slug: true } },
+      category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } },
     },
   })
 
@@ -183,6 +189,7 @@ export default async function BlogPostPage({ params }: Props) {
         site={siteData}
         seoSettings={seo ?? null}
         categories={navCategories}
+        fieldValues={post.fieldValues}
       />
     </>
   )

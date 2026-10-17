@@ -1,7 +1,29 @@
+/**
+ * DiVet — AuthorTemplate (/autor/[slug])
+ *
+ * Breadcrumbs, antet cu avatar, nume, titlu, bio, site, numar articole,
+ * grila PostGrid si paginare. Server component, doar token-uri dv-*.
+ */
+
 import Image from 'next/image'
-import Link from 'next/link'
 import DivetLayout from './DivetLayout'
-import { BrandMark, StoryCard, buildPaginationItems, formatDateLong, resolveImageUrl, type NavCategoryItem, type StoryPost } from './utils'
+import Breadcrumbs from './Breadcrumbs'
+import PostGrid from './PostGrid'
+import EmptyState from './EmptyState'
+import Pagination from './Pagination'
+import { resolveImageUrl } from '../fauna/utils'
+
+interface PostItem {
+  id: string
+  title: string
+  slug: string
+  excerpt: string | null
+  publishedAt: Date | string | null
+  featuredImage: { url: string; altText: string | null } | null
+  author: { name: string | null } | null
+  category: { name: string; slug: string; parent?: { name: string; slug: string } | null } | null
+  fieldValues?: Array<{ value: string; fieldDefinition: { fieldKey: string } }>
+}
 
 interface DivetAuthorTemplateProps {
   author: {
@@ -12,236 +34,110 @@ interface DivetAuthorTemplateProps {
     photo: string | null
     website: string | null
   }
-  posts: Array<{
-    id: string
-    title: string
-    slug: string
-    excerpt: string | null
-    publishedAt: Date | string | null
-    featuredImage: { url: string; altText: string | null } | null
-    category: { name: string; slug: string } | null
-  }>
+  posts: PostItem[]
   pagination: { currentPage: number; totalPages: number; totalCount: number }
   site: { siteName: string; siteUrl: string }
-  categories?: NavCategoryItem[]
+  // LEGACY — ignorat, pastrat pentru compatibilitatea cu dispatcher-ul
+  categories?: Array<{ id: string; name: string; slug: string; description?: string | null; _count?: { posts: number } }>
+  // LEGACY — ignorat
   seoSettings?: { defaultMetaDesc?: string | null; defaultOgImage?: string | null } | null
 }
 
-export default function DivetAuthorTemplate({
-  author,
-  posts,
-  pagination,
-  site,
-  categories = [],
-  seoSettings,
-}: DivetAuthorTemplateProps) {
-  const authorName = author.name ?? 'Autor DiVet'
-  const authorSlug = author.slug ?? ''
-  const initials = authorName
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
+function initials(name: string): string {
+  const letters = name
+    .split(/\s+/)
+    .filter(Boolean)
     .slice(0, 2)
+    .map((w) => Array.from(w)[0] ?? '')
+    .join('')
+  return letters.toUpperCase() || '?'
+}
 
-  const canonical = `${site.siteUrl.replace(/\/$/, '')}/autor/${authorSlug}`
-  const paginationItems = buildPaginationItems(pagination.currentPage, pagination.totalPages)
-  const mappedPosts: StoryPost[] = posts.map((post) => ({
-    ...post,
-    author: null,
-  }))
-  const leadPost = mappedPosts[0] ?? null
-  const gridPosts = mappedPosts.slice(1)
-
-  const schema = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'Person',
-        '@id': `${canonical}/#person`,
-        name: authorName,
-        url: canonical,
-        ...(author.title && { jobTitle: author.title }),
-        ...(author.bio && { description: author.bio }),
-        ...(author.photo && {
-          image: { '@type': 'ImageObject', url: resolveImageUrl(author.photo, site.siteUrl) },
-        }),
-        ...(author.website && { sameAs: [author.website] }),
-        worksFor: { '@type': 'Organization', name: site.siteName, url: site.siteUrl },
-      },
-      {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: site.siteName, item: site.siteUrl },
-          { '@type': 'ListItem', position: 2, name: authorName, item: canonical },
-        ],
-      },
-    ],
+/** Site-ul autorului e text introdus de utilizator: acceptam doar http(s). */
+function safeWebsite(raw: string | null): { href: string; host: string } | null {
+  if (!raw) return null
+  try {
+    const u = new URL(raw)
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null
+    return { href: u.href, host: u.hostname }
+  } catch {
+    return null
   }
+}
+
+export default function DivetAuthor({ author, posts, pagination, site }: DivetAuthorTemplateProps) {
+  const { currentPage, totalPages, totalCount } = pagination
+  const name = author.name ?? 'Autor'
+  const website = safeWebsite(author.website)
 
   return (
-    <DivetLayout site={site} categories={categories} seoSettings={seoSettings}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }}
-      />
+    <DivetLayout site={{ siteName: site.siteName, siteUrl: site.siteUrl }}>
+      <div className="mx-auto w-full max-w-[1100px] px-4 py-6 md:px-10 lg:py-8">
+        <Breadcrumbs
+          items={[
+            { name: 'Acasă', href: '/' },
+            { name, href: author.slug ? `/autor/${author.slug}` : '/autor' },
+          ]}
+        />
 
-      <section className="border-b border-[color:var(--dv-border)] px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <nav aria-label="Breadcrumb" className="mb-8">
-            <ol className="flex flex-wrap items-center gap-2 text-xs text-[color:var(--dv-muted)]">
-              <li><Link href="/" className="transition-colors hover:text-[color:var(--dv-contrast)]">{site.siteName}</Link></li>
-              <li aria-hidden="true">/</li>
-              <li className="text-[color:var(--dv-muted-strong)]" aria-current="page">{authorName}</li>
-            </ol>
-          </nav>
-
-          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
-            <div className="divet-card rounded-[34px] p-7 sm:p-8">
-              <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[28px] border border-[color:var(--dv-border)] sm:h-28 sm:w-28">
-                  {author.photo ? (
-                    <Image
-                      src={resolveImageUrl(author.photo, site.siteUrl)}
-                      fill
-                      alt={authorName}
-                      className="object-cover"
-                      sizes="112px"
-                      priority
-                    />
-                  ) : (
-                    <div
-                      className="absolute inset-0 flex items-center justify-center text-2xl font-black text-white"
-                      style={{ background: 'linear-gradient(135deg, var(--dv-accent), var(--dv-forest))' }}
-                    >
-                      {initials || <BrandMark className="h-12 w-12" />}
-                    </div>
-                  )}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <p className="divet-kicker text-[11px] font-semibold">Autor DiVet</p>
-                  <h1 className="divet-display mt-3 text-5xl leading-[0.95] text-[color:var(--dv-contrast)] sm:text-[4rem]">
-                    {authorName}
-                  </h1>
-                  {author.title && (
-                    <p className="mt-3 text-base font-semibold text-[color:var(--dv-accent-strong)]">{author.title}</p>
-                  )}
-                  {author.bio && (
-                    <p className="mt-4 max-w-2xl text-sm leading-8 text-[color:var(--dv-muted-strong)] sm:text-base">
-                      {author.bio}
-                    </p>
-                  )}
-
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    <span className="divet-chip rounded-full px-4 py-2 text-sm">
-                      {pagination.totalCount} {pagination.totalCount === 1 ? 'articol publicat' : 'articole publicate'}
-                    </span>
-                    <span className="divet-chip rounded-full px-4 py-2 text-sm">Profil editorial verificat</span>
-                    {author.website && (
-                      <a
-                        href={author.website}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="divet-button-ghost inline-flex rounded-full px-4 py-2 text-sm font-semibold"
-                      >
-                        Website
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
+        <header className="mt-6 flex flex-col items-start gap-5 sm:flex-row sm:gap-6">
+          {author.photo ? (
+            <Image
+              src={resolveImageUrl(author.photo, site.siteUrl)}
+              alt={name}
+              width={80}
+              height={80}
+              className="h-20 w-20 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-dv-accent font-dv-display text-[28px] font-bold text-dv-accent-on"
+            >
+              {initials(name)}
             </div>
-
-            <div className="divet-card-soft rounded-[34px] p-7 sm:p-8">
-              <p className="divet-kicker text-[11px] font-semibold">Ce gasesti aici</p>
-              <div className="mt-4 space-y-4 text-sm leading-8 text-[color:var(--dv-muted-strong)]">
-                <p>Toate articolele publicate de acest autor, intr-un format editorial care ramane usor de parcurs.</p>
-                <p>Pagina trebuie sa inspire incredere si sa functioneze ca un nod EEAT real, nu doar ca o arhiva de linkuri.</p>
-                {leadPost?.publishedAt && (
-                  <p>
-                    Cel mai recent articol din aceasta selectie este din <span className="font-semibold text-[color:var(--dv-contrast)]">{formatDateLong(leadPost.publishedAt)}</span>.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="divet-kicker text-[11px] font-semibold">Arhiva autorului</p>
-              <h2 className="divet-display mt-3 text-4xl text-[color:var(--dv-contrast)]">Texte semnate de {authorName}</h2>
-            </div>
-            <p className="text-sm leading-7 text-[color:var(--dv-muted-strong)]">
-              Pagina ramane curata si ritmata chiar si pe masura ce cresc articolele.
+          )}
+          <div className="min-w-0">
+            <h1 className="m-0 font-dv-display text-[34px] leading-[1.08] font-bold tracking-[-0.03em] text-balance text-dv-ink sm:text-[44px]">
+              {name}
+            </h1>
+            {author.title ? <p className="mt-2 mb-0 text-dv-body text-dv-ink-muted">{author.title}</p> : null}
+            {author.bio ? <p className="mt-3 mb-0 max-w-[70ch] text-dv-body text-dv-ink-muted">{author.bio}</p> : null}
+            {website ? (
+              <p className="mt-3 mb-0 text-dv-meta">
+                <a
+                  href={website.href}
+                  rel="noopener noreferrer nofollow"
+                  target="_blank"
+                  className="text-dv-accent hover:text-dv-accent-hover focus-visible:outline-2 focus-visible:outline-dv-accent"
+                >
+                  {website.host}
+                </a>
+              </p>
+            ) : null}
+            <p className="mt-3 mb-0 text-dv-meta text-dv-ink-subtle">
+              {totalCount === 1 ? '1 articol' : `${totalCount} articole`}
             </p>
           </div>
+        </header>
 
-          {mappedPosts.length === 0 ? (
-            <div className="divet-card-soft rounded-[32px] p-10 text-center">
-              <p className="text-sm leading-7 text-[color:var(--dv-muted-strong)]">Autorul nu are inca articole publicate.</p>
-            </div>
+        <div className="mt-8">
+          {posts.length === 0 ? (
+            <EmptyState
+              title="Încă nu avem articole publicate de acest autor."
+              description="Revino curând sau caută în restul enciclopediei."
+            />
           ) : (
-            <>
-              {leadPost && (
-                <div className="mb-6">
-                  <StoryCard post={leadPost} siteUrl={site.siteUrl} variant="row" priority />
-                </div>
-              )}
-
-              {gridPosts.length > 0 && (
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                  {gridPosts.map((post) => (
-                    <StoryCard key={post.id} post={post} siteUrl={site.siteUrl} />
-                  ))}
-                </div>
-              )}
-
-              {pagination.totalPages > 1 && (
-                <nav aria-label="Paginare" className="mt-10 flex flex-wrap items-center justify-center gap-2">
-                  {pagination.currentPage > 1 && (
-                    <Link
-                      href={`/autor/${authorSlug}?page=${pagination.currentPage - 1}`}
-                      className="divet-button-ghost inline-flex items-center justify-center rounded-full px-4 py-3 text-sm font-semibold"
-                    >
-                      Anterior
-                    </Link>
-                  )}
-                  {paginationItems.map((item, index) =>
-                    item === '...' ? (
-                      <span key={`ellipsis-${index}`} className="px-2 text-sm text-[color:var(--dv-muted)]">&hellip;</span>
-                    ) : (
-                      <Link
-                        key={item}
-                        href={`/autor/${authorSlug}?page=${item}`}
-                        className={`inline-flex h-11 min-w-11 items-center justify-center rounded-full px-4 text-sm font-semibold transition-colors ${
-                          item === pagination.currentPage ? 'text-white' : 'text-[color:var(--dv-muted-strong)]'
-                        }`}
-                        style={item === pagination.currentPage ? { background: 'var(--dv-accent-strong)' } : { background: 'color-mix(in srgb, var(--dv-surface) 78%, transparent)', border: '1px solid var(--dv-border)' }}
-                        aria-current={item === pagination.currentPage ? 'page' : undefined}
-                      >
-                        {item}
-                      </Link>
-                    )
-                  )}
-                  {pagination.currentPage < pagination.totalPages && (
-                    <Link
-                      href={`/autor/${authorSlug}?page=${pagination.currentPage + 1}`}
-                      className="divet-button-ghost inline-flex items-center justify-center rounded-full px-4 py-3 text-sm font-semibold"
-                    >
-                      Urmator
-                    </Link>
-                  )}
-                </nav>
-              )}
-            </>
+            <PostGrid posts={posts} siteUrl={site.siteUrl} />
           )}
         </div>
-      </section>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          basePath={author.slug ? `/autor/${author.slug}` : '/autor'}
+        />
+      </div>
     </DivetLayout>
   )
 }

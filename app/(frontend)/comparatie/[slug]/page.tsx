@@ -15,7 +15,7 @@ import { ComparisonDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 type Props = {
   params: Promise<{ slug: string }>

@@ -3,6 +3,8 @@
  * Generates structured data for Articles, Pages, Categories, FAQs, HowTo, Reviews.
  */
 
+import { buildPostPath } from './canonical-builder'
+
 // ─── Input types (subset of Prisma models + relations) ────────────────────────
 
 export interface SchemaPost {
@@ -18,7 +20,7 @@ export interface SchemaPost {
   createdAt: Date | string
   author: { name: string | null; email: string; slug?: string | null } | null
   featuredImage: { url: string; altText: string | null } | null
-  category: { name: string; slug: string } | null
+  category: { name: string; slug: string; parent?: { name: string; slug: string } | null } | null
   noIndex: boolean
   canonicalUrl: string | null
 }
@@ -41,6 +43,7 @@ export interface SchemaCategory {
   description: string | null
   metaTitle: string | null
   metaDesc: string | null
+  parent?: { name: string; slug: string } | null
 }
 
 export interface SchemaSite {
@@ -64,6 +67,11 @@ export interface SchemaFieldValue {
 function isoDate(d: Date | string | null | undefined): string | undefined {
   if (!d) return undefined
   return new Date(d).toISOString()
+}
+
+/** Strip trailing slashes from the site URL so templates never produce `//`. */
+function normalizeSite(site: SchemaSite): SchemaSite {
+  return { ...site, siteUrl: site.siteUrl.replace(/\/+$/, '') }
 }
 
 function resolveUrl(site: SchemaSite, path: string): string {
@@ -138,12 +146,16 @@ function buildBreadcrumbSchema(
   }
 }
 
+function resolvePostUrl(post: SchemaPost, site: SchemaSite): string {
+  return post.canonicalUrl ?? resolveUrl(site, buildPostPath({ slug: post.slug }, post.category))
+}
+
 function buildArticleSchema(
   post: SchemaPost,
   site: SchemaSite,
+  url: string,
   fieldValues?: SchemaFieldValue[]
 ) {
-  const url = post.canonicalUrl ?? resolveUrl(site, `/${post.slug}`)
   const imageUrl = post.featuredImage?.url ?? site.defaultOgImage
 
   const isAnimalPost = fieldValues?.some(
@@ -283,9 +295,10 @@ function buildReviewSchema(reviewBlocks: TiptapNode[]) {
 
 export function generatePostSchema(
   post: SchemaPost,
-  site: SchemaSite,
+  rawSite: SchemaSite,
   fieldValues?: SchemaFieldValue[]
 ): Record<string, unknown> {
+  const site = normalizeSite(rawSite)
   const doc = post.contentJson as TiptapNode
 
   const faqBlocks = findBlocksOfType(doc, 'faqBlock')
@@ -293,18 +306,25 @@ export function generatePostSchema(
   const reviewBlocks = findBlocksOfType(doc, 'reviewBlock')
 
   const crumbs: Array<{ name: string; url: string }> = []
-  if (post.category) {
-    crumbs.push({
-      name: post.category.name,
-      url: resolveUrl(site, `/categorie/${post.category.slug}`),
-    })
+  const { category } = post
+  if (category) {
+    if (category.parent) {
+      crumbs.push({ name: category.parent.name, url: resolveUrl(site, `/${category.parent.slug}`) })
+      crumbs.push({
+        name: category.name,
+        url: resolveUrl(site, `/${category.parent.slug}/${category.slug}`),
+      })
+    } else {
+      crumbs.push({ name: category.name, url: resolveUrl(site, `/${category.slug}`) })
+    }
   }
-  crumbs.push({ name: post.title, url: post.canonicalUrl ?? resolveUrl(site, `/${post.slug}`) })
+  const articleUrl = resolvePostUrl(post, site)
+  crumbs.push({ name: post.title, url: articleUrl })
 
   const graph: unknown[] = [
     buildWebSiteSchema(site),
     buildBreadcrumbSchema(site, crumbs),
-    buildArticleSchema(post, site, fieldValues),
+    buildArticleSchema(post, site, articleUrl, fieldValues),
   ]
 
   const faq = buildFAQSchema(faqBlocks)
@@ -319,7 +339,8 @@ export function generatePostSchema(
   return { '@context': 'https://schema.org', '@graph': graph }
 }
 
-export function generatePageSchema(page: SchemaPage, site: SchemaSite): Record<string, unknown> {
+export function generatePageSchema(page: SchemaPage, rawSite: SchemaSite): Record<string, unknown> {
+  const site = normalizeSite(rawSite)
   const url = page.canonicalUrl ?? resolveUrl(site, `/${page.slug}`)
   return {
     '@context': 'https://schema.org',
@@ -343,14 +364,20 @@ export function generatePageSchema(page: SchemaPage, site: SchemaSite): Record<s
 
 export function generateCategorySchema(
   category: SchemaCategory,
-  site: SchemaSite
+  rawSite: SchemaSite
 ): Record<string, unknown> {
-  const url = resolveUrl(site, `/categorie/${category.slug}`)
+  const site = normalizeSite(rawSite)
+  const { parent } = category
+  const url = resolveUrl(site, parent ? `/${parent.slug}/${category.slug}` : `/${category.slug}`)
+  const crumbs = [
+    ...(parent ? [{ name: parent.name, url: resolveUrl(site, `/${parent.slug}`) }] : []),
+    { name: category.name, url },
+  ]
   return {
     '@context': 'https://schema.org',
     '@graph': [
       buildWebSiteSchema(site),
-      buildBreadcrumbSchema(site, [{ name: category.name, url }]),
+      buildBreadcrumbSchema(site, crumbs),
       {
         '@type': 'CollectionPage',
         '@id': `${url}/#collectionpage`,

@@ -20,6 +20,11 @@ export const TEMPLATES: TemplateInfo[] = [
     name: 'Fauna',
     description: 'Design editorial pentru animale și rase — optimizat pentru EEAT, reclame și SEO.',
   },
+  {
+    id: 'divet',
+    name: 'DiVet',
+    description: 'Enciclopedie animală — sistem de design propriu, navigație generată din categorii, fișe cu date structurate.',
+  },
 ]
 
 export const TEMPLATE_IDS = TEMPLATES.map((t) => t.id)

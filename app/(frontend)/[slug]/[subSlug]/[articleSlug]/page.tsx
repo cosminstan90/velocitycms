@@ -14,7 +14,7 @@ import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-export const revalidate = 7200
+export const dynamic = 'force-dynamic'
 
 type Props = {
   params: Promise<{ slug: string; subSlug: string; articleSlug: string }>
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     where: {
       slug,
       status: 'PUBLISHED',
-      category: { slug: subCategorySlug, parent: { slug: categorySlug } },
+      category: { slug: subCategorySlug, parent: { slug: categorySlug, parentId: null } },
     },
     include: { author: { select: { name: true, email: true, slug: true } } },
   })
@@ -97,12 +97,18 @@ export default async function SubCategoryPostPage({ params }: Props) {
     where: {
       slug,
       status: 'PUBLISHED',
-      category: { slug: subCategorySlug, parent: { slug: categorySlug } },
+      category: { slug: subCategorySlug, parent: { slug: categorySlug, parentId: null } },
     },
     include: {
       author: { select: { name: true, email: true, slug: true, title: true, bio: true, photo: true, website: true } },
-      category: { select: { name: true, slug: true } },
+      category: { select: { id: true, name: true, slug: true, parent: { select: { id: true, name: true, slug: true } } } },
       tags: { include: { tag: { select: { id: true, name: true, slug: true } } } },
+      fieldValues: {
+        include: {
+          fieldDefinition: { select: { fieldKey: true, fieldLabel: true, fieldType: true, sortOrder: true } },
+        },
+        orderBy: { fieldDefinition: { sortOrder: 'asc' } },
+      },
     },
   })
 
@@ -120,12 +126,19 @@ export default async function SubCategoryPostPage({ params }: Props) {
     ? await prisma.media.findUnique({ where: { id: post.featuredImageId }, select: { url: true, altText: true, width: true, height: true } })
     : null
 
-  // Related posts: same subcategory, exclude current
+  // Related posts: other recent posts of the same group
+  const groupId = post.category?.parent?.id ?? post.category?.id
   const rawRelated = await prisma.post.findMany({
-    where: { status: 'PUBLISHED', categoryId: post.categoryId, id: { not: post.id } },
-    take: 3,
+    where: {
+      status: 'PUBLISHED',
+      id: { not: post.id },
+      ...(groupId
+        ? { category: { OR: [{ id: groupId }, { parentId: groupId }] } }
+        : { categoryId: post.categoryId }),
+    },
     orderBy: { publishedAt: 'desc' },
-    include: { category: { select: { name: true, slug: true } } },
+    take: 6,
+    include: { category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } } },
   })
 
   const relatedImageIds = rawRelated.map((p) => p.featuredImageId).filter((id): id is string => !!id)
@@ -142,7 +155,7 @@ export default async function SubCategoryPostPage({ params }: Props) {
   }))
 
   const parentCategory = await prisma.category.findFirst({
-    where: { slug: categorySlug },
+    where: { slug: categorySlug, parentId: null },
     select: { name: true, slug: true },
   })
 
@@ -183,6 +196,7 @@ export default async function SubCategoryPostPage({ params }: Props) {
         breadcrumbExtra={parentCategory ? [{ name: parentCategory.name, href: `/${categorySlug}` }] : []}
         seoSettings={seo}
         categories={navCategories}
+        fieldValues={post.fieldValues}
       />
     </>
   )

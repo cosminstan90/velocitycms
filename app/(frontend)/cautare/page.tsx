@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { SearchDispatcher } from '@/components/frontend/TemplateDispatcher'
+import { CARD_META_KEYS } from '@/lib/fields'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -61,7 +62,11 @@ export default async function SearchPage({ searchParams }: Props) {
           orderBy: { publishedAt: 'desc' },
           include: {
             author: { select: { name: true } },
-            category: { select: { name: true, slug: true } },
+            category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } },
+            fieldValues: {
+              where: { fieldDefinition: { fieldKey: { in: [...CARD_META_KEYS] } } },
+              select: { value: true, fieldDefinition: { select: { fieldKey: true } } },
+            },
           },
         }),
         prisma.post.count({
