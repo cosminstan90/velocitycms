@@ -203,11 +203,11 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
     where: { slug, status: 'PUBLISHED', category: { slug: categorySlug, parentId: null } },
     include: {
       author: { select: { name: true, email: true, slug: true, title: true, bio: true, photo: true, website: true } },
-      category: { select: { name: true, slug: true } },
+      category: { select: { id: true, name: true, slug: true, parent: { select: { id: true, name: true, slug: true } } } },
       tags: { include: { tag: { select: { id: true, name: true, slug: true } } } },
       fieldValues: {
         include: {
-          fieldDefinition: { select: { fieldKey: true, fieldLabel: true, fieldType: true } },
+          fieldDefinition: { select: { fieldKey: true, fieldLabel: true, fieldType: true, sortOrder: true } },
         },
         orderBy: { fieldDefinition: { sortOrder: 'asc' } },
       },
@@ -225,12 +225,19 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
     orderBy: { name: 'asc' },
   })
 
-  // Related posts: same category, exclude current
+  // Related posts: other recent posts of the same group
+  const groupId = post.category?.parent?.id ?? post.category?.id
   const rawRelated = await prisma.post.findMany({
-    where: { status: 'PUBLISHED', categoryId: post.categoryId, id: { not: post.id } },
-    take: 3,
+    where: {
+      status: 'PUBLISHED',
+      id: { not: post.id },
+      ...(groupId
+        ? { category: { OR: [{ id: groupId }, { parentId: groupId }] } }
+        : { categoryId: post.categoryId }),
+    },
     orderBy: { publishedAt: 'desc' },
-    include: { author: { select: { name: true } }, category: { select: { name: true, slug: true } } },
+    take: 6,
+    include: { category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } } },
   })
   const relatedPosts = await mapPostsWithImages(rawRelated as any)
 

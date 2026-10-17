@@ -74,11 +74,11 @@ export default async function BlogPostPage({ params }: Props) {
     where: { slug, status: 'PUBLISHED', categoryId: null },
     include: {
       author: { select: { name: true, email: true, slug: true, title: true, bio: true, photo: true, website: true } },
-      category: { select: { name: true, slug: true } },
+      category: { select: { id: true, name: true, slug: true, parent: { select: { id: true, name: true, slug: true } } } },
       tags: { select: { tag: { select: { id: true, name: true, slug: true } } } },
       fieldValues: {
         include: {
-          fieldDefinition: { select: { fieldKey: true, fieldLabel: true, fieldType: true } },
+          fieldDefinition: { select: { fieldKey: true, fieldLabel: true, fieldType: true, sortOrder: true } },
         },
         orderBy: { fieldDefinition: { sortOrder: 'asc' } },
       },
@@ -118,11 +118,11 @@ export default async function BlogPostPage({ params }: Props) {
       categoryId: null,
       id: { not: post.id },
     },
-    take: 3,
+    take: 6,
     orderBy: { publishedAt: 'desc' },
     include: {
       author: { select: { name: true, email: true } },
-      category: { select: { name: true, slug: true } },
+      category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } },
     },
   })
 
