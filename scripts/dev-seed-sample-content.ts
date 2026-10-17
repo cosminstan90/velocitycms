@@ -565,6 +565,50 @@ async function main() {
     )
   }
 
+  // ── Autor si etichete (pentru /autor/[slug] si /eticheta/[slug]) ───────────
+  await prisma.user.update({
+    where: { id: author.id },
+    data: {
+      slug: 'redactia',
+      name: 'Redacția DiVet',
+      title: 'Echipa editorială',
+      bio: 'Fișe verificate despre rase, specii și îngrijire, scrise și revizuite de echipa DiVet.',
+      website: 'https://divet.ro',
+    },
+  })
+  console.log('Author updated: /autor/redactia')
+
+  const TAGS: Array<{ slug: string; name: string; posts: string[] }> = [
+    { slug: 'rase-mari', name: 'Rase mari', posts: ['labrador-retriever', 'ciobanesc-german'] },
+    {
+      slug: 'ghiduri',
+      name: 'Ghiduri',
+      posts: [
+        'cat-de-des-se-periaza-un-caine',
+        'cum-alegi-primul-caine',
+        'displazia-de-sold-la-cainii-de-talie-mare',
+        'calendarul-de-vaccinare-al-cainelui',
+      ],
+    },
+  ]
+  for (const t of TAGS) {
+    const tag = await prisma.tag.upsert({
+      where: { siteId_slug: { siteId: site.id, slug: t.slug } },
+      update: { name: t.name },
+      create: { siteId: site.id, slug: t.slug, name: t.name },
+    })
+    const tagged = await prisma.post.findMany({
+      where: { siteId: site.id, slug: { in: t.posts } },
+      select: { id: true },
+    })
+    if (tagged.length !== t.posts.length) throw new Error(`Missing posts for tag ${t.slug}`)
+    const { count } = await prisma.postTag.createMany({
+      data: tagged.map((p) => ({ postId: p.id, tagId: tag.id })),
+      skipDuplicates: true,
+    })
+    console.log(`tag ${t.slug.padEnd(10)} posts=${tagged.length} newLinks=${count}`)
+  }
+
   console.log(`\nDone: ${created} created, ${updated} updated, ${POSTS.length} posts total`)
 }
 
