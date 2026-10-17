@@ -7,7 +7,7 @@ import DivetLayout from '@/components/frontend/templates/divet/DivetLayout'
 import Breadcrumbs from '@/components/frontend/templates/divet/Breadcrumbs'
 import EmptyState from '@/components/frontend/templates/divet/EmptyState'
 
-export const revalidate = 1800
+export const dynamic = 'force-dynamic'
 
 type Entry = IndexItem & { group: string | null }
 

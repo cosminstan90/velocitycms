@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { parsePageParam } from '@/lib/pagination'
 import { CategoryDispatcher } from '@/components/frontend/TemplateDispatcher'
 import StaticPageTemplate from '@/components/frontend/shared/StaticPageTemplate'
 import { generateCategorySchema, generatePageSchema } from '@/lib/seo/schema-generator'
@@ -80,7 +81,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SlugPage({ params, searchParams }: Props) {
   const { slug } = await params
   const { page: pageParam } = await searchParams
-  const currentPage = Math.max(1, parseInt(pageParam ?? '1', 10))
+  const currentPage = parsePageParam(pageParam)
   const skip = (currentPage - 1) * POSTS_PER_PAGE
 
   // 1. Try category (root-level only)

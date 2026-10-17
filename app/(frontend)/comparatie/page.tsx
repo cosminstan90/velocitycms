@@ -5,6 +5,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { parsePageParam } from '@/lib/pagination'
 import { CategoryDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -29,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ComparisonsListPage({ searchParams }: Props) {
   const { page: pageStr } = await searchParams
-  const currentPage = Math.max(1, parseInt(pageStr ?? '1', 10) || 1)
+  const currentPage = parsePageParam(pageStr)
 
   const site = await prisma.site.findFirst({ where: { isActive: true } })
   if (!site) notFound()

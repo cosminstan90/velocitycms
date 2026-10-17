@@ -1,10 +1,11 @@
 import { prisma } from '@/lib/prisma'
+import { parsePageParam } from '@/lib/pagination'
 import { TagDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { CARD_META_KEYS } from '@/lib/fields'
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 const POSTS_PER_PAGE = 12
 
@@ -51,7 +52,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function TagPage({ params, searchParams }: Props) {
   const { slug } = await params
   const { page: pageParam } = await searchParams
-  const currentPage = Math.max(1, parseInt(pageParam ?? '1', 10))
+  const currentPage = parsePageParam(pageParam)
   const skip = (currentPage - 1) * POSTS_PER_PAGE
 
   const { siteId, template, siteName, siteUrl } = await getSiteData()

@@ -14,7 +14,7 @@ import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-export const revalidate = 7200
+export const dynamic = 'force-dynamic'
 
 type Props = {
   params: Promise<{ slug: string; subSlug: string; articleSlug: string }>

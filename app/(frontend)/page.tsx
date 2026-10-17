@@ -3,7 +3,7 @@ import { HomepageDispatcher } from '@/components/frontend/TemplateDispatcher'
 import { CARD_META_KEYS } from '@/lib/fields'
 import type { Metadata } from 'next'
 
-export const revalidate = 1800
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
