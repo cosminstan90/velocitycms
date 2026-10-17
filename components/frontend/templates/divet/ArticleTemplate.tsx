@@ -18,6 +18,7 @@ import SpecGrid from './SpecGrid'
 import BehaviorProfile from './BehaviorProfile'
 import RelatedArticles from './RelatedArticles'
 import FaqSection from './FaqSection'
+import { DV_PROSE } from './prose'
 import { resolveImageUrl, formatDateLong, getAuthorInitials } from '../fauna/utils'
 import { splitFieldValues, ratingToPercent, iucnLabel } from '@/lib/fields'
 import { extractToc, addHeadingIds, readingTimeMinutes } from '@/lib/article-html'
@@ -153,7 +154,7 @@ export default function ArticleTemplate({
   // vizibil (textul e in atributul innerhtml); FAQ-ul se randeaza din contentJson de FaqSection.
   const prose = (
     <div
-      className="prose max-w-none text-dv-body [--tw-prose-body:var(--color-dv-ink)] [--tw-prose-headings:var(--color-dv-ink)] [--tw-prose-links:var(--color-dv-accent)] [--tw-prose-bold:var(--color-dv-ink)] [--tw-prose-bullets:var(--color-dv-ink-subtle)] [--tw-prose-hr:var(--color-dv-border)] [--tw-prose-quotes:var(--color-dv-ink)] [--tw-prose-quote-borders:var(--color-dv-accent)] prose-headings:font-dv-display prose-headings:tracking-tight prose-h2:text-dv-heading-m prose-h2:scroll-mt-6 prose-a:font-medium [&>:first-child]:mt-0 [&_.faq-block]:hidden"
+      className={`${DV_PROSE} [&_.faq-block]:hidden`}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   )

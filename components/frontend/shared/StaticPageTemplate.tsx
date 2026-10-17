@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getTheme } from './theme'
+import DivetPageTemplate from '../templates/divet/PageTemplate'
 
 export interface StaticPageProps {
   template: string
@@ -11,6 +12,8 @@ export interface StaticPageProps {
 }
 
 export default function StaticPageTemplate({ template, page, site }: StaticPageProps) {
+  if (template === 'divet') return <DivetPageTemplate page={page} site={site} />
+
   const t = getTheme(template)
 
   return (

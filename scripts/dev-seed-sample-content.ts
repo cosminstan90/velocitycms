@@ -609,6 +609,31 @@ async function main() {
     console.log(`tag ${t.slug.padEnd(10)} posts=${tagged.length} newLinks=${count}`)
   }
 
+  // Pagina statica de proba (modelul Page), ca sa se vada si paginile care nu sunt articole.
+  const aboutHtml =
+    '<p>DiVet este o enciclopedie a animalelor din România: fișe structurate despre rase, specii și îngrijire.</p>' +
+    '<h2>Cum lucrăm</h2><p>Fiecare fișă are date verificabile, iar secțiunile sunt aceleași la toate speciile, ca să le poți compara ușor.</p>' +
+    '<h2>Contact</h2><p>Scrie-ne la <a href="mailto:contact@divet.ro">contact@divet.ro</a> pentru corecturi sau sugestii.</p>'
+  const aboutJson = {
+    type: 'doc',
+    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'DiVet este o enciclopedie a animalelor din România.' }] }],
+  }
+  await prisma.page.upsert({
+    where: { siteId_slug: { siteId: site.id, slug: 'despre-noi' } },
+    update: { title: 'Despre noi', contentHtml: aboutHtml, contentJson: aboutJson, status: 'PUBLISHED' },
+    create: {
+      siteId: site.id,
+      authorId: author.id,
+      title: 'Despre noi',
+      slug: 'despre-noi',
+      contentHtml: aboutHtml,
+      contentJson: aboutJson,
+      status: 'PUBLISHED',
+      publishedAt: new Date(),
+    },
+  })
+  console.log('page despre-noi upserted')
+
   console.log(`\nDone: ${created} created, ${updated} updated, ${POSTS.length} posts total`)
 }
 
