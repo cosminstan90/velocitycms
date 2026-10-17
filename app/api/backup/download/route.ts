@@ -5,11 +5,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import path from 'path'
 import fs from 'fs'
 import { auth } from '@/auth'
+import { resolveBackupPath } from '@/lib/backup/storage'
 
-const BACKUP_PATH = process.env.BACKUP_PATH ?? '/backups'
+export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -18,11 +18,8 @@ export async function GET(req: NextRequest) {
   const filePath = req.nextUrl.searchParams.get('file')
   if (!filePath) return NextResponse.json({ error: 'file param required' }, { status: 400 })
 
-  // Path traversal guard
-  const resolved = path.resolve(filePath)
-  const backupResolved = path.resolve(BACKUP_PATH)
-
-  if (!resolved.startsWith(backupResolved + path.sep) && resolved !== backupResolved) {
+  const resolved = resolveBackupPath(filePath)
+  if (!resolved) {
     return NextResponse.json({ error: 'Invalid file path' }, { status: 400 })
   }
 
@@ -34,7 +31,7 @@ export async function GET(req: NextRequest) {
   }
 
   const stat = fs.statSync(resolved)
-  const filename = path.basename(resolved)
+  const filename = resolved.split(/[/\\]/).pop() ?? 'backup.sql.gz'
 
   // Stream file
   const stream = fs.createReadStream(resolved)

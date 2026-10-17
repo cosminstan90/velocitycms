@@ -8,16 +8,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import path from 'path'
 import fs from 'fs/promises'
 import { auth } from '@/auth'
+import { resolveBackupPath } from '@/lib/backup/storage'
 
 const execAsync = promisify(exec)
 
-const BACKUP_PATH = process.env.BACKUP_PATH ?? '/backups'
-
-// Turbopack requires a statically-scoped base path to avoid full-project tracing
-const BACKUP_BASE = BACKUP_PATH
+export const runtime = 'nodejs'
 
 function parseDatabaseUrl(url: string) {
   const u = new URL(url)
@@ -53,11 +50,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'backupFile required' }, { status: 400 })
   }
 
-  // Security: ensure the file is within BACKUP_PATH (no path traversal)
-  const resolved = path.resolve(BACKUP_BASE, path.basename(body.backupFile))
-  const backupResolved = path.resolve(BACKUP_BASE)
-
-  if (!resolved.startsWith(backupResolved + path.sep) && resolved !== backupResolved) {
+  const resolved = resolveBackupPath(body.backupFile)
+  if (!resolved) {
     return NextResponse.json({ error: 'Invalid backupFile path' }, { status: 400 })
   }
 

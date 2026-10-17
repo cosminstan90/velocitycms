@@ -2,17 +2,13 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 
 declare global {
-  // eslint-disable-next-line no-var
   var _prismaClient: PrismaClient | undefined
 }
 
 function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL
   if (!connectionString) {
-    // During Next.js build-time static analysis there is no DATABASE_URL.
-    // Return a bare client so module evaluation doesn't crash — actual
-    // queries will fail at runtime only if DATABASE_URL is truly absent.
-    return new PrismaClient()
+    throw new Error('DATABASE_URL is not configured')
   }
 
   const adapter = new PrismaPg({ connectionString })
@@ -23,9 +19,19 @@ function createPrismaClient(): PrismaClient {
   })
 }
 
-export const prisma: PrismaClient =
-  globalThis._prismaClient ?? createPrismaClient()
+function getPrismaClient(): PrismaClient {
+  if (!globalThis._prismaClient) {
+    globalThis._prismaClient = createPrismaClient()
+  }
 
-if (process.env.NODE_ENV !== 'production') {
-  globalThis._prismaClient = prisma
+  return globalThis._prismaClient
 }
+
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    const client = getPrismaClient()
+    const value = Reflect.get(client, prop, receiver)
+
+    return typeof value === 'function' ? value.bind(client) : value
+  },
+}) as PrismaClient

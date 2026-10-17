@@ -23,7 +23,7 @@ export const TEMPLATES: TemplateInfo[] = [
   {
     id: 'divet',
     name: 'DiVet',
-    description: 'Enciclopedie animală — verde pădure + crem + auriu, Playfair Display, spotlight asymetric.',
+    description: 'Enciclopedie animală — sistem de design propriu, navigație generată din categorii, fișe cu date structurate.',
   },
 ]
 
