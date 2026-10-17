@@ -185,7 +185,7 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
     const posts = await mapPostsWithImages(rawPosts as any)
     const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE)
 
-    const schemaCat = { id: subCategory.id, name: subCategory.name, slug: subCategory.slug, description: subCategory.description, metaTitle: subCategory.metaTitle, metaDesc: subCategory.metaDesc }
+    const schemaCat = { id: subCategory.id, name: subCategory.name, slug: subCategory.slug, description: subCategory.description, metaTitle: subCategory.metaTitle, metaDesc: subCategory.metaDesc, parent: parentCategory ? { name: parentCategory.name, slug: parentCategory.slug } : null }
     const schema = generateCategorySchema(schemaCat, { siteName, siteUrl, defaultOgImage })
 
     return (
