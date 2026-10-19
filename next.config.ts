@@ -85,6 +85,20 @@ const nextConfig: NextConfig = {
     ]
   },
 
+  // ── Rewrites ──────────────────────────────────────────────────────────────
+  // Files written to public/media/uploads at runtime are unknown to Next's
+  // startup scan of public/. Anything Next cannot resolve falls through to a
+  // route handler that reads from disk per request.
+  async rewrites() {
+    return {
+      beforeFiles: [],
+      afterFiles: [],
+      fallback: [
+        { source: '/media/uploads/:path*', destination: '/api/media-file/:path*' },
+      ],
+    }
+  },
+
   // ── Redirects ─────────────────────────────────────────────────────────────
   // Note: runtime redirects are handled by the custom middleware (Redis lookup).
   // Only add static build-time redirects here.
