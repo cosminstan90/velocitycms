@@ -102,13 +102,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     select: { id: true, template: true },
   })
   if (directorySite?.template === 'divet') {
+    const directorySeo = await prisma.seoSettings.findFirst({ where: { siteId: directorySite.id } })
+    const directoryUrl = (directorySeo?.siteUrl ?? siteUrl).replace(/\/$/, '')
     const listings = await prisma.listing.findMany({
       where: { siteId: directorySite.id, status: 'PUBLISHED' },
       select: { type: true, citySlug: true, slug: true, updatedAt: true },
     })
     for (const e of buildDirectoryPaths(listings)) {
       entries.push({
-        url: `${siteUrl}${e.path}`,
+        url: `${directoryUrl}${e.path}`,
         lastModified: e.lastModified,
         changeFrequency: 'weekly',
         priority: e.priority,
