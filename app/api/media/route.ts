@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getSiteIdFromRequest } from '@/lib/site'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 
 // ─── GET — list media for a site ─────────────────────────────────────────────
 export async function GET(req: NextRequest) {
@@ -10,6 +11,7 @@ export async function GET(req: NextRequest) {
 
   const siteId = (await getSiteIdFromRequest(req)) ?? session.user.activeSiteId
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   const page = Math.max(1, parseInt(req.nextUrl.searchParams.get('page') ?? '1'))
   const limit = Math.min(100, parseInt(req.nextUrl.searchParams.get('limit') ?? '40'))

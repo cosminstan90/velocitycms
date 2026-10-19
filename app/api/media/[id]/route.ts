@@ -3,6 +3,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { siteUploadDir } from '@/lib/media/storage'
 
 type Params = { params: Promise<{ id: string }> }
@@ -14,7 +15,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   const { id } = await params
   const media = await prisma.media.findUnique({ where: { id } })
-  if (!media) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!media || !(await hasSiteAccess(session.user.id, media.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   return NextResponse.json({ media })
 }
@@ -26,7 +27,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   const { id } = await params
   const existing = await prisma.media.findUnique({ where: { id } })
-  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!existing || !(await hasSiteAccess(session.user.id, existing.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const body = await req.json() as { altText?: string | null; caption?: string | null }
 
@@ -48,7 +49,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
   const { id } = await params
   const media = await prisma.media.findUnique({ where: { id } })
-  if (!media) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!media || !(await hasSiteAccess(session.user.id, media.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Check if used as featured image in any post
   const usedInPost = await prisma.post.findFirst({
