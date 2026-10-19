@@ -81,6 +81,18 @@ describe('PUT /api/categories/[id]', () => {
     await put({ description: 'x' })
     expect(revalidateTag).toHaveBeenCalledWith('navigation', { expire: 0 })
   })
+
+  it('400 when a root category would take the reserved slug "director"', async () => {
+    prisma.category.findUnique.mockResolvedValue({ ...existing, parentId: null })
+    const res = await put({ slug: 'director' })
+    expect(res.status).toBe(400)
+    expect(prisma.category.update).not.toHaveBeenCalled()
+  })
+
+  it('allows "director" as a subcategory slug', async () => {
+    const res = await put({ slug: 'director' }) // existing.parentId = 'p1'
+    expect(res.status).toBe(200)
+  })
 })
 
 describe('DELETE /api/categories/[id]', () => {

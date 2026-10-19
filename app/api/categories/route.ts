@@ -5,6 +5,7 @@ import { NAVIGATION_TAG } from '@/lib/navigation'
 import { prisma } from '@/lib/prisma'
 import { getSiteIdFromRequest } from '@/lib/site'
 import { slugify } from '@/lib/slugify'
+import { isReservedRootSlug } from '@/lib/listings'
 
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -53,6 +54,9 @@ export async function POST(req: NextRequest) {
   if (!name) return NextResponse.json({ error: 'name required' }, { status: 400 })
 
   const slug = body.slug ? slugify(body.slug) : slugify(name)
+  if (!parentId && isReservedRootSlug(slug)) {
+    return NextResponse.json({ error: `Slug-ul "${slug}" este rezervat` }, { status: 400 })
+  }
 
   const existing = await prisma.category.findFirst({ where: { siteId, slug, parentId: parentId || null } })
   if (existing) return NextResponse.json({ error: 'Slug already exists in this category level' }, { status: 409 })
