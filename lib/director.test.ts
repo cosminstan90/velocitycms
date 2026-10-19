@@ -9,6 +9,7 @@ import {
   countyVariants,
   metaDescription,
   mergeCities,
+  normalizeSearchQuery,
 } from './director'
 
 describe('buildListingWhere', () => {
@@ -188,5 +189,29 @@ describe('metaDescription', () => {
   })
   it('un cuvant foarte lung se taie la 155', () => {
     expect(metaDescription('x'.repeat(300), 'fb')).toHaveLength(155)
+  })
+})
+
+describe('normalizeSearchQuery', () => {
+  it('lipsa, gol sau prea scurt -> null', () => {
+    expect(normalizeSearchQuery(undefined)).toBeNull()
+    expect(normalizeSearchQuery('')).toBeNull()
+    expect(normalizeSearchQuery('   ')).toBeNull()
+    expect(normalizeSearchQuery('a')).toBeNull()
+    expect(normalizeSearchQuery(' a ')).toBeNull()
+  })
+  it('taie si colapseaza spatiile', () => {
+    expect(normalizeSearchQuery('  Iași   centru ')).toBe('Iași centru')
+    expect(normalizeSearchQuery('ab')).toBe('ab')
+  })
+  it('foloseste prima valoare dintr-un array', () => {
+    expect(normalizeSearchQuery(['iasi', 'cluj'])).toBe('iasi')
+    expect(normalizeSearchQuery([])).toBeNull()
+  })
+  it('taie la 80 de caractere', () => {
+    expect(normalizeSearchQuery('x'.repeat(200))).toHaveLength(80)
+  })
+  it('pastreaza metacaracterele LIKE (se escapeaza ulterior)', () => {
+    expect(normalizeSearchQuery('%_')).toBe('%_')
   })
 })

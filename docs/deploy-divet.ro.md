@@ -67,4 +67,4 @@ Lansările următoare: `./deploy-pm2.sh` (fără `--seed`, fără `--skip-pull`)
 - Pagina `/director` face câte un `groupBy` pe cerere; suficient pentru sute de fișe, de revăzut peste câteva mii. Directorul funcționează doar cu template-ul `divet` (pe celelalte, rutele dau 404). Editorul de program din admin păstrează un singur interval pe zi.
 - Orașul și județul se normalizează la scriere, per site: prima grafie stocată câștigă (ex. „Iași" vs „Iasi" ajung la aceeași grafie).
 - API-ul de fișe și de servicii nu verifică accesul pe site: orice utilizator autentificat poate citi sau modifica fișele altui site după id. Lacună preexistentă, aceeași ca la `app/api/categories`; urmărită ca follow-up.
-- `/director` nu are încă casetă de căutare (amânată).
+- `/director?q=` (căutare fără diacritice în director) este `noindex, follow`, cu canonical `/director`; caseta apare doar când există fișe publicate.

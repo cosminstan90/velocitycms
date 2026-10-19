@@ -34,7 +34,7 @@ Toate au `export const dynamic = 'force-dynamic'` (regula din runbook: `not-foun
 
 | Rută | Conținut |
 |---|---|
-| `/director` | cele 3 tipuri, orașele cu cele mai multe fișe publicate (caseta de căutare e amânată, nu există în v1) |
+| `/director` | cele 3 tipuri, orașele cu cele mai multe fișe publicate și caseta de căutare (`?q=`, implementată ca /director?q=, noindex) |
 | `/director/<tip>` | lista tipului; filtre `?judet=` și `?serviciu=`; paginare |
 | `/director/<tip>/<oras>` | lista unui oraș |
 | `/director/<tip>/<oras>/<slug>` | fișa |
@@ -75,7 +75,7 @@ Segmentele `<tip>` sunt `veterinari`, `dresori`, `toaletaj` (mapate la enum). O 
 
 ## Neinclus
 
-Înscriere publică, revendicare, moderare, planuri plătite, recenzii, hărți și geocodare, import în masă, orașe ca entitate, afiliere, imagini pe fișă (se adaugă cu sub-proiectul 2 sau separat), căutare fără diacritice în director (se reutilizează `lib/search.ts` când e nevoie).
+Înscriere publică, revendicare, moderare, planuri plătite, recenzii, hărți și geocodare, import în masă, orașe ca entitate, afiliere, imagini pe fișă (se adaugă cu sub-proiectul 2 sau separat), (căutarea fără diacritice în director e implementată ca /director?q=, noindex, cu `lib/search.ts`).
 
 ## Riscuri
 
