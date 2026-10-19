@@ -4,7 +4,7 @@
 # Utilizare (pe server, in directorul aplicatiei):
 #   ./deploy-pm2.sh                # backup, git pull --ff-only (main), install, migrari, build, reload
 #   ./deploy-pm2.sh --skip-pull    # construieste din arborele curent
-#   ./deploy-pm2.sh --seed         # ruleaza si seed-urile idempotente (categorii + campuri):
+#   ./deploy-pm2.sh --seed         # ruleaza si seed-urile idempotente (categorii + campuri + servicii director):
 #                                  # necesar o singura data, la prima lansare a noului template
 #   ./deploy-pm2.sh --skip-backup  # NU e recomandat
 #
@@ -93,8 +93,8 @@ npx prisma migrate deploy
 echo "✓ Baza de date la zi"
 
 if [ "$RUN_SEEDS" = true ]; then
-  echo "  Seed-uri idempotente pentru $SEED_SITE_DOMAIN (categorii, campuri)..."
-  for s in seed-categories seed-field-definitions; do
+  echo "  Seed-uri idempotente pentru $SEED_SITE_DOMAIN (categorii, campuri, servicii director)..."
+  for s in seed-categories seed-field-definitions seed-listing-services; do
     SEED_SITE_DOMAIN="$SEED_SITE_DOMAIN" node --env-file=.env node_modules/ts-node/dist/bin.js \
       --compiler-options '{"module":"CommonJS"}' "scripts/$s.ts"
   done
