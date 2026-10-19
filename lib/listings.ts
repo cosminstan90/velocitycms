@@ -76,13 +76,14 @@ export function normalizeWebsite(input: string): string | null {
     return null
   }
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
+  if (url.username || url.password) return null
   if (!url.hostname.includes('.')) return null
   const out = url.toString()
   return url.pathname === '/' && !url.search && !url.hash ? out.slice(0, -1) : out
 }
 
 export function isValidEmail(input: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(input)
+  return /^[^\s@?<>,;:"]+@[^\s@?<>,;:"]+\.[a-z]{2,}$/i.test(input)
 }
 
 // ── Program ──────────────────────────────────────────────────────────────────
@@ -126,6 +127,10 @@ export function parseOpeningHours(
         return { ok: false, error: `Interval invalid pentru ${DAY_LABEL[day]}` }
       }
       intervals.push({ from, to })
+    }
+    intervals.sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0))
+    for (let i = 1; i < intervals.length; i++) {
+      if (intervals[i - 1].to > intervals[i].from) return { ok: false, error: `Intervale suprapuse pentru ${DAY_LABEL[day]}` }
     }
     value[day] = intervals
   }
@@ -231,6 +236,7 @@ export function parseListingInput(body: unknown): Parsed {
   if (rawSlug) {
     const slug = slugify(rawSlug)
     if (!slug) return fail('Slug invalid')
+    if (slug.length > 240) return fail('Slug-ul poate avea cel mult 240 de caractere')
     data.slug = slug
   }
   return { ok: true, data }

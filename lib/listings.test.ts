@@ -62,7 +62,7 @@ describe('normalizeWebsite', () => {
     expect(normalizeWebsite('https://x.ro/')).toBe('https://x.ro')
     expect(normalizeWebsite('http://x.ro/cabinet/')).toBe('http://x.ro/cabinet/')
   })
-  it.each(['', 'ftp://x.ro', 'javascript:alert(1)', 'nu e site', 'localhost'])('respinge %j', (input) => {
+  it.each(['', 'ftp://x.ro', 'javascript:alert(1)', 'nu e site', 'localhost', 'https://user:pass@evil.com', 'https://user@evil.com', 'mailto:x@y.com'])('respinge %j', (input) => {
     expect(normalizeWebsite(input)).toBeNull()
   })
 })
@@ -73,6 +73,9 @@ describe('isValidEmail', () => {
     expect(isValidEmail('a b@c.ro')).toBe(false)
     expect(isValidEmail('abc')).toBe(false)
     expect(isValidEmail('a@b')).toBe(false)
+    expect(isValidEmail('a@b.ro?bcc=x@y.ro')).toBe(false)
+    expect(isValidEmail('a@b.ro,c@d.ro')).toBe(false)
+    expect(isValidEmail('<a>@b.ro')).toBe(false)
   })
 })
 
@@ -85,7 +88,14 @@ describe('parseOpeningHours', () => {
       expect(r.value.sun).toEqual([])
     }
   })
+  it('accepta intervale care se ating si le returneaza sortate', () => {
+    const r = parseOpeningHours({ mon: [{ from: '12:00', to: '18:00' }, { from: '09:00', to: '12:00' }] })
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.value.mon).toEqual([{ from: '09:00', to: '12:00' }, { from: '12:00', to: '18:00' }])
+  })
   it.each([
+    [{ mon: [{ from: '09:00', to: '13:00' }, { from: '12:00', to: '18:00' }] }],
+    [{ mon: [{ from: '12:00', to: '18:00' }, { from: '09:00', to: '12:01' }] }],
     [null],
     [[]],
     [{ lun: [] }],
@@ -139,6 +149,10 @@ describe('parseListingInput', () => {
   it('slug explicit trece prin slugify', () => {
     const r = parseListingInput({ ...base, slug: 'Şerban Vet' })
     expect(r.ok && r.data.slug).toBe('serban-vet')
+  })
+  it('respinge un slug explicit prea lung', () => {
+    expect(parseListingInput({ ...base, slug: 'a'.repeat(241) }).ok).toBe(false)
+    expect(parseListingInput({ ...base, slug: 'a'.repeat(240) }).ok).toBe(true)
   })
   it('elimina duplicatele din serviceIds', () => {
     const r = parseListingInput({ ...base, serviceIds: ['a', 'a', 'b'] })
