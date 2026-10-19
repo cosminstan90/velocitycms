@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server'
 
 const { prisma } = vi.hoisted(() => ({
   prisma: {
-    listing: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    listing: { findUnique: vi.fn(), findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn(), delete: vi.fn() },
     listingService: { findMany: vi.fn() },
   },
 }))
@@ -37,6 +37,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   prisma.listing.findUnique.mockResolvedValue(existing)
   prisma.listing.findFirst.mockResolvedValue(null)
+  prisma.listing.findMany.mockResolvedValue([])
   prisma.listing.update.mockImplementation(async ({ data }: { data: object }) => ({ ...existing, ...data }))
   prisma.listing.delete.mockResolvedValue({})
   prisma.listingService.findMany.mockResolvedValue([])
@@ -79,6 +80,15 @@ describe('PUT /api/listings/[id]', () => {
     const data = prisma.listing.update.mock.calls[0][0].data
     expect(data.citySlug).toBe('iasi')
     expect(data.slug).toBe('popescu-2')
+  })
+
+  it('stores the already-saved spelling of city and county', async () => {
+    prisma.listing.findMany.mockResolvedValueOnce([{ city: 'Iași' }]).mockResolvedValueOnce([{ county: 'Iași' }])
+    const res = await put({ ...body, city: 'Iasi', county: 'Iasi' })
+    expect(res.status).toBe(200)
+    const data = prisma.listing.update.mock.calls[0][0].data
+    expect(data).toMatchObject({ city: 'Iași', county: 'Iași', citySlug: 'iasi' })
+    expect(prisma.listing.findMany.mock.calls[0][0].where).toMatchObject({ id: { not: 'l1' } })
   })
 
   it('sets publishedAt on first publish and clears it on unpublish', async () => {

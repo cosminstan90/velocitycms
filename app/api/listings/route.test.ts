@@ -55,6 +55,18 @@ describe('POST /api/listings', () => {
     })
   })
 
+  it('stores the already-saved spelling of city and county', async () => {
+    prisma.listing.findMany.mockResolvedValueOnce([{ city: 'Iași' }]).mockResolvedValueOnce([{ county: 'Iași' }])
+    const res = await post({ ...body, city: 'Iasi', county: 'Iasi' })
+    expect(res.status).toBe(201)
+    expect(prisma.listing.create.mock.calls[0][0].data).toMatchObject({ city: 'Iași', county: 'Iași', citySlug: 'iasi' })
+  })
+
+  it('keeps the typed spelling when nothing similar exists', async () => {
+    await post({ ...body, city: 'Iasi', county: 'Iasi' })
+    expect(prisma.listing.create.mock.calls[0][0].data).toMatchObject({ city: 'Iasi', county: 'Iasi' })
+  })
+
   it('sets publishedAt when created as PUBLISHED', async () => {
     await post({ ...body, status: 'PUBLISHED' })
     expect(prisma.listing.create.mock.calls[0][0].data.publishedAt).toBeInstanceOf(Date)

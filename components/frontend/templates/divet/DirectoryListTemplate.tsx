@@ -5,6 +5,7 @@ import EmptyState from './EmptyState'
 import Pagination from './Pagination'
 import ListingCard, { type ListingCardProps } from './ListingCard'
 import { TYPE_LABEL, cityListPath, typeListPath, type ListingType } from '@/lib/listings'
+import { slugify } from '@/lib/slugify'
 import type { CityCount, TypeFacets } from '@/lib/director'
 
 const chip =
@@ -61,10 +62,10 @@ export default function DirectoryListTemplate({
           <form method="get" action={typeListPath(type)} className="mt-5 flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-[13px] text-dv-ink-muted">
               Județ
-              <select name="judet" defaultValue={selected?.county ? facets.counties.find((c) => c === selected.county) : ''} className={field}>
+              <select name="judet" defaultValue={selected?.county ? slugify(selected.county) : ''} className={field}>
                 <option value="">Toate</option>
                 {facets.counties.map((c) => (
-                  <option key={c} value={c}>
+                  <option key={c} value={slugify(c)}>
                     {c}
                   </option>
                 ))}

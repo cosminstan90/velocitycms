@@ -6,6 +6,9 @@ import {
   listingCard,
   buildDirectoryPaths,
   PAGE_SIZE,
+  countyVariants,
+  metaDescription,
+  mergeCities,
 } from './director'
 
 describe('buildListingWhere', () => {
@@ -130,5 +133,60 @@ describe('buildDirectoryPaths', () => {
   })
   it('PAGE_SIZE e un intreg pozitiv', () => {
     expect(PAGE_SIZE).toBeGreaterThan(0)
+  })
+})
+
+describe('buildListingWhere cu variante de judet', () => {
+  it('filtreaza dupa toate scrierile', () => {
+    expect(buildListingWhere({ siteId: 's1', type: 'VET', counties: ['Iași', 'Iasi'] })).toMatchObject({
+      county: { in: ['Iași', 'Iasi'] },
+    })
+  })
+  it('lista goala nu filtreaza', () => {
+    expect(buildListingWhere({ siteId: 's1', type: 'VET', counties: [] })).not.toHaveProperty('county')
+  })
+})
+
+describe('countyVariants', () => {
+  it('returneaza toate scrierile cu acelasi slug', () => {
+    expect(countyVariants(['Iași', 'Iasi', 'Cluj'], 'iasi')).toEqual(['Iași', 'Iasi'])
+    expect(countyVariants(['Cluj'], 'nu-exista')).toEqual([])
+    expect(countyVariants(['Cluj'], undefined)).toEqual([])
+  })
+})
+
+describe('mergeCities / duplicate citySlug', () => {
+  it('insumeaza si pastreaza numele cel mai frecvent', () => {
+    expect(
+      mergeCities([
+        { citySlug: 'iasi', city: 'Iasi', count: 1 },
+        { citySlug: 'iasi', city: 'Iași', count: 2 },
+      ]),
+    ).toEqual([{ citySlug: 'iasi', city: 'Iași', count: 3 }])
+  })
+  it('summarizeDirectory nu dubleaza orasele', () => {
+    const s = summarizeDirectory([
+      { type: 'VET', citySlug: 'iasi', city: 'Iasi', _count: { _all: 1 } },
+      { type: 'VET', citySlug: 'iasi', city: 'Iași', _count: { _all: 2 } },
+    ])
+    expect(s.total).toBe(3)
+    expect(s.byType.VET.cities).toEqual([{ citySlug: 'iasi', city: 'Iași', count: 3 }])
+  })
+})
+
+describe('metaDescription', () => {
+  it('colapseaza spatiile si foloseste fallback pentru gol', () => {
+    expect(metaDescription('  a  b ', 'fb')).toBe('a b')
+    expect(metaDescription(null, 'fb')).toBe('fb')
+    expect(metaDescription('   ', 'fb')).toBe('fb')
+  })
+  it('taie la limita de cuvant, max 155', () => {
+    const text = 'cuvant '.repeat(40)
+    const out = metaDescription(text, 'fb')
+    expect(out.length).toBeLessThanOrEqual(155)
+    expect(out.endsWith('cuvant')).toBe(true)
+  })
+  it('un cuvant foarte lung se taie la 155', () => {
+    expect(metaDescription('x'.repeat(300), 'fb')).toHaveLength(155)
   })
 })

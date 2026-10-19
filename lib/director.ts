@@ -25,15 +25,17 @@ export function buildListingWhere(args: {
   type: ListingType
   citySlug?: string
   county?: string
+  /** Toate scrierile aceluiasi judet (variante); are prioritate fata de `county`. */
+  counties?: string[]
   serviceSlug?: string
 }): Prisma.ListingWhereInput {
-  const { siteId, type, citySlug, county, serviceSlug } = args
+  const { siteId, type, citySlug, county, counties, serviceSlug } = args
   return {
     siteId,
     type,
     status: 'PUBLISHED',
     ...(citySlug && { citySlug }),
-    ...(county && { county }),
+    ...(counties && counties.length > 0 ? { county: { in: counties } } : county ? { county } : {}),
     ...(serviceSlug && { services: { some: { service: { slug: serviceSlug } } } }),
   }
 }
@@ -46,7 +48,41 @@ export function resolveCounty(counties: string[], param: string | undefined): st
   return counties.find((c) => slugify(c) === wanted)
 }
 
+/** Toate scrierile din lista care au acelasi slug ca parametrul din URL. */
+export function countyVariants(counties: string[], param: string | undefined): string[] {
+  if (!param) return []
+  const wanted = slugify(param)
+  if (!wanted) return []
+  return counties.filter((c) => slugify(c) === wanted)
+}
+
+/** Taie descrierea la <= max caractere, la limita de cuvant, dupa colapsarea spatiilor. */
+export function metaDescription(text: string | null | undefined, fallback: string, max = 155): string {
+  const clean = (text ?? '').replace(/\s+/g, ' ').trim() || fallback
+  if (clean.length <= max) return clean
+  const cut = clean.slice(0, max + 1)
+  const lastSpace = cut.lastIndexOf(' ')
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : clean.slice(0, max)).replace(/[\s,;:.\-–]+$/, '')
+}
+
 export type CityCount = { citySlug: string; city: string; count: number }
+
+/** Un rand pe citySlug: numarari insumate, numele afisat = varianta cea mai frecventa. */
+export function mergeCities(rows: CityCount[]): CityCount[] {
+  const bySlug = new Map<string, { total: number; names: Map<string, number> }>()
+  for (const r of rows) {
+    const e = bySlug.get(r.citySlug) ?? { total: 0, names: new Map<string, number>() }
+    e.total += r.count
+    e.names.set(r.city, (e.names.get(r.city) ?? 0) + r.count)
+    bySlug.set(r.citySlug, e)
+  }
+  return [...bySlug].map(([citySlug, e]) => ({
+    citySlug,
+    city: [...e.names].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ro'))[0][0],
+    count: e.total,
+  }))
+}
+
 export type DirectorySummary = {
   total: number
   byType: Record<ListingType, { count: number; cities: CityCount[] }>
@@ -57,14 +93,16 @@ export function summarizeDirectory(
   citiesPerType = 6,
 ): DirectorySummary {
   const byType = Object.fromEntries(LISTING_TYPES.map((t) => [t, { count: 0, cities: [] as CityCount[] }])) as DirectorySummary['byType']
+  const raw = Object.fromEntries(LISTING_TYPES.map((t) => [t, [] as CityCount[]])) as Record<ListingType, CityCount[]>
   let total = 0
   for (const r of rows) {
     const n = r._count._all
     total += n
     byType[r.type].count += n
-    byType[r.type].cities.push({ citySlug: r.citySlug, city: r.city, count: n })
+    raw[r.type].push({ citySlug: r.citySlug, city: r.city, count: n })
   }
   for (const t of LISTING_TYPES) {
+    byType[t].cities = mergeCities(raw[t])
     byType[t].cities.sort((a, b) => b.count - a.count || a.city.localeCompare(b.city, 'ro'))
     byType[t].cities = byType[t].cities.slice(0, citiesPerType)
   }
@@ -143,7 +181,10 @@ export async function getDirectorySummary(siteId: string): Promise<DirectorySumm
 
 export type TypeFacets = {
   cities: CityCount[]
+  /** Judete afisate in filtru: o singura scriere pe slug. */
   counties: string[]
+  /** Toate scrierile salvate (inclusiv variantele), pentru filtrare. */
+  rawCounties: string[]
   services: Array<{ slug: string; name: string; count: number }>
 }
 
@@ -151,7 +192,7 @@ export async function getTypeFacets(siteId: string, type: ListingType): Promise<
   const where = { siteId, type, status: 'PUBLISHED' as const }
   const [cityRows, countyRows, services] = await Promise.all([
     prisma.listing.groupBy({ by: ['citySlug', 'city'], where, _count: { _all: true } }),
-    prisma.listing.groupBy({ by: ['county'], where }),
+    prisma.listing.groupBy({ by: ['county'], where, _count: { _all: true } }),
     prisma.listingService.findMany({
       where: { siteId, type },
       orderBy: { name: 'asc' },
@@ -163,10 +204,12 @@ export async function getTypeFacets(siteId: string, type: ListingType): Promise<
     }),
   ])
   return {
-    cities: cityRows
-      .map((r) => ({ citySlug: r.citySlug, city: r.city, count: r._count._all }))
+    cities: mergeCities(cityRows.map((r) => ({ citySlug: r.citySlug, city: r.city, count: r._count._all })))
       .sort((a, b) => b.count - a.count || a.city.localeCompare(b.city, 'ro')),
-    counties: countyRows.map((r) => r.county).sort((a, b) => a.localeCompare(b, 'ro')),
+    counties: mergeCities(countyRows.map((r) => ({ citySlug: slugify(r.county), city: r.county, count: r._count._all })))
+      .map((r) => r.city)
+      .sort((a, b) => a.localeCompare(b, 'ro')),
+    rawCounties: countyRows.map((r) => r.county),
     services: services
       .map((s) => ({ slug: s.slug, name: s.name, count: s._count.listings }))
       .filter((s) => s.count > 0),
@@ -178,6 +221,7 @@ export async function listPublished(args: {
   type: ListingType
   citySlug?: string
   county?: string
+  counties?: string[]
   serviceSlug?: string
   page: number
 }) {
@@ -193,6 +237,10 @@ export async function listPublished(args: {
     prisma.listing.count({ where }),
   ])
   return { rows, cards: rows.map(listingCard), total, totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)) }
+}
+
+export function countPublished(args: Parameters<typeof buildListingWhere>[0]) {
+  return prisma.listing.count({ where: buildListingWhere(args) })
 }
 
 export function getPublishedListing(args: { siteId: string; type: ListingType; citySlug: string; slug: string }) {

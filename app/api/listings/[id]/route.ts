@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/slugify'
-import { nextFreeSlug, parseListingInput } from '@/lib/listings'
+import { nextFreeSlug, parseListingInput, pickCanonicalSpelling } from '@/lib/listings'
 
 const isUniqueViolation = (e: unknown) => (e as { code?: string })?.code === 'P2002'
 
@@ -37,6 +37,20 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const citySlug = slugify(data.city)
   if (!citySlug) return NextResponse.json({ error: 'Orașul nu poate fi folosit în URL' }, { status: 400 })
   if (citySlug.length > 100) return NextResponse.json({ error: 'Orașul este prea lung pentru URL' }, { status: 400 })
+
+  // O singura scriere pe oras/judet in site: refolosim cea deja salvata (la alta fisa).
+  const [sameCity] = await prisma.listing.findMany({
+    where: { siteId: existing.siteId, citySlug, id: { not: id } },
+    select: { city: true },
+    take: 1,
+  })
+  if (sameCity) data.city = sameCity.city
+  const knownCounties = await prisma.listing.findMany({
+    where: { siteId: existing.siteId, id: { not: id } },
+    distinct: ['county'],
+    select: { county: true },
+  })
+  data.county = pickCanonicalSpelling(data.county, knownCounties.map((c) => c.county))
 
   if (serviceIds.length > 0) {
     const found = await prisma.listingService.findMany({

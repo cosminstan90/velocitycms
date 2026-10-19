@@ -38,11 +38,8 @@ export default async function DirectoryCityPage({ params, searchParams }: Props)
   const page = parsePageParam((await searchParams).page)
   const { rows, cards, total, totalPages } = await listPublished({ siteId: ctx.site.id, type, citySlug, page })
   // Un oras fara fise publicate nu exista pentru vizitator.
-  if (total === 0) notFound()
-  // Pe o pagina dupa ultima, rows e gol: numele orasului vine din pagina 1.
-  const nameRows =
-    rows.length > 0 ? rows : (await listPublished({ siteId: ctx.site.id, type, citySlug, page: 1 })).rows
-  const cityName = nameRows[0]?.city ?? citySlug
+  if (total === 0 || page > totalPages) notFound()
+  const cityName = rows[0]?.city ?? citySlug
 
   return (
     <DirectoryListTemplate

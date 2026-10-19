@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getTypeFacets, listPublished, loadDirectorySite, resolveCounty } from '@/lib/director'
+import { countPublished, countyVariants, getTypeFacets, listPublished, loadDirectorySite, resolveCounty } from '@/lib/director'
 import { TYPE_LABEL, typeFromSegment, typeListPath } from '@/lib/listings'
 import { parsePageParam } from '@/lib/pagination'
 import { slugify } from '@/lib/slugify'
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!type || !ctx) return {}
   const label = TYPE_LABEL[type].plural
   const base = ctx.siteData.siteUrl.replace(/\/$/, '')
-  const { total } = await listPublished({ siteId: ctx.site.id, type, page: 1 })
+  const total = await countPublished({ siteId: ctx.site.id, type })
   return {
     title: `${label} din România | ${ctx.siteData.siteName}`,
     description: `${label} din România: date de contact, program și servicii.`,
@@ -46,10 +46,12 @@ export default async function DirectoryTypePage({ params, searchParams }: Props)
   const { cards, total, totalPages } = await listPublished({
     siteId: ctx.site.id,
     type,
-    county,
+    counties: countyVariants(facets.rawCounties, one(sp.judet)),
     serviceSlug,
     page,
   })
+
+  if (total > 0 && page > totalPages) notFound()
 
   const qs = new URLSearchParams()
   if (county) qs.set('judet', slugify(county))

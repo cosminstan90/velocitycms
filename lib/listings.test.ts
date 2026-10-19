@@ -12,8 +12,7 @@ import {
   isValidEmail,
   parseOpeningHours,
   parseListingInput,
-  nextFreeSlug,
-} from './listings'
+  nextFreeSlug, pickCanonicalSpelling } from './listings'
 
 describe('segmente si URL-uri', () => {
   it('mapeaza segmentele la tipuri si invers', () => {
@@ -170,5 +169,18 @@ describe('nextFreeSlug', () => {
   })
   it('renunta dupa 50 de incercari', async () => {
     await expect(nextFreeSlug(async () => true, 'vet')).rejects.toThrow()
+  })
+})
+
+describe('pickCanonicalSpelling', () => {
+  it('refoloseste scrierea existenta (diacritice)', () => {
+    expect(pickCanonicalSpelling('Iasi', ['Cluj', 'Iași'])).toBe('Iași')
+  })
+  it('refoloseste scrierea existenta (spatiu vs cratima)', () => {
+    expect(pickCanonicalSpelling('Cluj Napoca', ['Cluj-Napoca'])).toBe('Cluj-Napoca')
+  })
+  it('fara potrivire sau lista goala -> textul tastat', () => {
+    expect(pickCanonicalSpelling('Brasov', ['Cluj'])).toBe('Brasov')
+    expect(pickCanonicalSpelling('Brasov', [])).toBe('Brasov')
   })
 })

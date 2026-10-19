@@ -250,3 +250,10 @@ export async function nextFreeSlug(isTaken: (slug: string) => Promise<boolean>, 
   }
   throw new Error(`Nu am gasit un slug liber pentru "${base}"`)
 }
+
+/** Scrierea deja salvata (aceeasi dupa slugify) pentru un oras/judet tastat; altfel textul tastat. */
+export function pickCanonicalSpelling(typed: string, existing: string[]): string {
+  const wanted = slugify(typed)
+  if (!wanted) return typed
+  return existing.find((e) => slugify(e) === wanted) ?? typed
+}
