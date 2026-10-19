@@ -23,6 +23,7 @@ import {
   X,
   Zap,
   Globe,
+  MapPin,
 } from 'lucide-react'
 
 const navItems = [
@@ -30,6 +31,7 @@ const navItems = [
   { href: '/admin/posts', label: 'Articole', icon: FileText },
   { href: '/admin/pages', label: 'Pagini', icon: File },
   { href: '/admin/categories', label: 'Categorii', icon: FolderOpen },
+  { href: '/admin/director', label: 'Director', icon: MapPin },
   { href: '/admin/media', label: 'Media', icon: Image },
   { href: '/admin/sites', label: 'Site-uri', icon: Globe },
   { href: '/admin/redirects', label: 'Redirecturi', icon: ArrowLeftRight },

@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
 import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import { categoryLastModified } from '@/lib/sitemap-categories'
+import { buildDirectoryPaths } from '@/lib/director'
 
 export const dynamic = 'force-dynamic'
 
@@ -93,6 +94,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.6,
     })
+  }
+
+  // Director: doar cu template-ul `divet` (altfel rutele dau 404) si doar fise publicate.
+  const directorySite = await prisma.site.findFirst({
+    where: { isActive: true },
+    select: { id: true, template: true },
+  })
+  if (directorySite?.template === 'divet') {
+    const directorySeo = await prisma.seoSettings.findFirst({ where: { siteId: directorySite.id } })
+    const directoryUrl = (directorySeo?.siteUrl ?? siteUrl).replace(/\/$/, '')
+    const listings = await prisma.listing.findMany({
+      where: { siteId: directorySite.id, status: 'PUBLISHED' },
+      select: { type: true, citySlug: true, slug: true, updatedAt: true },
+    })
+    for (const e of buildDirectoryPaths(listings)) {
+      entries.push({
+        url: `${directoryUrl}${e.path}`,
+        lastModified: e.lastModified,
+        changeFrequency: 'weekly',
+        priority: e.priority,
+      })
+    }
   }
 
   return entries

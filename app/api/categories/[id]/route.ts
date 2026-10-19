@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/slugify'
 import { NAVIGATION_TAG } from '@/lib/navigation'
+import { isReservedRootSlug } from '@/lib/listings'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -25,6 +26,10 @@ export async function PUT(req: NextRequest, { params }: Params) {
   // Check slug uniqueness among siblings (excluding self) when slug or parent changes
   const targetParentId = (parentId !== undefined ? parentId : category.parentId) || null
   const parentChanged = targetParentId !== (category.parentId ?? null)
+
+  if (!targetParentId && isReservedRootSlug(slug)) {
+    return NextResponse.json({ error: `Slug-ul "${slug}" este rezervat` }, { status: 400 })
+  }
 
   if (slug !== category.slug || parentChanged) {
     const conflict = await prisma.category.findFirst({

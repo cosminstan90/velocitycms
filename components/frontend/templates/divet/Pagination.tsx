@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { buildPaginationItems } from '../fauna/utils'
 
 function pageHref(basePath: string, page: number): string {
-  return page === 1 ? basePath : `${basePath}?page=${page}`
+  if (page === 1) return basePath
+  return `${basePath}${basePath.includes('?') ? '&' : '?'}page=${page}`
 }
 
 const ITEM =

@@ -96,6 +96,8 @@ model Site {
   cwvReports       CWVReport[]
   apiKeys          APIKey[]
   importLogs       ImportLog[]
+  listings         Listing[]
+  listingServices  ListingService[]
 }
 
 model UserSiteAccess {
@@ -395,4 +397,67 @@ model NotFoundLog {
   site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
   @@unique([siteId, path])
+}
+
+enum ListingType {
+  VET
+  TRAINER
+  GROOMER
+}
+
+enum ListingStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Listing {
+  id           String               @id @default(cuid())
+  siteId       String
+  type         ListingType
+  name         String               @db.VarChar(255)
+  slug         String               @db.VarChar(255)
+  description  String?
+  county       String               @db.VarChar(100)
+  city         String               @db.VarChar(100)
+  citySlug     String               @db.VarChar(100)
+  address      String?              @db.VarChar(255)
+  lat          Float?
+  lng          Float?
+  phone        String?              @db.VarChar(20)
+  email        String?              @db.VarChar(255)
+  website      String?              @db.VarChar(255)
+  openingHours Json?
+  status       ListingStatus        @default(DRAFT)
+  // Rezervate pentru planurile platite (sub-proiectul 3); nefolosite in v1.
+  featured     Boolean              @default(false)
+  plan         String               @default("free") @db.VarChar(30)
+  publishedAt  DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  site         Site                 @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  services     ListingServiceLink[]
+
+  @@unique([siteId, type, citySlug, slug])
+  @@index([siteId, type, status, citySlug])
+}
+
+model ListingService {
+  id       String               @id @default(cuid())
+  siteId   String
+  type     ListingType
+  name     String               @db.VarChar(100)
+  slug     String               @db.VarChar(100)
+  site     Site                 @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  listings ListingServiceLink[]
+
+  @@unique([siteId, type, slug])
+}
+
+model ListingServiceLink {
+  listingId String
+  serviceId String
+  listing   Listing        @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  service   ListingService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([listingId, serviceId])
 }

@@ -9,6 +9,7 @@ Nimic de aici nu se rulează automat. Fiecare pas pe producție se face cu acord
 - **Cod:** template-ul `divet` (navigație din categorii, fișe cu date structurate, `/index-a-z`, FAQ vizibil, JSON-LD și sitemap corectate, publisher cu `subCategorySlug`).
 - **Baza de date:** două migrări aditive pe `Category` (`sortOrder`, `showInNav`; unicitatea slug-ului devine pe părinte). Cele 3 articole existente rămân neatinse în `caini`.
 - **Date:** 7 grupuri + 30 de subcategorii și 19 definiții de câmpuri (seed-uri idempotente).
+- **Director:** migrare aditivă (`Listing`, `ListingService`, `ListingServiceLink`), seed de servicii (13). Directorul rămâne gol și invizibil (fără link în meniu, fără intrări în sitemap) până adaugi fișe din `/admin/director`.
 - **Site-ul rămâne pe template-ul `fauna`** până când îl comuți tu din admin.
 
 ## Înainte de prima lansare (local)
@@ -27,7 +28,7 @@ git pull --ff-only origin main        # nu atinge ecosystem.config.js (are o mod
 ./deploy-pm2.sh --skip-pull --seed
 ```
 
-Ce face scriptul, în ordine: backup al bazei (verificat) în `/home/divet.ro/backups/pre-deploy/` → `npm ci` → `prisma generate` + `migrate deploy` → seed-uri (`--seed`) → `npm run build` → `pm2 reload` → health check → test de fum.
+Ce face scriptul, în ordine: backup al bazei (verificat) în `/home/divet.ro/backups/pre-deploy/` → `npm ci` → `prisma generate` + `migrate deploy` → seed-uri (`--seed`: categorii, câmpuri, servicii director) → `npm run build` → `pm2 reload` → health check → test de fum.
 
 Testul de fum cere 200 pe cel mult 30 de pagini din sitemap (acasă, grupuri, subcategorii, articole, etichete, autori) și 404 pe o pagină inexistentă. Dacă pică, scriptul oprește și tipărește comanda de revenire la commit-ul anterior.
 
@@ -63,3 +64,7 @@ Lansările următoare: `./deploy-pm2.sh` (fără `--seed`, fără `--skip-pull`)
 - Unicitatea slug-ului pe categorii rădăcină nu e garantată de baza de date (în PostgreSQL `NULL` nu e egal cu `NULL`); o garantează aplicația, în API-ul de categorii și în seed-uri.
 - `contentHtml` se afișează fără sanitizare (comportament existent): token-ul de publisher trebuie tratat ca secret.
 - Rich Results Test (Google) nu poate fi rulat de aici: după lansare, verifică manual un articol cu FAQ.
+- Pagina `/director` face câte un `groupBy` pe cerere; suficient pentru sute de fișe, de revăzut peste câteva mii. Directorul funcționează doar cu template-ul `divet` (pe celelalte, rutele dau 404). Editorul de program din admin păstrează un singur interval pe zi.
+- Orașul și județul se normalizează la scriere, per site: prima grafie stocată câștigă (ex. „Iași" vs „Iasi" ajung la aceeași grafie).
+- API-ul de fișe și de servicii nu verifică accesul pe site: orice utilizator autentificat poate citi sau modifica fișele altui site după id. Lacună preexistentă, aceeași ca la `app/api/categories`; urmărită ca follow-up.
+- `/director` nu are încă casetă de căutare (amânată).
