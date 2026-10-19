@@ -13,10 +13,12 @@ export default function DivetNav({
   groups,
   recentByGroup,
   activeSlug,
+  extraLinks = [],
 }: {
   groups: NavGroup[]
   recentByGroup: Record<string, GroupPost[]>
   activeSlug?: string | null
+  extraLinks?: Array<{ label: string; href: string }>
 }) {
   const [openId, setOpenId] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -137,6 +139,24 @@ export default function DivetNav({
               </li>
             )
           })}
+          {extraLinks.map((l) => {
+            const active = pathname === l.href || pathname.startsWith(`${l.href}/`)
+            return (
+              <li key={l.href} className="flex items-stretch">
+                <Link
+                  href={l.href}
+                  aria-current={active ? 'page' : undefined}
+                  className={`flex items-center border-b-2 text-[14px] ${focusRing} ${
+                    active
+                      ? 'border-dv-accent font-semibold text-dv-accent'
+                      : 'border-transparent text-dv-ink hover:text-dv-accent'
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              </li>
+            )
+          })}
         </ul>
       </nav>
 
@@ -191,6 +211,15 @@ export default function DivetNav({
               </details>
             )
           })}
+          {extraLinks.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className={`flex min-h-11 items-center border-t border-dv-border text-[14px] text-dv-ink ${focusRing}`}
+            >
+              {l.label}
+            </Link>
+          ))}
         </div>
       </div>
     </div>
