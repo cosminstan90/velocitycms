@@ -7,6 +7,7 @@ const { prisma } = vi.hoisted(() => ({
     post: { findUnique: vi.fn(), update: vi.fn(), count: vi.fn() },
     category: { findUnique: vi.fn() },
     fieldValue: { findMany: vi.fn(), upsert: vi.fn() },
+    fieldDefinition: { count: vi.fn() },
     siteScheduleSettings: { findUnique: vi.fn() },
     $transaction: vi.fn(),
   },
@@ -55,6 +56,7 @@ beforeEach(() => {
   prisma.post.update.mockResolvedValue({ id: 'p1', slug: 't', status: 'PUBLISHED', publishedAt: null })
   prisma.fieldValue.findMany.mockResolvedValue([])
   prisma.fieldValue.upsert.mockReturnValue({})
+  prisma.fieldDefinition.count.mockResolvedValue(1)
   prisma.$transaction.mockResolvedValue([])
   prisma.siteScheduleSettings.findUnique.mockResolvedValue(null)
   prisma.post.count.mockResolvedValue(0)
@@ -81,6 +83,24 @@ describe('post subroutes: positive path', () => {
     expect(cancelSchedule).toHaveBeenCalledWith('p1')
   })
   it('suggest-links POST', async () => expect((await suggestLinks(req('POST'), ctx)).status).toBe(200))
+})
+
+describe('post field-values: definitions of the same site only', () => {
+  it('400 Invalid fieldDefinitionId and no write when a definition belongs to another site', async () => {
+    prisma.fieldDefinition.count.mockResolvedValue(1)
+    const res = await putFieldValues(req('PUT', [{ fieldDefinitionId: 'd1', value: 'a' }, { fieldDefinitionId: 'foreign', value: 'b' }]), ctx)
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ error: 'Invalid fieldDefinitionId' })
+    expect(prisma.fieldDefinition.count).toHaveBeenCalledWith({ where: { id: { in: ['d1', 'foreign'] }, siteId: 's1', postType: 'POST' } })
+    expect(prisma.$transaction).not.toHaveBeenCalled()
+    expect(prisma.fieldValue.upsert).not.toHaveBeenCalled()
+  })
+  it('writes when every definition is valid', async () => {
+    prisma.fieldDefinition.count.mockResolvedValue(1)
+    const res = await putFieldValues(req('PUT', [{ fieldDefinitionId: 'd1', value: 'a' }]), ctx)
+    expect(res.status).toBe(200)
+    expect(prisma.$transaction).toHaveBeenCalled()
+  })
 })
 
 describe('post subroutes: post of an inaccessible site', () => {

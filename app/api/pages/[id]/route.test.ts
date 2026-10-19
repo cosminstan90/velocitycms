@@ -6,6 +6,7 @@ const { prisma } = vi.hoisted(() => ({
     userSiteAccess: { findUnique: vi.fn() },
     page: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn(), delete: vi.fn() },
     fieldValue: { findMany: vi.fn(), upsert: vi.fn() },
+    fieldDefinition: { count: vi.fn() },
     $transaction: vi.fn(),
   },
 }))
@@ -40,6 +41,7 @@ beforeEach(() => {
   prisma.page.update.mockResolvedValue({ ...pageRow, author: null })
   prisma.fieldValue.findMany.mockResolvedValue([])
   prisma.fieldValue.upsert.mockReturnValue({})
+  prisma.fieldDefinition.count.mockResolvedValue(1)
   prisma.$transaction.mockResolvedValue([])
 })
 
@@ -54,6 +56,23 @@ describe('/api/pages/[id] with access', () => {
     expect(prisma.page.delete).toHaveBeenCalledWith({ where: { id: 'pg1' } })
   })
   it('publish', async () => expect((await publish(req('POST'), ctx)).status).toBe(200))
+})
+
+describe('/api/pages/[id]/field-values definitions', () => {
+  it('400 Invalid fieldDefinitionId and no write when a definition belongs to another site', async () => {
+    prisma.fieldDefinition.count.mockResolvedValue(0)
+    const res = await putFieldValues(req('PUT', [{ fieldDefinitionId: 'foreign', value: 'b' }]), ctx)
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ error: 'Invalid fieldDefinitionId' })
+    expect(prisma.fieldDefinition.count).toHaveBeenCalledWith({ where: { id: { in: ['foreign'] }, siteId: 's1', postType: 'PAGE' } })
+    expect(prisma.$transaction).not.toHaveBeenCalled()
+    expect(prisma.fieldValue.upsert).not.toHaveBeenCalled()
+  })
+  it('writes when every definition is valid', async () => {
+    const res = await putFieldValues(req('PUT', [{ fieldDefinitionId: 'd1', value: 'a' }]), ctx)
+    expect(res.status).toBe(200)
+    expect(prisma.$transaction).toHaveBeenCalled()
+  })
 })
 
 describe('/api/pages/[id] page of an inaccessible site', () => {

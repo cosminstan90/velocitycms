@@ -42,6 +42,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const items: FieldValueItem[] = body
 
+  // Every referenced definition must belong to this page's site (and be a PAGE definition)
+  const definitionIds = [...new Set(items.map((item) => String(item.fieldDefinitionId)))]
+  if (definitionIds.length > 0) {
+    const validCount = await prisma.fieldDefinition.count({
+      where: { id: { in: definitionIds }, siteId: page.siteId, postType: 'PAGE' },
+    })
+    if (validCount !== definitionIds.length) {
+      return NextResponse.json({ error: 'Invalid fieldDefinitionId' }, { status: 400 })
+    }
+  }
+
   const upserted = await prisma.$transaction(
     items.map((item) =>
       prisma.fieldValue.upsert({
