@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server'
 
 const { prisma, revalidateTag, revalidatePath } = vi.hoisted(() => ({
   prisma: {
+    userSiteAccess: { findUnique: vi.fn() },
     category: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
@@ -32,6 +33,7 @@ const existing = { id: 'c1', siteId: 's1', slug: 'old', name: 'Old', parentId: '
 
 beforeEach(() => {
   vi.clearAllMocks()
+  prisma.userSiteAccess.findUnique.mockResolvedValue({ id: 'a1' })
   prisma.category.findUnique.mockResolvedValue(existing)
   prisma.category.findFirst.mockResolvedValue(null)
   prisma.category.update.mockImplementation(async ({ data }: any) => ({ ...existing, ...data }))
@@ -109,5 +111,32 @@ describe('DELETE /api/categories/[id]', () => {
     expect(res.status).toBe(200)
     expect(prisma.category.delete).toHaveBeenCalledWith({ where: { id: 'c1' } })
     expect(revalidateTag).toHaveBeenCalledWith('navigation', { expire: 0 })
+  })
+})
+
+describe('site access and parent', () => {
+  it('404 on PUT for a category of a site the user cannot access, no update', async () => {
+    prisma.userSiteAccess.findUnique.mockResolvedValue(null)
+    expect((await put({ name: 'X' })).status).toBe(404)
+    expect(prisma.category.update).not.toHaveBeenCalled()
+  })
+  it('404 on DELETE, loading nothing else and deleting nothing', async () => {
+    prisma.userSiteAccess.findUnique.mockResolvedValue(null)
+    expect((await del()).status).toBe(404)
+    expect(prisma.category.delete).not.toHaveBeenCalled()
+    expect(prisma.post.count).not.toHaveBeenCalled()
+  })
+  it('404 on DELETE when the category does not exist', async () => {
+    prisma.category.findUnique.mockResolvedValue(null)
+    expect((await del()).status).toBe(404)
+    expect(prisma.category.delete).not.toHaveBeenCalled()
+  })
+  it('400 on PUT when the new parent belongs to another site', async () => {
+    prisma.category.findUnique
+      .mockResolvedValueOnce(existing)
+      .mockResolvedValueOnce({ id: 'p2', siteId: 's2' })
+    const res = await put({ parentId: 'p2' })
+    expect(res.status).toBe(400)
+    expect(prisma.category.update).not.toHaveBeenCalled()
   })
 })

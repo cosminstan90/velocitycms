@@ -3,6 +3,7 @@ import { revalidateTag } from 'next/cache'
 import { auth } from '@/auth'
 import { NAVIGATION_TAG } from '@/lib/navigation'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { getSiteIdFromRequest } from '@/lib/site'
 import { slugify } from '@/lib/slugify'
 import { isReservedRootSlug } from '@/lib/listings'
@@ -13,6 +14,7 @@ export async function GET(req: NextRequest) {
 
   const siteId = (await getSiteIdFromRequest(req)) ?? session.user.activeSiteId
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   const categories = await prisma.category.findMany({
     where: { siteId },
@@ -51,11 +53,17 @@ export async function POST(req: NextRequest) {
   const siteId = (await getSiteIdFromRequest(req)) ?? body.siteId ?? session.user.activeSiteId
 
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
   if (!name) return NextResponse.json({ error: 'name required' }, { status: 400 })
 
   const slug = body.slug ? slugify(body.slug) : slugify(name)
   if (!parentId && isReservedRootSlug(slug)) {
     return NextResponse.json({ error: `Slug-ul "${slug}" este rezervat` }, { status: 400 })
+  }
+
+  if (parentId) {
+    const parent = await prisma.category.findUnique({ where: { id: String(parentId) }, select: { id: true, siteId: true } })
+    if (!parent || parent.siteId !== siteId) return NextResponse.json({ error: 'Invalid parent' }, { status: 400 })
   }
 
   const existing = await prisma.category.findFirst({ where: { siteId, slug, parentId: parentId || null } })

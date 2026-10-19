@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { slugify } from '@/lib/slugify'
 import { NAVIGATION_TAG } from '@/lib/navigation'
 import { isReservedRootSlug } from '@/lib/listings'
@@ -17,7 +18,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const { name, description, metaTitle, metaDesc, parentId } = body
 
   const category = await prisma.category.findUnique({ where: { id } })
-  if (!category) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!category || !(await hasSiteAccess(session.user.id, category.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   let slug = category.slug
   if (body.slug) slug = slugify(body.slug)
@@ -26,6 +27,11 @@ export async function PUT(req: NextRequest, { params }: Params) {
   // Check slug uniqueness among siblings (excluding self) when slug or parent changes
   const targetParentId = (parentId !== undefined ? parentId : category.parentId) || null
   const parentChanged = targetParentId !== (category.parentId ?? null)
+
+  if (parentId && targetParentId) {
+    const parent = await prisma.category.findUnique({ where: { id: targetParentId }, select: { id: true, siteId: true } })
+    if (!parent || parent.siteId !== category.siteId) return NextResponse.json({ error: 'Invalid parent' }, { status: 400 })
+  }
 
   if (!targetParentId && isReservedRootSlug(slug)) {
     return NextResponse.json({ error: `Slug-ul "${slug}" este rezervat` }, { status: 400 })
@@ -73,6 +79,9 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
+
+  const category = await prisma.category.findUnique({ where: { id }, select: { id: true, siteId: true } })
+  if (!category || !(await hasSiteAccess(session.user.id, category.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const postCount = await prisma.post.count({ where: { categoryId: id } })
   if (postCount > 0) {
