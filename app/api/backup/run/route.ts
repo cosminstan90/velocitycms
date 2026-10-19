@@ -22,6 +22,7 @@ import { prisma } from '@/lib/prisma'
 import { runBackup } from '@/lib/backup/backup-runner'
 import { notifyBackupResult, check404SpikeAndNotify } from '@/lib/notifications/email-service'
 import { getSiteIdFromRequest } from '@/lib/site'
+import { isSiteAdmin } from '@/lib/site-access'
 
 const VALID_TYPES = ['database', 'media', 'full'] as const
 type BackupType = (typeof VALID_TYPES)[number]
@@ -78,6 +79,9 @@ export async function POST(req: NextRequest) {
 
   const siteId = await getSiteIdFromRequest(req)
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await isSiteAdmin(session.user.id, siteId))) {
+    return NextResponse.json({ error: 'Site admin required' }, { status: 403 })
+  }
 
   const body = await req.json().catch(() => ({})) as { type?: string }
   const rawType = body.type ?? 'database'
