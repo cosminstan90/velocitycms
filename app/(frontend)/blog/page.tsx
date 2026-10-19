@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { ogImages } from '@/lib/default-og'
 import { parsePageParam } from '@/lib/pagination'
 import { CategoryDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
@@ -21,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
       openGraph: {
         title: `Blog | ${siteName}`,
         description: seo?.defaultMetaDesc ?? undefined,
-        images: seo?.defaultOgImage ? [{ url: seo.defaultOgImage }] : [],
+        images: ogImages(seo?.siteUrl ?? 'http://localhost', seo?.defaultOgImage),
       },
     }
   } catch {
