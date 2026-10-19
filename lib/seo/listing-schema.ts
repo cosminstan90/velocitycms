@@ -57,7 +57,7 @@ export function generateListingSchema(l: ListingSchemaInput, siteUrl: string): R
   if (l.description) business.description = l.description
   if (l.phone) business.telephone = l.phone
   if (l.email) business.email = l.email
-  if (l.website) business.sameAs = [l.website]
+  if (l.website && /^https?:\/\//i.test(l.website)) business.sameAs = [l.website]
   if (l.lat !== null && l.lng !== null) {
     business.geo = { '@type': 'GeoCoordinates', latitude: l.lat, longitude: l.lng }
   }

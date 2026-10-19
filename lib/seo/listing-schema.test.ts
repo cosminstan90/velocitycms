@@ -42,6 +42,11 @@ describe('generateListingSchema', () => {
     })
   })
 
+  it('omite sameAs pentru un site fara http(s)', () => {
+    const [b] = generateListingSchema({ ...base, website: 'data:text/html,x' }, SITE)
+    expect(b.sameAs).toBeUndefined()
+  })
+
   it('omite campurile goale si geo fara coordonate', () => {
     const [b] = generateListingSchema(
       { ...base, description: null, address: null, phone: null, email: null, website: null, openingHours: null },

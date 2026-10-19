@@ -55,7 +55,7 @@ export default function ListingTemplate({
       <div className="mx-auto w-full max-w-[1100px] px-4 py-6 md:px-10 lg:py-8">
         <Breadcrumbs items={crumbs} />
         <div className="mt-4 text-dv-label font-semibold uppercase text-dv-accent">{TYPE_LABEL[listing.type].singular}</div>
-        <h1 className="mt-1 mb-0 font-dv-display text-[34px] leading-[1.08] font-bold tracking-[-0.03em] text-balance sm:text-[44px]">
+        <h1 className="break-words mt-1 mb-0 font-dv-display text-[34px] leading-[1.08] font-bold tracking-[-0.03em] text-balance sm:text-[44px]">
           {listing.name}
         </h1>
         <p className="mt-2 mb-0 text-dv-body text-dv-ink-muted">
@@ -113,7 +113,7 @@ export default function ListingTemplate({
                   </dd>
                 </div>
               ) : null}
-              {listing.website ? (
+              {listing.website && /^https?:\/\//i.test(listing.website) ? (
                 <div>
                   <dt className="text-dv-ink-subtle">Site</dt>
                   <dd className="m-0 break-all">

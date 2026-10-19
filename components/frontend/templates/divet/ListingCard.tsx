@@ -16,7 +16,7 @@ export default function ListingCard({ href, name, kicker, location, phone, servi
       className="group flex flex-col rounded-[9px] border border-dv-border bg-dv-surface px-[15px] py-[14px] hover:border-dv-accent focus-visible:outline-2 focus-visible:outline-dv-accent"
     >
       <div className="mb-1 text-dv-label font-semibold uppercase text-dv-accent">{kicker}</div>
-      <h3 className="m-0 font-dv-display text-dv-title text-dv-ink group-hover:text-dv-accent">{name}</h3>
+      <h2 className="m-0 font-dv-display text-dv-title break-words text-dv-ink group-hover:text-dv-accent">{name}</h2>
       <div className="mt-1.5 text-[13px] text-dv-ink-muted">{location}</div>
       {phone ? <div className="mt-1 text-[13px] text-dv-ink">{phone}</div> : null}
       {services.length > 0 ? (
