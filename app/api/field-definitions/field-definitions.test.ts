@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
-const { prisma, authMock } = vi.hoisted(() => ({
+const { prisma, authMock, siteMock } = vi.hoisted(() => ({
   prisma: {
     userSiteAccess: { findUnique: vi.fn() },
     fieldDefinition: {
@@ -12,10 +12,12 @@ const { prisma, authMock } = vi.hoisted(() => ({
     $transaction: vi.fn(),
   },
   authMock: vi.fn(),
+  siteMock: vi.fn(),
 }))
 
 vi.mock('@/auth', () => ({ auth: authMock }))
 vi.mock('@/lib/prisma', () => ({ prisma }))
+vi.mock('@/lib/site', () => ({ getSiteIdFromRequest: siteMock }))
 
 import { GET, POST } from './route'
 import { GET as getOne, PUT, DELETE } from './[id]/route'
@@ -28,6 +30,7 @@ const req = (url: string, method = 'GET', body?: unknown) =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  siteMock.mockImplementation(async (r: NextRequest) => r.nextUrl.searchParams.get('siteId'))
   authMock.mockResolvedValue({ user: { id: 'u1', activeSiteId: 's1' } })
   prisma.userSiteAccess.findUnique.mockResolvedValue({ id: 'a1' })
   prisma.fieldDefinition.findMany.mockResolvedValue([])
@@ -58,6 +61,25 @@ describe('/api/field-definitions collection', () => {
   it('POST creates with access', async () => {
     const res = await POST(req('/api/field-definitions', 'POST', { siteId: 's1', fieldLabel: 'Age', fieldType: 'NUMBER' }))
     expect(res.status).toBe(201)
+  })
+  it('POST falls back to the resolved site when the body has no siteId', async () => {
+    siteMock.mockResolvedValue('s1')
+    const res = await POST(req('/api/field-definitions', 'POST', { fieldLabel: 'Age', fieldType: 'NUMBER' }))
+    expect(res.status).toBe(201)
+    expect(prisma.userSiteAccess.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { userId_siteId: { userId: 'u1', siteId: 's1' } } }))
+    expect(prisma.fieldDefinition.create.mock.calls[0][0].data.siteId).toBe('s1')
+  })
+  it('POST falls back to the session activeSiteId and is 403 without access', async () => {
+    siteMock.mockResolvedValue(null)
+    prisma.userSiteAccess.findUnique.mockResolvedValue(null)
+    const res = await POST(req('/api/field-definitions', 'POST', { fieldLabel: 'Age', fieldType: 'NUMBER' }))
+    expect(res.status).toBe(403)
+    expect(prisma.fieldDefinition.create).not.toHaveBeenCalled()
+  })
+  it('GET without siteId uses the resolved site', async () => {
+    siteMock.mockResolvedValue('s1')
+    expect((await GET(req('/api/field-definitions'))).status).toBe(200)
+    expect(prisma.fieldDefinition.findMany.mock.calls[0][0].where.siteId).toBe('s1')
   })
   it('POST 403 without access', async () => {
     prisma.userSiteAccess.findUnique.mockResolvedValue(null)
