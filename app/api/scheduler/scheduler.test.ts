@@ -18,9 +18,11 @@ const { prisma } = vi.hoisted(() => ({
 vi.mock('@/auth', () => ({ auth: vi.fn(async () => ({ user: { id: 'u1', activeSiteId: 's1' } })) }))
 vi.mock('@/lib/prisma', () => ({ prisma }))
 vi.mock('@/lib/site', () => ({ getSiteIdFromRequest: vi.fn(async () => 's1') }))
+vi.mock('@/lib/navigation', () => ({ revalidateNavigation: vi.fn(), NAVIGATION_TAG: 'navigation' }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn(), revalidateTag: vi.fn() }))
 vi.mock('@/lib/notifications/email-service', () => ({ notifyPostPublished: vi.fn(async () => {}) }))
 
+import { revalidateNavigation } from '@/lib/navigation'
 import { GET as calendar } from './calendar/route'
 import { GET as run } from './run/route'
 import { GET as getSettings, PUT as putSettings } from './settings/route'
@@ -86,6 +88,16 @@ describe('scheduler/run (cron secret path)', () => {
   })
   it('401 without the secret', async () => {
     expect((await run(get('/api/scheduler/run'))).status).toBe(401)
+    expect(revalidateNavigation).not.toHaveBeenCalled()
+  })
+  it('revalidates the navigation after publishing a due post', async () => {
+    prisma.post.findMany.mockResolvedValue([
+      { id: 'p1', siteId: 's1', slug: 'a', title: 'A', categoryId: null, scheduledAt: new Date(), category: null },
+    ])
+    prisma.schedulerLog.updateMany.mockResolvedValue({ count: 1 })
+    const res = await run(get('/api/scheduler/run', { 'x-cron-secret': 'topsecret' }))
+    expect(res.status).toBe(200)
+    expect(revalidateNavigation).toHaveBeenCalledTimes(1)
   })
 })
 

@@ -7,6 +7,8 @@ export type CategoryRow = {
   parentId: string | null
   sortOrder: number
   showInNav: boolean
+  /** Articole PUBLICATE direct in aceasta categorie (nu si in copii). */
+  postCount: number
 }
 
 export type NavChild = { id: string; name: string; slug: string; href: string }
@@ -17,17 +19,22 @@ function byOrderThenName(a: CategoryRow, b: CategoryRow): number {
   return a.name.localeCompare(b.name, 'ro')
 }
 
+/**
+ * Meniul arata doar categorii cu continut: o subcategorie apare daca are >= 1 articol
+ * publicat direct in ea; un grup apare daca are articole proprii sau cel putin o
+ * subcategorie vizibila.
+ */
 export function buildNavTree(rows: CategoryRow[]): NavGroup[] {
   const visible = rows.filter((r) => r.showInNav)
   const roots = visible.filter((r) => r.parentId === null).sort(byOrderThenName)
 
-  return roots.map((root) => ({
+  const groups: NavGroup[] = roots.map((root) => ({
     id: root.id,
     name: root.name,
     slug: root.slug,
     href: `/${root.slug}`,
     children: visible
-      .filter((r) => r.parentId === root.id)
+      .filter((r) => r.parentId === root.id && r.postCount > 0)
       .sort(byOrderThenName)
       .map((child) => ({
         id: child.id,
@@ -36,6 +43,9 @@ export function buildNavTree(rows: CategoryRow[]): NavGroup[] {
         href: `/${root.slug}/${child.slug}`,
       })),
   }))
+
+  const postCountById = new Map(roots.map((r) => [r.id, r.postCount]))
+  return groups.filter((g) => (postCountById.get(g.id) ?? 0) > 0 || g.children.length > 0)
 }
 
 export type RecentPostRow = {

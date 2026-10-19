@@ -15,6 +15,7 @@ const { prisma } = vi.hoisted(() => ({
 
 vi.mock('@/auth', () => ({ auth: vi.fn(async () => ({ user: { id: 'u1', activeSiteId: 's1' } })) }))
 vi.mock('@/lib/prisma', () => ({ prisma }))
+vi.mock('@/lib/navigation', () => ({ revalidateNavigation: vi.fn(), NAVIGATION_TAG: 'navigation' }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn(), revalidateTag: vi.fn() }))
 vi.mock('@/lib/notifications/email-service', () => ({ notifyPostPublished: vi.fn(async () => {}) }))
 vi.mock('@/lib/seo/internal-linker', () => ({
@@ -36,6 +37,7 @@ import { POST as restore } from './restore/[version]/route'
 import { GET as getRevisions } from './revisions/route'
 import { POST as schedule, DELETE as unschedule } from './schedule/route'
 import { POST as suggestLinks } from './suggest-links/route'
+import { revalidateNavigation } from '@/lib/navigation'
 import { cancelSchedule, schedulePost } from '@/lib/scheduler/smart-scheduler'
 
 const ctx = { params: Promise.resolve({ id: 'p1' }) }
@@ -69,8 +71,12 @@ describe('post subroutes: positive path', () => {
   it('publish', async () => {
     expect((await publish(req('POST'), ctx)).status).toBe(200)
     expect(prisma.post.update).toHaveBeenCalled()
+    expect(revalidateNavigation).toHaveBeenCalledTimes(1)
   })
-  it('unpublish', async () => expect((await unpublish(req('POST'), ctx)).status).toBe(200))
+  it('unpublish', async () => {
+    expect((await unpublish(req('POST'), ctx)).status).toBe(200)
+    expect(revalidateNavigation).toHaveBeenCalledTimes(1)
+  })
   it('restore', async () => expect((await restore(req('POST'), vctx)).status).toBe(200))
   it('revisions GET', async () => expect((await getRevisions(req(), ctx)).status).toBe(200))
   it('schedule POST', async () => {

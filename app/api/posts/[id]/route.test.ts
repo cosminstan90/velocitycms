@@ -14,8 +14,10 @@ const { prisma } = vi.hoisted(() => ({
 
 vi.mock('@/auth', () => ({ auth: vi.fn(async () => ({ user: { id: 'u1', activeSiteId: 's1' } })) }))
 vi.mock('@/lib/prisma', () => ({ prisma }))
+vi.mock('@/lib/navigation', () => ({ revalidateNavigation: vi.fn(), NAVIGATION_TAG: 'navigation' }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn(), revalidateTag: vi.fn() }))
 
+import { revalidateNavigation } from '@/lib/navigation'
 import { GET, PUT, DELETE } from './route'
 
 const ctx = { params: Promise.resolve({ id: 'p1' }) }
@@ -48,6 +50,7 @@ describe('/api/posts/[id] with access', () => {
     const res = await put({ title: 'New', categoryId: 'c1', tagIds: ['t1'], featuredImageId: 'm1' })
     expect(res.status).toBe(200)
     expect(prisma.post.update).toHaveBeenCalled()
+    expect(revalidateNavigation).toHaveBeenCalledTimes(1)
   })
   it('PUT 400 Invalid categoryId for a category of another site (no update)', async () => {
     prisma.category.findFirst.mockResolvedValue(null)

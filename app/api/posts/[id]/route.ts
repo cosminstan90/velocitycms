@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { revalidateNavigation } from '@/lib/navigation'
 import { hasSiteAccess } from '@/lib/site-access'
 import { findInvalidSiteRef } from '@/lib/site-refs'
 import { slugify } from '@/lib/slugify'
@@ -123,6 +124,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
       tags: { include: { tag: true } },
     },
   })
+
+  revalidateNavigation()
 
   try {
     revalidateTag('homepage', { expire: 0 })

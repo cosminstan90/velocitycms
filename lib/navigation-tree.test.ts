@@ -5,7 +5,7 @@ import {
 } from './navigation-tree'
 
 const row = (p: Partial<CategoryRow>): CategoryRow => ({
-  id: 'x', name: 'X', slug: 'x', parentId: null, sortOrder: 0, showInNav: true, ...p,
+  id: 'x', name: 'X', slug: 'x', parentId: null, sortOrder: 0, showInNav: true, postCount: 1, ...p,
 })
 
 describe('buildNavTree', () => {
@@ -50,6 +50,52 @@ describe('buildNavTree', () => {
       row({ id: 'a2', name: 'Ascuns', slug: 'ascuns', parentId: 'a', showInNav: false }),
     ])
     expect(tree[0].children.map((c) => c.slug)).toEqual(['rase'])
+  })
+
+  it('ascunde grupul fara articole si fara subcategorii vizibile', () => {
+    const tree = buildNavTree([
+      row({ id: 'a', name: 'Câini', slug: 'caini', postCount: 0 }),
+      row({ id: 'b', name: 'Pisici', slug: 'pisici', postCount: 0 }),
+      row({ id: 'b1', name: 'Rase', slug: 'rase', parentId: 'b', postCount: 0 }),
+    ])
+    expect(tree).toEqual([])
+  })
+
+  it('pastreaza grupul cu articole proprii si fara copii vizibili', () => {
+    const tree = buildNavTree([
+      row({ id: 'a', name: 'Câini', slug: 'caini', postCount: 3 }),
+      row({ id: 'a1', name: 'Rase', slug: 'rase', parentId: 'a', postCount: 0 }),
+    ])
+    expect(tree.map((g) => g.slug)).toEqual(['caini'])
+    expect(tree[0].children).toEqual([])
+  })
+
+  it('pastreaza grupul gol daca o subcategorie are articole', () => {
+    const tree = buildNavTree([
+      row({ id: 'a', name: 'Câini', slug: 'caini', postCount: 0 }),
+      row({ id: 'a1', name: 'Rase', slug: 'rase', parentId: 'a', postCount: 2 }),
+    ])
+    expect(tree.map((g) => g.slug)).toEqual(['caini'])
+    expect(tree[0].children.map((c) => c.slug)).toEqual(['rase'])
+  })
+
+  it('ascunde subcategoria fara articole', () => {
+    const tree = buildNavTree([
+      row({ id: 'a', name: 'Câini', slug: 'caini', postCount: 1 }),
+      row({ id: 'a1', name: 'Rase', slug: 'rase', parentId: 'a', postCount: 2 }),
+      row({ id: 'a2', name: 'Goala', slug: 'goala', parentId: 'a', postCount: 0 }),
+    ])
+    expect(tree[0].children.map((c) => c.slug)).toEqual(['rase'])
+  })
+
+  it('showInNav fals ramane ascuns chiar daca are articole', () => {
+    const tree = buildNavTree([
+      row({ id: 'a', name: 'Câini', slug: 'caini', postCount: 5, showInNav: false }),
+      row({ id: 'b', name: 'Pisici', slug: 'pisici' }),
+      row({ id: 'b1', name: 'Rase', slug: 'rase', parentId: 'b', postCount: 5, showInNav: false }),
+    ])
+    expect(tree.map((g) => g.slug)).toEqual(['pisici'])
+    expect(tree[0].children).toEqual([])
   })
 
   it('ignora copiii al caror parinte lipseste sau e ascuns', () => {
