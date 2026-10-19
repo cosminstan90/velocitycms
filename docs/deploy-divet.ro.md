@@ -58,7 +58,7 @@ Lansările următoare: `./deploy-pm2.sh` (fără `--seed`, fără `--skip-pull`)
 - **Nu pune `export const revalidate` pe rutele din `app/(frontend)`.** `app/not-found.tsx` citește `headers()` (ca să logheze 404-urile), iar componenta 404 e inclusă în fiecare pagină: orice rută devine dinamică, iar cele cu `revalidate` + `generateStaticParams` dau 500 în producție ("Page changed from static to dynamic"). Toate rutele din `(frontend)` sunt `force-dynamic`. Dev-ul și `tsc` nu prind asta; testul de fum după deploy da.
 - `next build` descarcă fonturile de la Google (`next/font`): serverul are nevoie de acces la internet în timpul build-ului.
 - Build-ul scrie în `.next` cât timp procesul vechi încă rulează: în cele câteva zeci de secunde ale build-ului, câteva cereri pot primi erori.
-- Căutarea ține cont de diacritice: „caini" nu găsește „Câini" (corectarea cere extensia `unaccent` din Postgres sau o coloană normalizată).
+- Căutarea ignoră diacriticele pentru română și literele latine uzuale (translate în SQL, fără extensie). Pe un volum mare de articole interogarea face scanare secvențială; dacă devine lentă, se trece pe o coloană normalizată cu index trigram.
 - Comparațiile (`/comparatie`) nu sunt restilizate: cad pe template-ul `fauna`.
 - Unicitatea slug-ului pe categorii rădăcină nu e garantată de baza de date (în PostgreSQL `NULL` nu e egal cu `NULL`); o garantează aplicația, în API-ul de categorii și în seed-uri.
 - `lib/slugify.ts` pierde literele cu sedilă (ş, ţ) în sluguri.

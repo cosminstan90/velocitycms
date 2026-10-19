@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { SearchDispatcher } from '@/components/frontend/TemplateDispatcher'
 import { CARD_META_KEYS } from '@/lib/fields'
+import { SQL_TRANSLATE_FROM, SQL_TRANSLATE_TO, toContainsPattern } from '@/lib/search'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -48,40 +49,31 @@ export default async function SearchPage({ searchParams }: Props) {
 
   if (query && site) {
     try {
-      const [rawPosts, count] = await Promise.all([
-        prisma.post.findMany({
-          where: {
-            status: 'PUBLISHED',
-            siteId: site.id,
-            OR: [
-              { title: { contains: query, mode: 'insensitive' } },
-              { excerpt: { contains: query, mode: 'insensitive' } },
-            ],
-          },
-          take: MAX_RESULTS,
-          orderBy: { publishedAt: 'desc' },
-          include: {
-            author: { select: { name: true } },
-            category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } },
-            fieldValues: {
-              where: { fieldDefinition: { fieldKey: { in: [...CARD_META_KEYS] } } },
-              select: { value: true, fieldDefinition: { select: { fieldKey: true } } },
-            },
-          },
-        }),
-        prisma.post.count({
-          where: {
-            status: 'PUBLISHED',
-            siteId: site.id,
-            OR: [
-              { title: { contains: query, mode: 'insensitive' } },
-              { excerpt: { contains: query, mode: 'insensitive' } },
-            ],
-          },
-        }),
-      ])
+      // Potrivire fara diacritice: id-urile se aleg in SQL (translate + ILIKE), restul vine prin Prisma.
+      const pattern = toContainsPattern(query)
+      const matches = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT id FROM "Post"
+        WHERE "siteId" = ${site.id} AND status = 'PUBLISHED'
+          AND (translate(title, ${SQL_TRANSLATE_FROM}, ${SQL_TRANSLATE_TO}) ILIKE ${pattern}
+            OR translate(COALESCE(excerpt, ''), ${SQL_TRANSLATE_FROM}, ${SQL_TRANSLATE_TO}) ILIKE ${pattern})`
+      const matchIds = matches.map((m) => m.id)
+      const idFilter = { status: 'PUBLISHED' as const, siteId: site.id, id: { in: matchIds } }
 
-      totalCount = count
+      const rawPosts = await prisma.post.findMany({
+        where: idFilter,
+        take: MAX_RESULTS,
+        orderBy: { publishedAt: 'desc' },
+        include: {
+          author: { select: { name: true } },
+          category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } },
+          fieldValues: {
+            where: { fieldDefinition: { fieldKey: { in: [...CARD_META_KEYS] } } },
+            select: { value: true, fieldDefinition: { select: { fieldKey: true } } },
+          },
+        },
+      })
+
+      totalCount = matchIds.length
 
       const imageIds = rawPosts.map((p) => p.featuredImageId).filter((id): id is string => !!id)
       const mediaItems =
