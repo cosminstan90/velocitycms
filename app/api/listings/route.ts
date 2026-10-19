@@ -8,6 +8,7 @@ import { parsePageParam } from '@/lib/pagination'
 import { LISTING_TYPES, nextFreeSlug, parseListingInput } from '@/lib/listings'
 
 const PAGE_SIZE = 20
+const isUniqueViolation = (e: unknown) => (e as { code?: string })?.code === 'P2002'
 
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest) {
 
   const citySlug = slugify(data.city)
   if (!citySlug) return NextResponse.json({ error: 'Orașul nu poate fi folosit în URL' }, { status: 400 })
+  if (citySlug.length > 100) return NextResponse.json({ error: 'Orașul este prea lung pentru URL' }, { status: 400 })
 
   if (serviceIds.length > 0) {
     const found = await prisma.listingService.findMany({
@@ -81,19 +83,27 @@ export async function POST(req: NextRequest) {
     }
     slug = requestedSlug
   } else {
-    slug = await nextFreeSlug(taken, slugify(data.name) || 'fisa')
+    slug = await nextFreeSlug(taken, slugify(data.name).slice(0, 240) || 'fisa')
   }
 
-  const listing = await prisma.listing.create({
-    data: {
-      ...data,
-      siteId,
-      slug,
-      citySlug,
-      ...(openingHours && { openingHours: openingHours as Prisma.InputJsonValue }),
-      publishedAt: data.status === 'PUBLISHED' ? new Date() : null,
-      services: { create: serviceIds.map((serviceId) => ({ serviceId })) },
-    },
-  })
-  return NextResponse.json({ listing }, { status: 201 })
+  try {
+    const listing = await prisma.listing.create({
+      data: {
+        ...data,
+        siteId,
+        slug,
+        citySlug,
+        ...(openingHours && { openingHours: openingHours as Prisma.InputJsonValue }),
+        publishedAt: data.status === 'PUBLISHED' ? new Date() : null,
+        services: { create: serviceIds.map((serviceId) => ({ serviceId })) },
+      },
+    })
+    return NextResponse.json({ listing }, { status: 201 })
+  } catch (e) {
+    // cursa pe cheia unica (tip, oras, slug)
+    if (isUniqueViolation(e)) {
+      return NextResponse.json({ error: 'Există deja o fișă cu acest slug în oraș' }, { status: 409 })
+    }
+    throw e
+  }
 }

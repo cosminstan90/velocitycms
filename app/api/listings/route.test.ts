@@ -12,6 +12,7 @@ vi.mock('@/auth', () => ({ auth: vi.fn(async () => ({ user: { id: 'u1', activeSi
 vi.mock('@/lib/prisma', () => ({ prisma }))
 vi.mock('@/lib/site', () => ({ getSiteIdFromRequest: vi.fn(async () => 's1') }))
 
+import { auth } from '@/auth'
 import { GET, POST } from './route'
 
 const body = {
@@ -82,7 +83,32 @@ describe('POST /api/listings', () => {
   })
 })
 
+describe('POST /api/listings edge cases', () => {
+  it('409 on a unique-key race (P2002)', async () => {
+    prisma.listing.create.mockRejectedValue(Object.assign(new Error('dup'), { code: 'P2002' }))
+    expect((await post(body)).status).toBe(409)
+  })
+  it('rethrows other create errors', async () => {
+    prisma.listing.create.mockRejectedValue(new Error('boom'))
+    await expect(post(body)).rejects.toThrow('boom')
+  })
+  it('400 for an over-long explicit slug', async () => {
+    expect((await post({ ...body, slug: 'a'.repeat(241) })).status).toBe(400)
+  })
+  it('400 when the city slug is longer than 100 chars', async () => {
+    expect((await post({ ...body, city: 'ß'.repeat(60) })).status).toBe(400)
+  })
+  it('truncates the derived base slug to 240 chars', async () => {
+    await post({ ...body, name: 'a'.repeat(255) })
+    expect(prisma.listing.create.mock.calls[0][0].data.slug).toHaveLength(240)
+  })
+})
+
 describe('GET /api/listings', () => {
+  it('401 without a session', async () => {
+    vi.mocked(auth).mockResolvedValueOnce(null as never)
+    expect((await GET(new NextRequest('http://localhost/api/listings'))).status).toBe(401)
+  })
   it('scopes by site and applies filters', async () => {
     await GET(new NextRequest('http://localhost/api/listings?type=VET&status=DRAFT&page=2'))
     const args = prisma.listing.findMany.mock.calls[0][0]

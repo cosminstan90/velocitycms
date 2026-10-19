@@ -11,6 +11,7 @@ vi.mock('@/auth', () => ({ auth: vi.fn(async () => ({ user: { id: 'u1', activeSi
 vi.mock('@/lib/prisma', () => ({ prisma }))
 vi.mock('@/lib/site', () => ({ getSiteIdFromRequest: vi.fn(async () => 's1') }))
 
+import { auth } from '@/auth'
 import { GET, POST } from './route'
 
 const post = (body: unknown) =>
@@ -40,6 +41,20 @@ describe('POST /api/listing-services', () => {
     expect(prisma.listingService.create).toHaveBeenCalledWith({
       data: { siteId: 's1', type: 'VET', name: 'Urgențe 24/7', slug: 'urgente-247' },
     })
+  })
+})
+
+describe('POST /api/listing-services edge cases', () => {
+  it('409 on a unique-key race (P2002)', async () => {
+    prisma.listingService.create.mockRejectedValue(Object.assign(new Error('dup'), { code: 'P2002' }))
+    expect((await post({ type: 'VET', name: 'Urgențe' })).status).toBe(409)
+  })
+  it('400 for a slug longer than 100 chars', async () => {
+    expect((await post({ type: 'VET', name: 'Urgențe', slug: 'a'.repeat(101) })).status).toBe(400)
+  })
+  it('401 without a session', async () => {
+    vi.mocked(auth).mockResolvedValueOnce(null as never)
+    expect((await post({ type: 'VET', name: 'Urgențe' })).status).toBe(401)
   })
 })
 

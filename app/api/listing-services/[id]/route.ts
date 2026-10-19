@@ -3,6 +3,8 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/slugify'
 
+const isUniqueViolation = (e: unknown) => (e as { code?: string })?.code === 'P2002'
+
 type Params = { params: Promise<{ id: string }> }
 
 export async function PUT(req: NextRequest, { params }: Params) {
@@ -20,7 +22,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
   // Slug-ul ramane stabil: fisele publice nu il folosesc in URL, dar filtrul ?serviciu= da.
   const slug = body?.slug ? slugify(String(body.slug)) : existing.slug
-  if (!slug) return NextResponse.json({ error: 'Slug invalid' }, { status: 400 })
+  if (!slug || slug.length > 100) return NextResponse.json({ error: 'Slug invalid' }, { status: 400 })
 
   if (slug !== existing.slug) {
     const conflict = await prisma.listingService.findFirst({
@@ -29,8 +31,15 @@ export async function PUT(req: NextRequest, { params }: Params) {
     if (conflict) return NextResponse.json({ error: 'Există deja un serviciu cu acest slug' }, { status: 409 })
   }
 
-  const service = await prisma.listingService.update({ where: { id }, data: { name, slug } })
-  return NextResponse.json({ service })
+  try {
+    const service = await prisma.listingService.update({ where: { id }, data: { name, slug } })
+    return NextResponse.json({ service })
+  } catch (e) {
+    if (isUniqueViolation(e)) {
+      return NextResponse.json({ error: 'Există deja un serviciu cu acest slug' }, { status: 409 })
+    }
+    throw e
+  }
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {

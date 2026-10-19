@@ -5,6 +5,8 @@ import { getSiteIdFromRequest } from '@/lib/site'
 import { slugify } from '@/lib/slugify'
 import { isListingType, LISTING_TYPES } from '@/lib/listings'
 
+const isUniqueViolation = (e: unknown) => (e as { code?: string })?.code === 'P2002'
+
 export async function GET(req: NextRequest) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -34,11 +36,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Numele trebuie să aibă între 2 și 100 de caractere' }, { status: 400 })
   }
   const slug = slugify(body?.slug ? String(body.slug) : name)
-  if (!slug) return NextResponse.json({ error: 'Slug invalid' }, { status: 400 })
+  if (!slug || slug.length > 100) return NextResponse.json({ error: 'Slug invalid' }, { status: 400 })
 
   const existing = await prisma.listingService.findFirst({ where: { siteId, type, slug } })
   if (existing) return NextResponse.json({ error: 'Există deja un serviciu cu acest slug' }, { status: 409 })
 
-  const service = await prisma.listingService.create({ data: { siteId, type, name, slug } })
-  return NextResponse.json({ service }, { status: 201 })
+  try {
+    const service = await prisma.listingService.create({ data: { siteId, type, name, slug } })
+    return NextResponse.json({ service }, { status: 201 })
+  } catch (e) {
+    if (isUniqueViolation(e)) {
+      return NextResponse.json({ error: 'Există deja un serviciu cu acest slug' }, { status: 409 })
+    }
+    throw e
+  }
 }

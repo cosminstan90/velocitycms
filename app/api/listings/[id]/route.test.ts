@@ -11,6 +11,7 @@ const { prisma } = vi.hoisted(() => ({
 vi.mock('@/auth', () => ({ auth: vi.fn(async () => ({ user: { id: 'u1' } })) }))
 vi.mock('@/lib/prisma', () => ({ prisma }))
 
+import { auth } from '@/auth'
 import { GET, PUT, DELETE } from './route'
 
 const ctx = { params: Promise.resolve({ id: 'l1' }) }
@@ -94,6 +95,32 @@ describe('PUT /api/listings/[id]', () => {
       deleteMany: {},
       create: [{ serviceId: 'sv1' }],
     })
+  })
+})
+
+describe('PUT /api/listings/[id] edge cases', () => {
+  it('409 on a unique-key race (P2002)', async () => {
+    prisma.listing.update.mockRejectedValue(Object.assign(new Error('dup'), { code: 'P2002' }))
+    expect((await put(body)).status).toBe(409)
+  })
+  it('400 for an over-long explicit slug', async () => {
+    expect((await put({ ...body, slug: 'a'.repeat(241) })).status).toBe(400)
+  })
+  it('400 when the city slug is longer than 100 chars', async () => {
+    expect((await put({ ...body, city: 'ß'.repeat(60) })).status).toBe(400)
+  })
+  it('400 when a type change leaves services of the old type', async () => {
+    prisma.listingService.findMany.mockResolvedValue([])
+    expect((await put({ ...body, type: 'GROOMER', serviceIds: ['sv1'] })).status).toBe(400)
+    expect(prisma.listingService.findMany.mock.calls[0][0].where).toMatchObject({ type: 'GROOMER', siteId: 's1' })
+  })
+  it('clears the service links when serviceIds is omitted', async () => {
+    await put(body)
+    expect(prisma.listing.update.mock.calls[0][0].data.services).toEqual({ deleteMany: {}, create: [] })
+  })
+  it('401 without a session', async () => {
+    vi.mocked(auth).mockResolvedValueOnce(null as never)
+    expect((await put(body)).status).toBe(401)
   })
 })
 

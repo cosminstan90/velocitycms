@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/slugify'
 import { nextFreeSlug, parseListingInput } from '@/lib/listings'
 
+const isUniqueViolation = (e: unknown) => (e as { code?: string })?.code === 'P2002'
+
 type Params = { params: Promise<{ id: string }> }
 
 export async function GET(_req: NextRequest, { params }: Params) {
@@ -34,6 +36,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   const citySlug = slugify(data.city)
   if (!citySlug) return NextResponse.json({ error: 'Orașul nu poate fi folosit în URL' }, { status: 400 })
+  if (citySlug.length > 100) return NextResponse.json({ error: 'Orașul este prea lung pentru URL' }, { status: 400 })
 
   if (serviceIds.length > 0) {
     const found = await prisma.listingService.findMany({
@@ -64,18 +67,26 @@ export async function PUT(req: NextRequest, { params }: Params) {
     }
   }
 
-  const listing = await prisma.listing.update({
-    where: { id },
-    data: {
-      ...data,
-      slug,
-      citySlug,
-      openingHours: openingHours ? (openingHours as Prisma.InputJsonValue) : Prisma.DbNull,
-      publishedAt: data.status === 'PUBLISHED' ? (existing.publishedAt ?? new Date()) : null,
-      services: { deleteMany: {}, create: serviceIds.map((serviceId) => ({ serviceId })) },
-    },
-  })
-  return NextResponse.json({ listing })
+  try {
+    const listing = await prisma.listing.update({
+      where: { id },
+      data: {
+        ...data,
+        slug,
+        citySlug,
+        openingHours: openingHours ? (openingHours as Prisma.InputJsonValue) : Prisma.DbNull,
+        publishedAt: data.status === 'PUBLISHED' ? (existing.publishedAt ?? new Date()) : null,
+        services: { deleteMany: {}, create: serviceIds.map((serviceId) => ({ serviceId })) },
+      },
+    })
+    return NextResponse.json({ listing })
+  } catch (e) {
+    // cursa pe cheia unica (tip, oras, slug)
+    if (isUniqueViolation(e)) {
+      return NextResponse.json({ error: 'Există deja o fișă cu acest slug în oraș' }, { status: 409 })
+    }
+    throw e
+  }
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
