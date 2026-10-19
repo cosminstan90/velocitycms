@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
+import { findInvalidSiteRef } from '@/lib/site-refs'
 import { getSiteIdFromRequest } from '@/lib/site'
 import { slugify } from '@/lib/slugify'
 import { appendRevision } from '@/lib/revisions'
@@ -15,6 +17,7 @@ export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams
   const siteId = (await getSiteIdFromRequest(req)) ?? session.user.activeSiteId
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   const status = p.get('status') as string | null
   const categoryId = p.get('categoryId') as string | null
@@ -82,9 +85,13 @@ export async function POST(req: NextRequest) {
 
   const siteId = body.siteId ?? session.user.activeSiteId
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
   if (!title) return NextResponse.json({ error: 'title required' }, { status: 400 })
 
   const slug = body.slug ? slugify(body.slug) : slugify(title)
+
+  const invalidRef = await findInvalidSiteRef(siteId, { categoryId, tagIds, featuredImageId, ogImageId })
+  if (invalidRef) return NextResponse.json({ error: `Invalid ${invalidRef}` }, { status: 400 })
 
   const existing = await prisma.post.findFirst({ where: { siteId, slug } })
   if (existing) return NextResponse.json({ error: 'Slug already exists for this site' }, { status: 409 })

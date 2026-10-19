@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
+import { findInvalidSiteRef } from '@/lib/site-refs'
 import { slugify } from '@/lib/slugify'
 import { appendRevision } from '@/lib/revisions'
 import { calculateGeoScore } from '@/lib/seo/geo-scorer'
@@ -26,7 +28,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     },
   })
 
-  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!post || !(await hasSiteAccess(session.user.id, post.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json({ post: { ...post, siteId: post.site?.id ?? null } })
 }
 
@@ -38,7 +40,15 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const body = await req.json()
 
   const post = await prisma.post.findUnique({ where: { id } })
-  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!post || !(await hasSiteAccess(session.user.id, post.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  const invalidRef = await findInvalidSiteRef(post.siteId, {
+    categoryId: body.categoryId,
+    tagIds: body.tagIds,
+    featuredImageId: body.featuredImageId,
+    ogImageId: body.ogImageId,
+  })
+  if (invalidRef) return NextResponse.json({ error: `Invalid ${invalidRef}` }, { status: 400 })
 
   // Save revision before updating
   const revisions = appendRevision(post.revisions, {
@@ -231,7 +241,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
   const { id } = await params
   const post = await prisma.post.findUnique({ where: { id } })
-  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!post || !(await hasSiteAccess(session.user.id, post.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   if (post.status !== 'DRAFT' && post.status !== 'ARCHIVED') {
     return NextResponse.json(

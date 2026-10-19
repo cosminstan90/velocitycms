@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 
 type FieldValueItem = { fieldDefinitionId: string; value: string }
 
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params
   const post = await prisma.post.findUnique({ where: { id } })
-  if (!post) return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+  if (!post || !(await hasSiteAccess(session.user.id, post.siteId))) return NextResponse.json({ error: 'Post not found' }, { status: 404 })
 
   const values = await prisma.fieldValue.findMany({
     where: { postId: id },
@@ -26,7 +27,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params
   const post = await prisma.post.findUnique({ where: { id } })
-  if (!post) return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+  if (!post || !(await hasSiteAccess(session.user.id, post.siteId))) return NextResponse.json({ error: 'Post not found' }, { status: 404 })
 
   let body: any
   try {
