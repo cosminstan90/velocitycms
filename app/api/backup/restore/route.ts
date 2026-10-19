@@ -11,6 +11,8 @@ import { promisify } from 'util'
 import fs from 'fs/promises'
 import { auth } from '@/auth'
 import { resolveBackupPath } from '@/lib/backup/storage'
+import { getSiteIdFromRequest } from '@/lib/site'
+import { isSiteAdmin } from '@/lib/site-access'
 
 const execAsync = promisify(exec)
 
@@ -40,6 +42,12 @@ export async function POST(req: NextRequest) {
     backupFile?: string
     confirm?: boolean
     siteId?: string
+  }
+
+  const siteId = body.siteId || (await getSiteIdFromRequest(req))
+  if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await isSiteAdmin(session.user.id, siteId))) {
+    return NextResponse.json({ error: 'Site admin required' }, { status: 403 })
   }
 
   if (!body.confirm) {

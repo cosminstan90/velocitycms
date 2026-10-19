@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { getSiteIdFromRequest } from '@/lib/site'
+import { isSiteAdmin } from '@/lib/site-access'
 
 export async function DELETE(
   req: NextRequest,
@@ -26,8 +27,8 @@ export async function DELETE(
   })
   if (!key) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  // Ensure the key belongs to the current site
-  if (key.siteId !== siteId) {
+  // Ensure the key belongs to the current site, and the user administers it
+  if (key.siteId !== siteId || !(await isSiteAdmin(session.user.id, key.siteId))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
