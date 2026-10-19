@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { id } = await params
   const field = await prisma.fieldDefinition.findUnique({ where: { id } })
-  if (!field) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!field || !(await hasSiteAccess(session.user.id, field.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json({ fieldDefinition: field })
 }
 
@@ -14,6 +18,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
+  const field = await prisma.fieldDefinition.findUnique({ where: { id } })
+  if (!field || !(await hasSiteAccess(session.user.id, field.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
   const payload = await req.json()
   const updates: any = {}
 
@@ -23,9 +30,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (payload.showInSchema !== undefined) updates.showInSchema = Boolean(payload.showInSchema)
   if (payload.schemaProperty !== undefined) updates.schemaProperty = payload.schemaProperty ? String(payload.schemaProperty) : null
   if (payload.sortOrder !== undefined) updates.sortOrder = Number(payload.sortOrder)
-
-  const field = await prisma.fieldDefinition.findUnique({ where: { id } })
-  if (!field) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Avoid accidental key collision by key changing via separate endpoint (not handled here)
 
@@ -39,7 +43,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const { id } = await params
   const field = await prisma.fieldDefinition.findUnique({ where: { id } })
-  if (!field) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!field || !(await hasSiteAccess(session.user.id, field.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const count = await prisma.fieldValue.count({ where: { fieldDefinitionId: id } })
   if (count > 0) {

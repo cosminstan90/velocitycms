@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { refreshRedirectsCache } from '@/lib/redis/redirects'
 
 type Params = { params: Promise<{ id: string }> }
@@ -12,7 +13,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   const { id } = await params
   const existing = await prisma.redirect.findUnique({ where: { id } })
-  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!existing || !(await hasSiteAccess(session.user.id, existing.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const body = await req.json() as {
     fromPath?: string
@@ -58,7 +59,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
 
   const { id } = await params
   const existing = await prisma.redirect.findUnique({ where: { id } })
-  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!existing || !(await hasSiteAccess(session.user.id, existing.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   await prisma.redirect.delete({ where: { id } })
   await refreshRedirectsCache(existing.siteId)

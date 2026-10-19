@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 
 type PostType = 'POST' | 'PAGE'
 type FieldType = 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'SELECT' | 'BOOLEAN' | 'DATE' | 'URL'
@@ -20,12 +21,15 @@ function slugify(input: string): string {
 }
 
 export async function GET(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const siteId = req.nextUrl.searchParams.get('siteId')
   const postType = (req.nextUrl.searchParams.get('postType') ?? 'POST').toUpperCase() as PostType
 
   if (!siteId) {
     return NextResponse.json({ error: 'siteId is required' }, { status: 400 })
   }
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
   if (!validPostTypes.includes(postType)) {
     return NextResponse.json({ error: 'Invalid postType' }, { status: 400 })
   }
@@ -54,6 +58,8 @@ export async function POST(req: NextRequest) {
   if (!siteId || !fieldLabel || !fieldType) {
     return NextResponse.json({ error: 'siteId, fieldLabel and fieldType are required' }, { status: 400 })
   }
+
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   const normalizedPostType = String(postType).toUpperCase() as PostType
   if (!validPostTypes.includes(normalizedPostType)) {
