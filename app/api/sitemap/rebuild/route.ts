@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { getSiteIdFromRequest } from '@/lib/site'
 
 export async function POST(req: NextRequest) {
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
 
   const siteId = await getSiteIdFromRequest(req)
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   // Revalidate all sitemap-related paths
   revalidatePath('/sitemap.xml')
@@ -48,6 +50,7 @@ export async function GET(req: NextRequest) {
 
   const siteId = await getSiteIdFromRequest(req)
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   const [postCount, pageCount, topCatCount, subCatCount, seo] = await Promise.all([
     prisma.post.count({ where: { siteId, status: 'PUBLISHED', noIndex: false } }),

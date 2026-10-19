@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -14,6 +15,7 @@ export async function GET(req: NextRequest) {
 
   const siteId = req.nextUrl.searchParams.get('siteId') ?? session.user.activeSiteId
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   const settings = await prisma.siteScheduleSettings.findUnique({ where: { siteId } })
   if (!settings) {
@@ -46,6 +48,7 @@ export async function PUT(req: NextRequest) {
 
   const siteId = body.siteId ?? session.user.activeSiteId
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   // Validate preferredTimes format "HH:MM"
   if (body.preferredTimes) {
