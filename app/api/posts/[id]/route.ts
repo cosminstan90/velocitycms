@@ -42,6 +42,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const post = await prisma.post.findUnique({ where: { id } })
   if (!post || !(await hasSiteAccess(session.user.id, post.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  if (body.tagIds === null) return NextResponse.json({ error: 'Invalid tagIds' }, { status: 400 })
   const invalidRef = await findInvalidSiteRef(post.siteId, {
     categoryId: body.categoryId,
     tagIds: body.tagIds,

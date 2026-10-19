@@ -29,6 +29,7 @@ vi.mock('@/lib/rate-limit', () => ({
   rateLimitResponse: vi.fn(),
 }))
 
+import { rateLimit } from '@/lib/rate-limit'
 import { GET as list } from './route'
 import { GET, PUT, DELETE } from './[id]/route'
 import { POST as upload } from './upload/route'
@@ -93,6 +94,12 @@ describe('media upload routes', () => {
     expect(fsMock.writeFile).not.toHaveBeenCalled()
     expect(prisma.media.create).not.toHaveBeenCalled()
   })
+  it('upload 403 does not consume rate-limit quota', async () => {
+    const fd = new FormData()
+    fd.set('file', new File(['x'], 'a.pdf', { type: 'application/pdf' }))
+    expect((await upload(new NextRequest('http://localhost/api/media/upload', { method: 'POST', body: fd }))).status).toBe(403)
+    expect(rateLimit).not.toHaveBeenCalled()
+  })
   it('upload/url 403 without access and no download is attempted', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
     const res = await uploadUrl(
@@ -111,5 +118,6 @@ describe('media upload routes', () => {
     const res = await upload(new NextRequest('http://localhost/api/media/upload', { method: 'POST', body: fd }))
     expect(res.status).toBe(201)
     expect(prisma.media.create).toHaveBeenCalled()
+    expect(rateLimit).toHaveBeenCalledTimes(1)
   })
 })

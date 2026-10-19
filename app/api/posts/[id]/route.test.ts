@@ -71,6 +71,19 @@ describe('/api/posts/[id] with access', () => {
     expect(await res.json()).toEqual({ error: 'Invalid featuredImageId' })
     expect(prisma.post.update).not.toHaveBeenCalled()
   })
+  it('PUT 400 Invalid ogImageId for media of another site', async () => {
+    prisma.media.findFirst.mockResolvedValue(null)
+    const res = await put({ ogImageId: 'foreign' })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ error: 'Invalid ogImageId' })
+    expect(prisma.post.update).not.toHaveBeenCalled()
+  })
+  it.each([['a string', 'abc'], ['an object', { length: 1 }], ['null', null]])('PUT 400 Invalid tagIds when tagIds is %s (not a 500)', async (_n, tagIds) => {
+    const res = await put({ tagIds })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ error: 'Invalid tagIds' })
+    expect(prisma.post.update).not.toHaveBeenCalled()
+  })
   it('PUT allows clearing relations with null', async () => {
     const res = await put({ categoryId: null, featuredImageId: null, tagIds: [] })
     expect(res.status).toBe(200)

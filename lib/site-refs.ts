@@ -17,6 +17,7 @@ export async function findInvalidSiteRef(siteId: string, refs: SiteRefs): Promis
     const category = await prisma.category.findFirst({ where: { id: String(refs.categoryId), siteId }, select: { id: true } })
     if (!category) return 'categoryId'
   }
+  if (refs.tagIds !== undefined && refs.tagIds !== null && !Array.isArray(refs.tagIds)) return 'tagIds'
   if (Array.isArray(refs.tagIds) && refs.tagIds.length > 0) {
     const ids = [...new Set(refs.tagIds.map(String))]
     const count = await prisma.tag.count({ where: { id: { in: ids }, siteId } })

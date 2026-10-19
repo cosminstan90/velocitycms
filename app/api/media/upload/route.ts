@@ -40,10 +40,6 @@ export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Rate limit: 20 uploads per hour per user
-  const rl = await rateLimit(`upload:${session.user.id}`, 20, 3600)
-  if (!rl.allowed) return rateLimitResponse(rl)
-
   let formData: FormData
   try {
     formData = await req.formData()
@@ -58,6 +54,10 @@ export async function POST(req: NextRequest) {
   if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
   if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
+
+  // Rate limit: 20 uploads per hour per user (counted only for requests that passed the access check)
+  const rl = await rateLimit(`upload:${session.user.id}`, 20, 3600)
+  if (!rl.allowed) return rateLimitResponse(rl)
   if (file.size > MAX_SIZE) return NextResponse.json({ error: 'File too large (max 20 MB)' }, { status: 422 })
 
   const kind = ALLOWED_TYPES[file.type]

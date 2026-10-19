@@ -79,6 +79,19 @@ describe('POST /api/posts', () => {
     expect(await res.json()).toEqual({ error: 'Invalid tagIds' })
     expect(prisma.post.create).not.toHaveBeenCalled()
   })
+  it('400 Invalid ogImageId for media of another site', async () => {
+    prisma.media.findFirst.mockResolvedValue(null)
+    const res = await post({ siteId: 's1', title: 'Hello', ogImageId: 'foreign' })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ error: 'Invalid ogImageId' })
+    expect(prisma.post.create).not.toHaveBeenCalled()
+  })
+  it('400 Invalid tagIds when tagIds is not an array', async () => {
+    const res = await post({ siteId: 's1', title: 'Hello', tagIds: 'abc' })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ error: 'Invalid tagIds' })
+    expect(prisma.post.create).not.toHaveBeenCalled()
+  })
   it('400 Invalid featuredImageId for media of another site', async () => {
     prisma.media.findFirst.mockResolvedValue(null)
     const res = await post({ siteId: 's1', title: 'Hello', featuredImageId: 'foreign' })
