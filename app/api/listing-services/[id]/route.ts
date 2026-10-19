@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { slugify } from '@/lib/slugify'
 
 const isUniqueViolation = (e: unknown) => (e as { code?: string })?.code === 'P2002'
@@ -13,7 +14,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const { id } = await params
 
   const existing = await prisma.listingService.findUnique({ where: { id } })
-  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!existing || !(await hasSiteAccess(session.user.id, existing.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const body = await req.json().catch(() => null)
   const name = typeof body?.name === 'string' ? body.name.trim() : ''
@@ -47,8 +48,8 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
 
-  const existing = await prisma.listingService.findUnique({ where: { id }, select: { id: true } })
-  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  const existing = await prisma.listingService.findUnique({ where: { id }, select: { id: true, siteId: true } })
+  if (!existing || !(await hasSiteAccess(session.user.id, existing.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Legaturile se sterg in cascada; fisele raman, doar fara acest serviciu.
   await prisma.listingService.delete({ where: { id } })

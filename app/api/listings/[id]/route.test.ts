@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server'
 
 const { prisma } = vi.hoisted(() => ({
   prisma: {
+    userSiteAccess: { findUnique: vi.fn() },
     listing: { findUnique: vi.fn(), findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn(), delete: vi.fn() },
     listingService: { findMany: vi.fn() },
   },
@@ -35,6 +36,7 @@ const put = (b: unknown) =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  prisma.userSiteAccess.findUnique.mockResolvedValue({ id: 'a1' })
   prisma.listing.findUnique.mockResolvedValue(existing)
   prisma.listing.findFirst.mockResolvedValue(null)
   prisma.listing.findMany.mockResolvedValue([])
@@ -140,5 +142,27 @@ describe('DELETE /api/listings/[id]', () => {
     expect((await DELETE(new NextRequest('http://localhost/api/listings/l1', { method: 'DELETE' }), ctx)).status).toBe(404)
     expect((await DELETE(new NextRequest('http://localhost/api/listings/l1', { method: 'DELETE' }), ctx)).status).toBe(200)
     expect(prisma.listing.delete).toHaveBeenCalledWith({ where: { id: 'l1' } })
+  })
+})
+
+describe('site access', () => {
+  beforeEach(() => {
+    prisma.userSiteAccess.findUnique.mockResolvedValue(null)
+  })
+  it('404 on GET for a listing of a site the user cannot access', async () => {
+    const res = await GET(new NextRequest('http://localhost/api/listings/l1'), ctx)
+    expect(res.status).toBe(404)
+    expect(prisma.userSiteAccess.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { userId_siteId: { userId: 'u1', siteId: 's1' } } }),
+    )
+  })
+  it('404 on PUT and no update', async () => {
+    expect((await put(body)).status).toBe(404)
+    expect(prisma.listing.update).not.toHaveBeenCalled()
+  })
+  it('404 on DELETE and no delete', async () => {
+    const res = await DELETE(new NextRequest('http://localhost/api/listings/l1', { method: 'DELETE' }), ctx)
+    expect(res.status).toBe(404)
+    expect(prisma.listing.delete).not.toHaveBeenCalled()
   })
 })
