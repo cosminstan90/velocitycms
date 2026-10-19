@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/slugify'
+import { SQL_TRANSLATE_FROM, SQL_TRANSLATE_TO, toContainsPattern } from '@/lib/search'
 import { toCardProps } from '@/lib/post-card'
 import {
   LISTING_TYPES,
@@ -63,6 +64,18 @@ export function metaDescription(text: string | null | undefined, fallback: strin
   const cut = clean.slice(0, max + 1)
   const lastSpace = cut.lastIndexOf(' ')
   return (lastSpace > 0 ? cut.slice(0, lastSpace) : clean.slice(0, max)).replace(/[\s,;:.\-–]+$/, '')
+}
+
+export const SEARCH_MIN = 2
+export const SEARCH_MAX = 80
+
+/** Textul cautat din `?q=`: prima valoare, spatii colapsate, minim 2 si maxim 80 de caractere; altfel null. */
+export function normalizeSearchQuery(raw: string | string[] | undefined): string | null {
+  const value = Array.isArray(raw) ? raw[0] : raw
+  if (typeof value !== 'string') return null
+  const clean = value.replace(/\s+/g, ' ').trim()
+  if (clean.length < SEARCH_MIN) return null
+  return clean.slice(0, SEARCH_MAX).trim()
 }
 
 export type CityCount = { citySlug: string; city: string; count: number }
@@ -236,6 +249,36 @@ export async function listPublished(args: {
     }),
     prisma.listing.count({ where }),
   ])
+  return { rows, cards: rows.map(listingCard), total, totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)) }
+}
+
+/** Cautare fara diacritice in fisele publicate: nume, oras, judet, adresa sau numele unui serviciu legat. */
+export async function searchListings(args: { siteId: string; q: string; page: number }) {
+  const pattern = toContainsPattern(args.q)
+  const matches = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT l."id" FROM "Listing" l
+    WHERE l."siteId" = ${args.siteId} AND l."status" = 'PUBLISHED'
+      AND (translate(l."name", ${SQL_TRANSLATE_FROM}, ${SQL_TRANSLATE_TO}) ILIKE ${pattern}
+        OR translate(l."city", ${SQL_TRANSLATE_FROM}, ${SQL_TRANSLATE_TO}) ILIKE ${pattern}
+        OR translate(l."county", ${SQL_TRANSLATE_FROM}, ${SQL_TRANSLATE_TO}) ILIKE ${pattern}
+        OR translate(COALESCE(l."address", ''), ${SQL_TRANSLATE_FROM}, ${SQL_TRANSLATE_TO}) ILIKE ${pattern}
+        OR EXISTS (
+          SELECT 1 FROM "ListingServiceLink" k
+          JOIN "ListingService" s ON s."id" = k."serviceId"
+          WHERE k."listingId" = l."id"
+            AND translate(s."name", ${SQL_TRANSLATE_FROM}, ${SQL_TRANSLATE_TO}) ILIKE ${pattern}))
+    ORDER BY l."featured" DESC, l."name" ASC, l."id" ASC`
+  const total = matches.length
+  const ids = matches.slice((args.page - 1) * PAGE_SIZE, args.page * PAGE_SIZE).map((m) => m.id)
+  const found =
+    ids.length === 0
+      ? []
+      : await prisma.listing.findMany({
+          where: { id: { in: ids }, siteId: args.siteId, status: 'PUBLISHED' },
+          include: { services: { include: { service: { select: { name: true } } } } },
+        })
+  const order = new Map(ids.map((id, i) => [id, i]))
+  const rows = found.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
   return { rows, cards: rows.map(listingCard), total, totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)) }
 }
 
