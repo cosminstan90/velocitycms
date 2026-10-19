@@ -61,6 +61,5 @@ Lansările următoare: `./deploy-pm2.sh` (fără `--seed`, fără `--skip-pull`)
 - Căutarea ignoră diacriticele pentru română și literele latine uzuale (translate în SQL, fără extensie). Pe un volum mare de articole interogarea face scanare secvențială; dacă devine lentă, se trece pe o coloană normalizată cu index trigram.
 - Comparațiile (`/comparatie`) nu sunt restilizate: cad pe template-ul `fauna`.
 - Unicitatea slug-ului pe categorii rădăcină nu e garantată de baza de date (în PostgreSQL `NULL` nu e egal cu `NULL`); o garantează aplicația, în API-ul de categorii și în seed-uri.
-- `lib/slugify.ts` pierde literele cu sedilă (ş, ţ) în sluguri.
 - `contentHtml` se afișează fără sanitizare (comportament existent): token-ul de publisher trebuie tratat ca secret.
 - Rich Results Test (Google) nu poate fi rulat de aici: după lansare, verifică manual un articol cu FAQ.
