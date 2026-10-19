@@ -21,3 +21,29 @@ describe('hasSiteAccess', () => {
     expect(await hasSiteAccess('u1', 's2')).toBe(false)
   })
 })
+
+import { getSiteRole, isSiteAdmin } from './site-access'
+
+describe('getSiteRole / isSiteAdmin', () => {
+  it('returns the row role, queried by the composite key', async () => {
+    prisma.userSiteAccess.findUnique.mockResolvedValue({ role: 'EDITOR' })
+    expect(await getSiteRole('u1', 's1')).toBe('EDITOR')
+    expect(prisma.userSiteAccess.findUnique).toHaveBeenCalledWith({
+      where: { userId_siteId: { userId: 'u1', siteId: 's1' } },
+      select: { role: true },
+    })
+  })
+  it('null without a row', async () => {
+    prisma.userSiteAccess.findUnique.mockResolvedValue(null)
+    expect(await getSiteRole('u1', 's1')).toBeNull()
+    expect(await isSiteAdmin('u1', 's1')).toBe(false)
+  })
+  it('isSiteAdmin only for ADMIN', async () => {
+    prisma.userSiteAccess.findUnique.mockResolvedValue({ role: 'ADMIN' })
+    expect(await isSiteAdmin('u1', 's1')).toBe(true)
+    prisma.userSiteAccess.findUnique.mockResolvedValue({ role: 'EDITOR' })
+    expect(await isSiteAdmin('u1', 's1')).toBe(false)
+    prisma.userSiteAccess.findUnique.mockResolvedValue({ role: 'AUTHOR' })
+    expect(await isSiteAdmin('u1', 's1')).toBe(false)
+  })
+})
