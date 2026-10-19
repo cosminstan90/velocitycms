@@ -282,11 +282,18 @@ export async function POST(req: NextRequest) {
   }
   const authorId = siteAccess.userId
 
+  // ── Find existing post (needed before scheduling decisions) ─────────────
+  const existing = publisherPageId
+    ? await prisma.post.findFirst({ where: { siteId, publisherPageId } })
+    : await prisma.post.findFirst({ where: { siteId, slug } })
+
   // ── Smart scheduler ──────────────────────────────────────────────────────
+  // The scheduler spaces NEW publications; it must never unpublish a live post.
+  const keepPublished = rawStatus === 'published' && existing?.status === 'PUBLISHED'
   let scheduledAt: Date | null = null
   let finalStatus: 'DRAFT' | 'PUBLISHED' = rawStatus === 'published' ? 'PUBLISHED' : 'DRAFT'
 
-  if (rawStatus === 'published') {
+  if (rawStatus === 'published' && !keepPublished) {
     const slot = await getSmartScheduledAt(siteId)
     if (slot) {
       scheduledAt = slot
@@ -295,10 +302,6 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Upsert post ─────────────────────────────────────────────────────────
-  const existing = publisherPageId
-    ? await prisma.post.findFirst({ where: { siteId, publisherPageId } })
-    : await prisma.post.findFirst({ where: { siteId, slug } })
-
   let post: { id: string; slug: string }
 
   if (existing) {
@@ -312,7 +315,7 @@ export async function POST(req: NextRequest) {
         focusKeyword: focusKeyword ?? null,
         status: finalStatus,
         scheduledAt,
-        publishedAt: finalStatus === 'PUBLISHED' ? now : existing.publishedAt,
+        publishedAt: finalStatus === 'PUBLISHED' && !keepPublished ? now : existing.publishedAt,
         geoScore,
         geoBreakdown: geoBreakdown !== null ? asJson(geoBreakdown) : Prisma.JsonNull,
         directAnswer,
