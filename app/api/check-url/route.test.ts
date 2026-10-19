@@ -56,12 +56,21 @@ describe('POST /api/check-url', () => {
     ['control character', '/a\u0000b'],
     ['newline', '/a\nb'],
     ['non-string', 5],
-  ])('400 and no fetch for an unsafe path (%s)', async (_n, p) => {
+  ])('returns a null-status entry and never fetches an unsafe path (%s)', async (_n, p) => {
     const res = await call(['/ok', p])
-    expect(res.status).toBe(400)
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(res.status).toBe(200)
+    const { results } = await res.json()
+    expect(results).toHaveLength(2)
+    expect(results[0]).toMatchObject({ path: '/ok', status: 200 })
+    expect(results[1]).toEqual({ path: p, status: null, redirected: false, finalUrl: null })
+    expect(fetchMock.mock.calls.map((c) => String(c[0]))).toEqual(['https://site.example/ok'])
   })
-  it('400 when paths is not an array', async () => {
+  it('keeps a path prefix of the site URL', async () => {
+    prisma.seoSettings.findUnique.mockResolvedValue({ siteUrl: 'https://site.example/sub/' })
+    await call(['/a?x=1'])
+    expect(fetchMock.mock.calls.map((c) => String(c[0]))).toEqual(['https://site.example/sub/a?x=1'])
+  })
+  it('400 when paths is missing or not an array', async () => {
     expect((await call('/a')).status).toBe(400)
   })
 })

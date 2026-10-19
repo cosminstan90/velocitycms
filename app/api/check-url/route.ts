@@ -20,27 +20,37 @@ export async function POST(request: NextRequest) {
   if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   const { paths } = await request.json() as { paths: string[] }
-  if (!Array.isArray(paths) || !paths.every(isSafePath)) {
-    return NextResponse.json({ error: 'Invalid path' }, { status: 400 })
+  if (!Array.isArray(paths)) {
+    return NextResponse.json({ error: 'paths must be an array' }, { status: 400 })
   }
 
   const seo = await prisma.seoSettings.findUnique({ where: { siteId } })
   const siteUrl = (seo?.siteUrl ?? 'http://localhost:3000').replace(/\/$/, '')
 
-  let siteOrigin: string
+  let siteBase: URL
   try {
-    siteOrigin = new URL(siteUrl).origin
+    siteBase = new URL(siteUrl)
   } catch {
     return NextResponse.json({ error: 'Invalid site URL' }, { status: 400 })
   }
+  // Keep a path prefix of the site URL (https://host/sub) but never let the host change
+  const basePath = siteBase.pathname.replace(/\/$/, '')
 
-  const targets = paths.map((path) => ({ path, url: new URL(path, siteUrl) }))
-  if (targets.some((t) => t.url.origin !== siteOrigin)) {
-    return NextResponse.json({ error: 'Invalid path' }, { status: 400 })
+  // Resolve a path to a URL on the site's own origin, or null when it is unsafe
+  const resolveTarget = (path: unknown): URL | null => {
+    if (!isSafePath(path)) return null
+    try {
+      const url = new URL(`${siteBase.origin}${basePath}${path}`)
+      return url.origin === siteBase.origin ? url : null
+    } catch {
+      return null
+    }
   }
 
   const results = await Promise.all(
-    targets.map(async ({ path, url }) => {
+    paths.map(async (path: string) => {
+      const url = resolveTarget(path)
+      if (!url) return { path, status: null, redirected: false, finalUrl: null }
       try {
         const res = await fetch(url, {
           method: 'HEAD',
