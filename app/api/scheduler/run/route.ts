@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { revalidateNavigation } from '@/lib/navigation'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { notifyPostPublished } from '@/lib/notifications/email-service'
 
@@ -62,6 +63,7 @@ export async function GET(req: NextRequest) {
       })
 
       // ── ISR invalidation ─────────────────────────────────────────────────
+      revalidateNavigation()
       try {
         revalidateTag('homepage', { expire: 0 })
         revalidateTag('posts', { expire: 0 })

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { ogImages } from '@/lib/default-og'
 import { HomepageDispatcher } from '@/components/frontend/TemplateDispatcher'
 import { CARD_META_KEYS } from '@/lib/fields'
 import type { Metadata } from 'next'
@@ -16,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
         title: seo.defaultMetaTitle ?? seo.siteName,
         description: seo.defaultMetaDesc ?? undefined,
         url: seo.siteUrl,
-        images: seo.defaultOgImage ? [{ url: seo.defaultOgImage }] : [],
+        images: ogImages(seo.siteUrl, seo.defaultOgImage),
       },
       alternates: { canonical: seo.siteUrl },
     }

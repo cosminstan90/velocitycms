@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { ogImages } from '@/lib/default-og'
 import { ArticleDispatcher } from '@/components/frontend/TemplateDispatcher'
 import { generatePostSchema } from '@/lib/seo/schema-generator'
 import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
@@ -58,11 +59,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.ogTitle ?? title,
       description: post.ogDescription ?? description,
       url: canonical,
-      images: ogImageUrl ? [{ url: ogImageUrl }] : [],
+      images: ogImages(siteUrl, ogImageUrl),
       type: 'article',
       publishedTime: post.publishedAt?.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
     },
+    twitter: { card: 'summary_large_image', images: ogImages(siteUrl, ogImageUrl) },
     alternates: { canonical },
   }
 }

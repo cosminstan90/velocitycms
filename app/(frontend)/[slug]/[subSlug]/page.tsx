@@ -10,6 +10,7 @@
  *   [subSlug] = subcategory or article slug (was [slug])
  */
 import { prisma } from '@/lib/prisma'
+import { ogImages } from '@/lib/default-og'
 import { parsePageParam } from '@/lib/pagination'
 import { ArticleDispatcher, CategoryDispatcher } from '@/components/frontend/TemplateDispatcher'
 import { generatePostSchema, generateCategorySchema } from '@/lib/seo/schema-generator'
@@ -91,7 +92,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: `${title} | ${siteName}`,
       description,
-      openGraph: { title, description, url: canonical, images: defaultOgImage ? [{ url: defaultOgImage }] : [] },
+      openGraph: { title, description, url: canonical, images: ogImages(siteUrl, defaultOgImage) },
       alternates: { canonical },
     }
   }
@@ -132,11 +133,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.ogTitle ?? title,
       description: post.ogDescription ?? description,
       url: canonical,
-      images: ogImageUrl ? [{ url: ogImageUrl }] : [],
+      images: ogImages(siteUrl, ogImageUrl),
       type: 'article',
       publishedTime: post.publishedAt?.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
     },
+    twitter: { card: 'summary_large_image', images: ogImages(siteUrl, ogImageUrl) },
     alternates: { canonical },
   }
 }

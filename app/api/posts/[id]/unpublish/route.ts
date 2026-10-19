@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { hasSiteAccess } from '@/lib/site-access'
 import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidateNavigation } from '@/lib/navigation'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -22,6 +23,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     data: { status: 'DRAFT', publishedAt: null },
     select: { id: true, slug: true, status: true, publishedAt: true },
   })
+
+  revalidateNavigation()
 
   try {
     revalidateTag('homepage', { expire: 0 })

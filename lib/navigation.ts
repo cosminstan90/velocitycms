@@ -1,4 +1,4 @@
-import { unstable_cache } from 'next/cache'
+import { revalidateTag, unstable_cache } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { buildNavTree, toGroupPost, type GroupPost, type NavGroup, type RecentPostRow } from '@/lib/navigation-tree'
 
@@ -6,21 +6,43 @@ export type { NavGroup, NavChild, GroupPost } from '@/lib/navigation-tree'
 
 export const NAVIGATION_TAG = 'navigation'
 
+export const POSTS_TAG = 'posts'
+
+/**
+ * Invalideaza meniul si listele recente; de apelat dupa orice operatie care schimba
+ * ce articole sunt PUBLISHED sau categoria lor. Nu arunca niciodata.
+ */
+export function revalidateNavigation(): void {
+  try {
+    revalidateTag(NAVIGATION_TAG, { expire: 0 })
+    revalidateTag(POSTS_TAG, { expire: 0 })
+  } catch {
+    // in afara unui context Next (teste, scripturi) revalidateTag poate arunca
+  }
+}
+
 export function getNavigation(siteId: string): Promise<NavGroup[]> {
   return unstable_cache(
     async () => {
-      const rows = await prisma.category.findMany({
-        where: { siteId },
-        select: { id: true, name: true, slug: true, parentId: true, sortOrder: true, showInNav: true },
-      })
-      return buildNavTree(rows)
+      const [categories, counts] = await Promise.all([
+        prisma.category.findMany({
+          where: { siteId },
+          select: { id: true, name: true, slug: true, parentId: true, sortOrder: true, showInNav: true },
+        }),
+        prisma.post.groupBy({
+          by: ['categoryId'],
+          where: { siteId, status: 'PUBLISHED', categoryId: { not: null } },
+          _count: { _all: true },
+        }),
+      ])
+      const countById = new Map(counts.map((c) => [c.categoryId, c._count._all]))
+      return buildNavTree(categories.map((c) => ({ ...c, postCount: countById.get(c.id) ?? 0 })))
     },
     ['divet-nav', siteId],
     { revalidate: 1800, tags: [NAVIGATION_TAG] },
   )()
 }
 
-export const POSTS_TAG = 'posts'
 const RECENT_PER_GROUP = 6
 
 /** Cele mai recente articole publicate din fiecare grup (radacina + subcategoriile ei), fara cache. */

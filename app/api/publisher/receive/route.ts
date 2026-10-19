@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { prisma } from '@/lib/prisma'
+import { revalidateNavigation } from '@/lib/navigation'
 import { processImage, saveProcessedImage, generateAltText } from '@/lib/media/image-processor'
 import { siteUploadDir, sitePublicPrefix } from '@/lib/media/storage'
 import { calculateGeoScore } from '@/lib/seo/geo-scorer'
@@ -410,6 +411,7 @@ export async function POST(req: NextRequest) {
 
   // ── Revalidate public paths ─────────────────────────────────────────────
   const publicPath = buildPublicPath({ categorySlug, subCategorySlug, postSlug: post.slug })
+  revalidateNavigation()
   try {
     revalidatePath(publicPath)
     revalidatePath('/sitemap.xml')

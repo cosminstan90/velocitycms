@@ -28,7 +28,7 @@ export default async function DivetHomepage({ latestPosts, site, seoSettings }: 
   const groups = nav ? nav.groups.filter((g) => (nav.recentByGroup[g.id] ?? []).length > 0) : []
 
   return (
-    <DivetLayout site={{ siteName: site.siteName, siteUrl: site.siteUrl }}>
+    <DivetLayout site={{ siteName: site.siteName, siteUrl: site.siteUrl }} headerSearch={false}>
       <div className="mx-auto w-full max-w-[1100px] px-4 md:px-10">
         <section className="py-10 lg:py-14">
           <h1 className="m-0 font-dv-display text-[34px] leading-[1.08] font-bold tracking-[-0.03em] text-balance text-dv-ink sm:text-[52px]">

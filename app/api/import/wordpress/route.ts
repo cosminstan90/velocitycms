@@ -6,6 +6,7 @@ import { WordPressImporter } from '@/lib/import/wordpress-importer'
 import { prisma } from '@/lib/prisma'
 import { getSiteIdFromRequest } from '@/lib/site'
 import { isSiteAdmin } from '@/lib/site-access'
+import { revalidateNavigation } from '@/lib/navigation'
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -80,6 +81,7 @@ export async function POST(req: NextRequest) {
       })
 
       importer.importAll(onProgress).then((result) => {
+        revalidateNavigation()
         sendEvent({ ...result, step: 'completed' })
         controller.close()
         // Cleanup

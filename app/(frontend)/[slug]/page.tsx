@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { ogImages } from '@/lib/default-og'
 import { parsePageParam } from '@/lib/pagination'
 import { CategoryDispatcher } from '@/components/frontend/TemplateDispatcher'
 import StaticPageTemplate from '@/components/frontend/shared/StaticPageTemplate'
@@ -44,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title,
         description,
         url: canonical,
-        images: seo?.defaultOgImage ? [{ url: seo.defaultOgImage }] : [],
+        images: ogImages(siteUrl, seo?.defaultOgImage),
       },
       alternates: { canonical },
     }
@@ -70,6 +71,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title,
         description,
         url: canonical,
+        images: ogImages(siteUrl),
       },
       alternates: { canonical },
     }

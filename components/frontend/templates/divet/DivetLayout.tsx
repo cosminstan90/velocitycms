@@ -8,10 +8,12 @@ export interface DivetLayoutProps {
   site: { siteName: string; siteUrl: string }
   /** Slug-ul grupului radacina activ (subliniat in navigatie). */
   activeGroup?: string | null
+  /** Cautarea din header (ascunsa pe homepage, unde exista cea din hero). */
+  headerSearch?: boolean
   children: React.ReactNode
 }
 
-export default async function DivetLayout({ site, activeGroup, children }: DivetLayoutProps) {
+export default async function DivetLayout({ site, activeGroup, headerSearch = true, children }: DivetLayoutProps) {
   let groups: NavGroup[] = []
   let recent: Record<string, GroupPost[]> = {}
   let hasDirectory = false
@@ -29,7 +31,7 @@ export default async function DivetLayout({ site, activeGroup, children }: Divet
 
   return (
     <div className="min-h-screen flex flex-col font-dv-body bg-dv-bg text-dv-ink">
-      <DivetHeader siteName={site.siteName} />
+      <DivetHeader siteName={site.siteName} showSearch={headerSearch} />
       <DivetNav groups={groups} recentByGroup={recent} activeSlug={activeGroup} extraLinks={hasDirectory ? [{ label: 'Director', href: '/director' }] : []} />
       <main className="flex-1">{children}</main>
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-dv-border px-4 py-6 text-dv-meta text-dv-ink-muted md:px-10">

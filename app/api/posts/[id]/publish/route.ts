@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { hasSiteAccess } from '@/lib/site-access'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { notifyPostPublished } from '@/lib/notifications/email-service'
+import { revalidateNavigation } from '@/lib/navigation'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -20,6 +21,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     data: { status: 'PUBLISHED', publishedAt: new Date() },
     select: { id: true, slug: true, status: true, publishedAt: true },
   })
+
+  revalidateNavigation()
 
   try {
     // ── Tag-based invalidation (for pages using unstable_cache) ────────────
