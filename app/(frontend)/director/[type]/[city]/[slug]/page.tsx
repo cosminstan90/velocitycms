@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getPublishedListing, getRelatedArticles, loadDirectorySite } from '@/lib/director'
+import { getPublishedListing, getRelatedArticles, loadDirectorySite, metaDescription } from '@/lib/director'
 import { TYPE_LABEL, listingPath, typeFromSegment } from '@/lib/listings'
 import { generateListingSchema } from '@/lib/seo/listing-schema'
 import ListingTemplate from '@/components/frontend/templates/divet/ListingTemplate'
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const fallback = `${TYPE_LABEL[type].singular} în ${listing.city}: date de contact, program și servicii.`
   return {
     title: `${listing.name} – ${TYPE_LABEL[type].singular} în ${listing.city} | ${ctx.siteData.siteName}`,
-    description: (listing.description ?? fallback).slice(0, 155),
+    description: metaDescription(listing.description, fallback),
     alternates: { canonical: `${base}${listingPath(listing)}` },
   }
 }
