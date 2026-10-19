@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server'
 
 const { prisma } = vi.hoisted(() => ({
   prisma: {
+    userSiteAccess: { findUnique: vi.fn() },
     listingService: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn() },
   },
 }))
@@ -19,6 +20,7 @@ const post = (body: unknown) =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  prisma.userSiteAccess.findUnique.mockResolvedValue({ id: 'a1' })
   prisma.listingService.findFirst.mockResolvedValue(null)
   prisma.listingService.create.mockImplementation(async ({ data }: { data: object }) => ({ id: 'n1', ...data }))
   prisma.listingService.findMany.mockResolvedValue([])
@@ -64,5 +66,18 @@ describe('GET /api/listing-services', () => {
     expect(prisma.listingService.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { siteId: 's1', type: 'VET' } }),
     )
+  })
+})
+
+describe('site access', () => {
+  it('403 on GET without access', async () => {
+    prisma.userSiteAccess.findUnique.mockResolvedValue(null)
+    expect((await GET(new NextRequest('http://localhost/api/listing-services'))).status).toBe(403)
+    expect(prisma.listingService.findMany).not.toHaveBeenCalled()
+  })
+  it('403 on POST without access', async () => {
+    prisma.userSiteAccess.findUnique.mockResolvedValue(null)
+    expect((await post({ type: 'VET', name: 'Urgențe' })).status).toBe(403)
+    expect(prisma.listingService.create).not.toHaveBeenCalled()
   })
 })

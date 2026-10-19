@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { slugify } from '@/lib/slugify'
 import { nextFreeSlug, parseListingInput, pickCanonicalSpelling } from '@/lib/listings'
 
@@ -18,7 +19,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     where: { id },
     include: { services: { select: { serviceId: true } } },
   })
-  if (!listing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!listing || !(await hasSiteAccess(session.user.id, listing.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json({ listing })
 }
 
@@ -28,7 +29,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const { id } = await params
 
   const existing = await prisma.listing.findUnique({ where: { id } })
-  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!existing || !(await hasSiteAccess(session.user.id, existing.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const parsed = parseListingInput(await req.json().catch(() => null))
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 })
@@ -108,8 +109,8 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
 
-  const existing = await prisma.listing.findUnique({ where: { id }, select: { id: true } })
-  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  const existing = await prisma.listing.findUnique({ where: { id }, select: { id: true, siteId: true } })
+  if (!existing || !(await hasSiteAccess(session.user.id, existing.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   await prisma.listing.delete({ where: { id } })
   return NextResponse.json({ success: true })

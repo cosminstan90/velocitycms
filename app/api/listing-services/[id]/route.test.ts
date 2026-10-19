@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server'
 
 const { prisma } = vi.hoisted(() => ({
   prisma: {
+    userSiteAccess: { findUnique: vi.fn() },
     listingService: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn(), delete: vi.fn() },
   },
 }))
@@ -22,6 +23,7 @@ const del = () =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  prisma.userSiteAccess.findUnique.mockResolvedValue({ id: 'a1' })
   prisma.listingService.findUnique.mockResolvedValue(existing)
   prisma.listingService.findFirst.mockResolvedValue(null)
   prisma.listingService.update.mockImplementation(async ({ data }: { data: object }) => ({ ...existing, ...data }))
@@ -70,5 +72,19 @@ describe('DELETE /api/listing-services/[id]', () => {
   it('200 deletes', async () => {
     expect((await del()).status).toBe(200)
     expect(prisma.listingService.delete).toHaveBeenCalledWith({ where: { id: 'sv1' } })
+  })
+})
+
+describe('site access', () => {
+  beforeEach(() => {
+    prisma.userSiteAccess.findUnique.mockResolvedValue(null)
+  })
+  it('404 on PUT for a service of a site the user cannot access, no update', async () => {
+    expect((await put({ name: 'Nou' })).status).toBe(404)
+    expect(prisma.listingService.update).not.toHaveBeenCalled()
+  })
+  it('404 on DELETE, no delete', async () => {
+    expect((await del()).status).toBe(404)
+    expect(prisma.listingService.delete).not.toHaveBeenCalled()
   })
 })
