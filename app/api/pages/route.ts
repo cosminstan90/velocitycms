@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { getSiteIdFromRequest } from '@/lib/site'
 import { slugify } from '@/lib/slugify'
 import { appendRevision } from '@/lib/revisions'
@@ -15,6 +16,7 @@ export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams
   const siteId = (await getSiteIdFromRequest(req)) ?? session.user.activeSiteId
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   const status = p.get('status') as string | null
   const search = p.get('search') as string | null
@@ -61,6 +63,7 @@ export async function POST(req: NextRequest) {
   const siteId = body.siteId ?? session.user.activeSiteId
 
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
   if (!title) return NextResponse.json({ error: 'title required' }, { status: 400 })
 
   const slug = body.slug ? slugify(body.slug) : slugify(title)

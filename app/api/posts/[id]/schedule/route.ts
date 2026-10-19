@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import {
   getNextAvailableSlot,
   schedulePost,
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     where: { id },
     select: { id: true, siteId: true, status: true },
   })
-  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!post || !(await hasSiteAccess(session.user.id, post.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   let targetDate: Date
 
@@ -118,9 +119,9 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
   const post = await prisma.post.findUnique({
     where: { id },
-    select: { id: true },
+    select: { id: true, siteId: true },
   })
-  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!post || !(await hasSiteAccess(session.user.id, post.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   await cancelSchedule(id)
 

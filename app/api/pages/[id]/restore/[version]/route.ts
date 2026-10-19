@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { appendRevision, type Revision } from '@/lib/revisions'
 
 type Params = { params: Promise<{ id: string; version: string }> }
@@ -13,7 +14,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const versionNum = parseInt(version)
 
   const page = await prisma.page.findUnique({ where: { id } })
-  if (!page) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!page || !(await hasSiteAccess(session.user.id, page.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const revisions = Array.isArray(page.revisions) ? (page.revisions as unknown as Revision[]) : []
   const target = revisions.find((r) => r.version === versionNum)

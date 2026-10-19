@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { slugify } from '@/lib/slugify'
 import { appendRevision } from '@/lib/revisions'
 
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     },
   })
 
-  if (!page) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!page || !(await hasSiteAccess(session.user.id, page.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json({ page })
 }
 
@@ -32,7 +33,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const body = await req.json()
 
   const page = await prisma.page.findUnique({ where: { id } })
-  if (!page) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!page || !(await hasSiteAccess(session.user.id, page.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const revisions = appendRevision(page.revisions, {
     savedAt: new Date().toISOString(),
@@ -90,7 +91,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
   const { id } = await params
   const page = await prisma.page.findUnique({ where: { id } })
-  if (!page) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!page || !(await hasSiteAccess(session.user.id, page.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   if (page.status !== 'DRAFT' && page.status !== 'ARCHIVED') {
     return NextResponse.json({ error: 'Only DRAFT or ARCHIVED pages can be deleted' }, { status: 409 })

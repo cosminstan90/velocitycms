@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { getLinksAlreadyInContent } from '@/lib/seo/internal-linker'
 
 type Params = { params: Promise<{ id: string }> }
@@ -26,9 +27,9 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   const post = await prisma.post.findUnique({
     where: { id },
-    select: { contentHtml: true },
+    select: { contentHtml: true, siteId: true },
   })
-  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!post || !(await hasSiteAccess(session.user.id, post.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const links = getLinksAlreadyInContent(post.contentHtml)
 

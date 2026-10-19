@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { getSiteIdFromRequest } from '@/lib/site'
 import { refreshRedirectsCache } from '@/lib/redis/redirects'
 
@@ -14,6 +15,7 @@ export async function GET(req: NextRequest) {
 
   const siteId = (await getSiteIdFromRequest(req)) ?? session.user.activeSiteId
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   const page  = Math.max(1, parseInt(req.nextUrl.searchParams.get('page')  ?? '1'))
   const limit = Math.min(100, parseInt(req.nextUrl.searchParams.get('limit') ?? '50'))
@@ -74,6 +76,7 @@ export async function POST(req: NextRequest) {
 
   const siteId = body.siteId ?? session.user.activeSiteId
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   const { fromPath, toPath, statusCode = 301 } = body
 

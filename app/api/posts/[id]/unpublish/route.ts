@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { revalidatePath, revalidateTag } from 'next/cache'
 
 type Params = { params: Promise<{ id: string }> }
@@ -12,9 +13,9 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { id } = await params
   const post = await prisma.post.findUnique({
     where: { id },
-    select: { id: true, slug: true, categoryId: true, category: { select: { slug: true, parentId: true, parent: { select: { slug: true } } } } },
+    select: { id: true, siteId: true, slug: true, categoryId: true, category: { select: { slug: true, parentId: true, parent: { select: { slug: true } } } } },
   })
-  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!post || !(await hasSiteAccess(session.user.id, post.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const updated = await prisma.post.update({
     where: { id },

@@ -66,7 +66,7 @@ export default function CustomFieldsSettingsPage() {
   const loadDefinitions = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/field-definitions?siteId=localhost&postType=${tab}`)
+      const res = await fetch(`/api/field-definitions?postType=${tab}`)
       if (!res.ok) throw new Error(await res.text())
       const data = await res.json()
       setDefs((data.fieldDefinitions ?? []).sort((a:any,b:any)=>a.sortOrder-b.sortOrder))
@@ -101,7 +101,6 @@ export default function CustomFieldsSettingsPage() {
   const saveFieldDef = async () => {
     try {
       const body: any = {
-        siteId: 'localhost',
         postType: tab,
         fieldLabel: form.fieldLabel,
         fieldKey: form.fieldKey || slugify(form.fieldLabel),

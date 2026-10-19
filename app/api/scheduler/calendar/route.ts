@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -25,6 +26,7 @@ export async function GET(req: NextRequest) {
   const monthStr = sp.get('month')   // e.g. "2026-03"
 
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   // Parse month range
   let monthStart: Date

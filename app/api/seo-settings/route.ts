@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { getSiteIdFromRequest } from '@/lib/site'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -17,6 +18,7 @@ export async function GET(req: NextRequest) {
 
   const siteId = (await getSiteIdFromRequest(req)) ?? session.user.activeSiteId
   if (!siteId) return NextResponse.json({ error: 'No active site' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   const seo = await prisma.seoSettings.findUnique({ where: { siteId } })
   return NextResponse.json({ seo })
@@ -28,6 +30,7 @@ export async function PUT(req: NextRequest) {
 
   const siteId = (await getSiteIdFromRequest(req)) ?? session.user.activeSiteId
   if (!siteId) return NextResponse.json({ error: 'No active site' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   const body = await req.json() as {
     siteName?: string

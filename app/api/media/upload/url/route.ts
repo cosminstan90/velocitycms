@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { processImage, saveProcessedImage, generateAltText } from '@/lib/media/image-processor'
 import { siteUploadDir, sitePublicPrefix } from '@/lib/media/storage'
 import { getSiteIdFromRequest } from '@/lib/site'
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
   const siteId = (await getSiteIdFromRequest(req)) ?? bodySiteId ?? session.user.activeSiteId
   if (!url) return NextResponse.json({ error: 'url required' }, { status: 400 })
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
 
   // Download the image
   let imageBuffer: Buffer

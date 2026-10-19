@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import { refreshRedirectsCache } from '@/lib/redis/redirects'
 
 export async function POST(req: NextRequest) {
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json() as { csv?: string; siteId?: string }
   const siteId = body.siteId ?? session.user.activeSiteId
   if (!siteId) return NextResponse.json({ error: 'siteId required' }, { status: 400 })
+  if (!(await hasSiteAccess(session.user.id, siteId))) return NextResponse.json({ error: 'Site access denied' }, { status: 403 })
   if (!body.csv) return NextResponse.json({ error: 'csv required' }, { status: 400 })
 
   const lines = body.csv

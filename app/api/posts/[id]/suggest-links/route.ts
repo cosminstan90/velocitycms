@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 import {
   getSuggestedLinks,
   invalidateLinkSuggestionsCache,
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     where: { id },
     select: { id: true, contentHtml: true, siteId: true, title: true },
   })
-  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!post || !(await hasSiteAccess(session.user.id, post.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Invalidate cache if force=true
   if (force) {

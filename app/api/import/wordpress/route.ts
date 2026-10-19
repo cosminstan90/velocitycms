@@ -1,13 +1,19 @@
 import { NextRequest } from 'next/server'
+import { auth } from '@/auth'
 import { writeFile, unlink } from 'fs/promises'
 import path from 'path'
 import { WordPressImporter } from '@/lib/import/wordpress-importer'
 import { prisma } from '@/lib/prisma'
 import { getSiteIdFromRequest } from '@/lib/site'
+import { isSiteAdmin } from '@/lib/site-access'
 
 export async function POST(req: NextRequest) {
-  const siteId = await getSiteIdFromRequest(req)
+  const session = await auth()
+  if (!session?.user) return new Response('Unauthorized', { status: 401 })
+
+  const siteId = (await getSiteIdFromRequest(req)) ?? session.user.activeSiteId
   if (!siteId) return new Response('siteId required', { status: 400 })
+  if (!(await isSiteAdmin(session.user.id, siteId))) return new Response('Site admin required', { status: 403 })
 
   const formData = await req.formData()
   const file = formData.get('file') as File

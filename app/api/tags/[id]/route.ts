@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { hasSiteAccess } from '@/lib/site-access'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -9,6 +10,9 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
+  const tag = await prisma.tag.findUnique({ where: { id }, select: { id: true, siteId: true } })
+  if (!tag || !(await hasSiteAccess(session.user.id, tag.siteId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
   const detach = req.nextUrl.searchParams.get('detach') === 'true'
 
   const postCount = await prisma.postTag.count({ where: { tagId: id } })
