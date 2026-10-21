@@ -68,6 +68,8 @@ export interface PublisherPayload {
   fieldValues?: Array<{ fieldKey: string; value: string }>
   /** Tag slugs — create if missing, then attach to post */
   tags?: string[]
+  /** ISO 8601 date. With status 'published' and a future date, the post is stored as DRAFT and published at that time. */
+  scheduledAt?: string | null
 }
 
 export async function POST(req: NextRequest) {
@@ -117,6 +119,7 @@ export async function POST(req: NextRequest) {
     speakableSections: providedSpeakable = null,
     fieldValues: rawFieldValues = [],
     tags: rawTags = [],
+    scheduledAt: rawScheduledAt = null,
   } = body
 
   if (!title || !slug || !contentHtml) {
@@ -124,6 +127,27 @@ export async function POST(req: NextRequest) {
   }
   if (subCategorySlug && !categorySlug) {
     return NextResponse.json({ error: 'subCategorySlug requires categorySlug' }, { status: 400 })
+  }
+
+  // ── Validate explicit scheduledAt (before any side effect) ───────────────
+  let explicitSchedule: Date | null = null
+  if (rawScheduledAt !== null && rawScheduledAt !== undefined && rawScheduledAt !== '') {
+    const parsed = typeof rawScheduledAt === 'string' ? new Date(rawScheduledAt) : new Date(NaN)
+    if (Number.isNaN(parsed.getTime())) {
+      return NextResponse.json(
+        { error: 'scheduledAt must be a valid ISO 8601 date (e.g. 2026-10-23T05:00:00.000Z)' },
+        { status: 400 }
+      )
+    }
+    if (rawStatus === 'published') {
+      if (parsed.getTime() <= Date.now() + 60_000) {
+        return NextResponse.json(
+          { error: 'scheduledAt must be more than 1 minute in the future' },
+          { status: 400 }
+        )
+      }
+      explicitSchedule = parsed
+    }
   }
 
   // ── Find or create category (rădăcină + subcategorie opțională) ──────────
@@ -293,7 +317,14 @@ export async function POST(req: NextRequest) {
   let scheduledAt: Date | null = null
   let finalStatus: 'DRAFT' | 'PUBLISHED' = rawStatus === 'published' ? 'PUBLISHED' : 'DRAFT'
 
-  if (rawStatus === 'published' && !keepPublished) {
+  if (explicitSchedule && keepPublished) {
+    return NextResponse.json({ error: 'post already published' }, { status: 400 })
+  }
+
+  if (explicitSchedule) {
+    scheduledAt = explicitSchedule
+    finalStatus = 'DRAFT' // Scheduler cron will publish at scheduledAt
+  } else if (rawStatus === 'published' && !keepPublished) {
     const slot = await getSmartScheduledAt(siteId)
     if (slot) {
       scheduledAt = slot

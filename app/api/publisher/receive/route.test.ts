@@ -126,4 +126,50 @@ describe('POST /api/publisher/receive', () => {
     expect(data.scheduledAt).toBe(SLOT)
     expect(data.publishedAt).toBeNull()
   })
+
+  describe('explicit scheduledAt', () => {
+    const future = () => new Date(Date.now() + 3 * 86_400_000).toISOString()
+
+    it('stores a NEW post as DRAFT with that scheduledAt and skips the scheduler', async () => {
+      const at = future()
+      const res = await send({ scheduledAt: at })
+      expect(res.status).toBe(201)
+      expect(getSmartScheduledAt).not.toHaveBeenCalled()
+      const data = prisma.post.create.mock.calls[0][0].data
+      expect(data.status).toBe('DRAFT')
+      expect(data.scheduledAt).toEqual(new Date(at))
+      expect(data.publishedAt).toBeNull()
+      expect((await res.json()).scheduledAt).toBe(at)
+    })
+
+    it('schedules an existing DRAFT post explicitly', async () => {
+      prisma.post.findFirst.mockResolvedValue(existingPost('DRAFT'))
+      const at = future()
+      const res = await send({ scheduledAt: at })
+      expect(res.status).toBe(200)
+      expect(getSmartScheduledAt).not.toHaveBeenCalled()
+      expect(prisma.post.update.mock.calls[0][0].data.scheduledAt).toEqual(new Date(at))
+    })
+
+    it('400 on an invalid date', async () => {
+      const res = await send({ scheduledAt: 'not-a-date' })
+      expect(res.status).toBe(400)
+      expect(prisma.post.create).not.toHaveBeenCalled()
+    })
+
+    it('400 on a past date or one less than a minute ahead', async () => {
+      expect((await send({ scheduledAt: '2020-01-01T00:00:00.000Z' })).status).toBe(400)
+      const soon = new Date(Date.now() + 30_000).toISOString()
+      expect((await send({ scheduledAt: soon })).status).toBe(400)
+      expect(prisma.post.create).not.toHaveBeenCalled()
+    })
+
+    it('400 when the post is already PUBLISHED', async () => {
+      prisma.post.findFirst.mockResolvedValue(existingPost('PUBLISHED'))
+      const res = await send({ scheduledAt: future() })
+      expect(res.status).toBe(400)
+      expect((await res.json()).error).toBe('post already published')
+      expect(prisma.post.update).not.toHaveBeenCalled()
+    })
+  })
 })
