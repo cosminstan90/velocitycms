@@ -16,7 +16,10 @@ import { ArticleDispatcher, CategoryDispatcher } from '@/components/frontend/Tem
 import { generatePostSchema, generateCategorySchema } from '@/lib/seo/schema-generator'
 import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
+import { headers } from 'next/headers'
+import { findLegacyRedirect } from '@/lib/legacy-redirects'
+import { getSiteIdFromHostname } from '@/lib/site'
 import { CARD_META_KEYS } from '@/lib/fields'
 
 export const dynamic = 'force-dynamic'
@@ -64,6 +67,15 @@ async function mapPostsWithImages(posts: Array<{ id: string; featuredImageId: st
     const m = p.featuredImageId ? (mediaMap.get(p.featuredImageId) ?? null) : null
     return { ...p, featuredImage: m ? { url: m.url, altText: m.altText ?? null, width: m.width ?? null, height: m.height ?? null } : null }
   })
+}
+
+/** Active site: by request host, falling back to the only root category with this slug. */
+async function resolveSiteId(groupSlug: string): Promise<string | null> {
+  const host = (await headers()).get('host') ?? ''
+  const bySite = host ? await getSiteIdFromHostname(host).catch(() => null) : null
+  if (bySite) return bySite
+  const roots = await prisma.category.findMany({ where: { slug: groupSlug, parentId: null }, select: { siteId: true }, take: 2 })
+  return roots.length === 1 ? roots[0].siteId : null
 }
 
 // ─── generateStaticParams ─────────────────────────────────────────────────────
@@ -225,7 +237,14 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
     },
   })
 
-  if (!post) notFound()
+  if (!post) {
+    // Legacy URL (/group/slug -> /group/sub/slug) or explicit alias: permanent redirect.
+    // Next only offers 308 from server components (no 301).
+    const siteId = await resolveSiteId(categorySlug)
+    const target = siteId ? await findLegacyRedirect({ siteId, group: categorySlug, slug }) : null
+    if (target) permanentRedirect(target)
+    notFound()
+  }
 
   const { siteName, siteUrl, defaultOgImage, template, seo } = await getSiteData(post.siteId)
   const featuredImage = await fetchFeaturedImage(post.featuredImageId)
