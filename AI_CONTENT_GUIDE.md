@@ -334,11 +334,11 @@ Anii verificabili contează ca statistici: anul înființării unui club de ras�
 - răspunsurile FAQ au 2–3 propoziții și repetă numele rasei, ca să poată fi citate singure
 - compară cu rase sau situații apropiate: tabelul comparativ și 2–3 linkuri interne către rasele comparate
 
-### Limitări cunoscute ale CMS-ului
+### Tabele și scorul de autor
 
-1. **Tabelele din `contentHtml` strică `contentJson`.** API-ul de publicare transformă HTML în JSON fără suport pentru `<table>`: tabelul devine un paragraf de text fără caracterele `<`. Pagina publică arată corect, pentru că se afișează din `contentHtml`, dar editorul din admin încarcă `contentJson` și va afișa text stricat; o salvare din editor poate stârni același text și pe pagina publică. Până la repararea parserului, pune tabelul comparativ ca `comparisonBlock` (în editor, `/compare`) și verifică `contentJson` după publicare.
-2. **Scorul de autor rămâne 0 în editor și la publicare prin API.** Panoul GEO primește `authorName={null}` și `authorCredentials={null}`, iar API-ul de publicare calculează scorul fără autor. Maximul real este 90, până când autorul și credențialele sunt transmise scorerului.
-3. **Scorul din editor poate fi mai mic cu 5 puncte decât cel de la publicare.** Speakable are 15 puncte doar când schema JSON-LD conține `SpeakableSpecification`; editorul nu are schema până la prima salvare.
+1. **Tabelele din `contentHtml` sunt acum salvate corect și în `contentJson`** (noduri `table`), deci editorul le afișează ca tabele. Scorul GEO pentru „tabel comparativ" cere însă un bloc `comparisonBlock` (în editor: `/compare`): un `<table>` obișnuit nu dă cele 10 puncte. Pentru fișele de rasă, pune comparația ca `comparisonBlock`.
+2. **Scorul de autor se calculează din autorul implicit al site-ului** (utilizatorul cu cel mai înalt rol): numele dă 4 puncte, titlul din profil („Titlu", câmpul `title`) dă 4 puncte pentru credențiale, iar prezența autorului în schema JSON-LD dă 2. Completează numele și titlul în profilul utilizatorului (ex. „Medic veterinar" sau „Redacția DiVet"); fără titlu, scorul de autor rămâne la 6 din 10. Nu trece o calificare pe care autorul nu o are.
+3. **Scorul din editor poate diferi cu până la 5 puncte de cel de la publicare.** Speakable are 15 puncte doar când schema JSON-LD conține `SpeakableSpecification`; editorul nu are schema până la prima salvare.
 
 ### Listă de verificare înainte de trimitere (SEO + GEO)
 
@@ -349,7 +349,7 @@ Anii verificabili contează ca statistici: anul înființării unui club de ras�
 - [ ] minim 2 linkuri interne și 1 link extern spre o sursă de autoritate
 - [ ] minim 3 ani sau cifre reale în text
 - [ ] minim 5 întrebări FAQ cu răspunsuri sub 50 de cuvinte
-- [ ] un bloc de comparație (`comparisonBlock`), nu un `<table>` în HTML
+- [ ] un bloc de comparație (`comparisonBlock`), nu doar un `<table>` în HTML
 - [ ] propoziții scurte (media sub 20 de cuvinte)
 - [ ] `meta description` de 130–155 de caractere
 
