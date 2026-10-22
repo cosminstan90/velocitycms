@@ -240,6 +240,18 @@ export async function POST(req: NextRequest) {
     doc.content = [...doc.content, { type: 'faqBlock', attrs: { items: validFaqItems } }]
   }
 
+  // ── Find default author for site (needed for GEO scoring and schema) ────
+  const siteAccess = await prisma.userSiteAccess.findFirst({
+    where: { siteId },
+    orderBy: [{ role: 'asc' }, { id: 'asc' }],
+    select: { userId: true, user: { select: { name: true, email: true, title: true, slug: true } } },
+  })
+  if (!siteAccess) {
+    return NextResponse.json({ error: 'No users found for site' }, { status: 422 })
+  }
+  const authorId = siteAccess.userId
+  const authorUser = siteAccess.user
+
   // ── GEO scoring ─────────────────────────────────────────────────────────
   let geoScore: number | null = providedGeoScore
   let geoBreakdown: Record<string, unknown> | null = providedGeoBreakdown
@@ -252,6 +264,7 @@ export async function POST(req: NextRequest) {
       contentJson,
       focusKeyword: focusKeyword ?? null,
       metaDescription: metaDescription ?? null,
+      author: authorUser ? { name: authorUser.name, credentials: authorUser.title ?? null } : null,
     })
     geoScore = geoResult.score
     geoBreakdown = geoResult.breakdown as unknown as Record<string, unknown>
@@ -279,7 +292,9 @@ export async function POST(req: NextRequest) {
       publishedAt: rawStatus === 'published' ? now : null,
       updatedAt: now,
       createdAt: now,
-      author: null,
+      author: authorUser
+        ? { name: authorUser.name, email: authorUser.email, slug: authorUser.slug }
+        : null,
       featuredImage: null,
       category: leafCategory,
       noIndex: false,
@@ -294,17 +309,6 @@ export async function POST(req: NextRequest) {
     speakableSections,
     faqCount
   )
-
-  // ── Find default author for site ─────────────────────────────────────────
-  const siteAccess = await prisma.userSiteAccess.findFirst({
-    where: { siteId },
-    orderBy: [{ role: 'asc' }, { id: 'asc' }],
-    select: { userId: true },
-  })
-  if (!siteAccess) {
-    return NextResponse.json({ error: 'No users found for site' }, { status: 422 })
-  }
-  const authorId = siteAccess.userId
 
   // ── Find existing post (needed before scheduling decisions) ─────────────
   const existing = publisherPageId

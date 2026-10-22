@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     include: {
       site: { select: { id: true } },
       category: true,
-      author: { select: { id: true, name: true, email: true } },
+      author: { select: { id: true, name: true, email: true, title: true } },
       tags: { include: { tag: true } },
       fieldValues: { include: { fieldDefinition: true } },
     },
@@ -120,7 +120,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     },
     include: {
       category: { select: { id: true, name: true, slug: true } },
-      author: { select: { id: true, name: true, email: true } },
+      author: { select: { id: true, name: true, email: true, title: true } },
       tags: { include: { tag: true } },
     },
   })
@@ -174,7 +174,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
       focusKeyword,
       metaDescription,
       author: updated.author
-        ? { name: updated.author.name, credentials: null }
+        ? { name: updated.author.name, credentials: updated.author.title ?? null }
         : null,
       schemaMarkup: updated.schemaMarkup as Record<string, unknown> | null,
     })

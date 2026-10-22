@@ -102,12 +102,36 @@ function parseListItems(html: string): TiptapNode[] {
   return items
 }
 
+/**
+ * Parse the inner HTML of a <table> into Tiptap table nodes.
+ * <thead>/<tbody>/<tfoot> wrappers are flattened; <th> becomes tableHeader, <td> tableCell.
+ */
+function parseTable(html: string): TiptapNode | null {
+  const rows: TiptapNode[] = []
+  const rowRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi
+  let rm: RegExpExecArray | null
+  while ((rm = rowRe.exec(html)) !== null) {
+    const cells: TiptapNode[] = []
+    const cellRe = /<(th|td)\b[^>]*>([\s\S]*?)<\/\1>/gi
+    let cm: RegExpExecArray | null
+    while ((cm = cellRe.exec(rm[1])) !== null) {
+      const inline = parseInline(cm[2].trim())
+      cells.push({
+        type: cm[1].toLowerCase() === 'th' ? 'tableHeader' : 'tableCell',
+        content: [{ type: 'paragraph', content: inline }],
+      })
+    }
+    if (cells.length > 0) rows.push({ type: 'tableRow', content: cells })
+  }
+  return rows.length > 0 ? { type: 'table', content: rows } : null
+}
+
 function parseBlocks(html: string): TiptapNode[] {
   const nodes: TiptapNode[] = []
 
   // Matches block-level tags; uses non-greedy [\s\S]*? which works for non-self-nested tags
   const re =
-    /<(h[1-6]|p|ul|ol|blockquote|pre|figure)\b([^>]*)>([\s\S]*?)<\/\1>|<hr\s*\/?>/gi
+    /<(h[1-6]|p|ul|ol|blockquote|pre|figure|table)\b([^>]*)>([\s\S]*?)<\/\1>|<hr\s*\/?>/gi
 
   let lastIndex = 0
   let m: RegExpExecArray | null
@@ -150,6 +174,9 @@ function parseBlocks(html: string): TiptapNode[] {
         ? parseBlocks(innerTrimmed)
         : [{ type: 'paragraph', content: parseInline(innerTrimmed) }]
       nodes.push({ type: 'blockquote', content })
+    } else if (tag === 'table') {
+      const table = parseTable(inner)
+      if (table) nodes.push(table)
     } else if (tag === 'pre') {
       const codeMatch = inner.match(/<code[^>]*>([\s\S]*?)<\/code>/i)
       const raw = codeMatch ? codeMatch[1] : inner

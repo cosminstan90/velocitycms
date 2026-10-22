@@ -43,6 +43,7 @@ interface Post {
   categoryId: string | null; featuredImageId: string | null
   scheduledAt: string | null; publishedAt: string | null
   tags: Array<{ tag: Tag }>
+  author?: { name: string | null; title?: string | null } | null
 }
 
 // ─── Panel helpers ─────────────────────────────────────────────────────────────
@@ -623,8 +624,8 @@ export default function PostEditorPage() {
               contentJson={Object.keys(contentJson).length > 0 ? contentJson : undefined}
               focusKeyword={focusKeyword || null}
               schemaMarkup={undefined}
-              authorName={null}
-              authorCredentials={null}
+              authorName={post?.author?.name ?? null}
+              authorCredentials={post?.author?.title ?? null}
               storedGeoScore={storedGeoScore}
               storedBreakdown={storedGeoBreakdown}
               onExtracted={({ directAnswer, speakableSections }) => {
