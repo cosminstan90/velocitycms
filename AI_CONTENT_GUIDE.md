@@ -261,6 +261,14 @@ X-CMS-Token: {PUBLISHER_TOKEN}
 
 > **Notă:** Dacă `scheduledAt` nu este `null`, articolul este programat — nu e publicat imediat. CMS-ul distribuie publicările inteligent pentru a evita mai multe articole în același interval.
 
+### Programare explicită: `scheduledAt`
+
+Câmp opțional în payload (`scheduledAt`, string ISO 8601, ex. `"2026-10-23T05:00:00.000Z"`). Cu `status: "published"` și o dată în viitor (peste 1 minut), articolul se salvează ca DRAFT cu acel `scheduledAt` și este publicat automat de scheduler la momentul respectiv; programatorul inteligent NU mai este folosit. Reguli:
+
+- dată invalidă sau în trecut (sau sub 1 minut în viitor): `400`;
+- articol deja PUBLISHED + `scheduledAt`: `400` (`post already published`) — articolele live nu sunt retrase;
+- fără `scheduledAt`: comportamentul rămâne cel al programatorului inteligent.
+
 ---
 
 ## Reguli obligatorii
