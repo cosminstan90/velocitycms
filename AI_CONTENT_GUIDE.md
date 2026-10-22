@@ -171,7 +171,7 @@ Omite toate câmpurile specifice. Poți folosi doar `tldr` dacă articolul benef
 
 ## FAQ (întrebări frecvente)
 
-Adaugă 3–5 întrebări reale pe care utilizatorii le-ar căuta pe Google. Fii concis în răspunsuri (2–4 propoziții).
+Adaugă 5–6 întrebări reale pe care utilizatorii le-ar căuta pe Google. Fii concis în răspunsuri (2–4 propoziții).
 
 ```json
 "faqItems": [
@@ -271,6 +271,90 @@ Câmp opțional în payload (`scheduledAt`, string ISO 8601, ex. `"2026-10-23T05
 
 ---
 
+## Scoruri SEO și GEO — cum se calculează și cum le atingi
+
+Editorul afișează două scoruri. Ambele se calculează automat din conținut, deci un articol scris după regulile de mai jos pornește de la 90–100, nu de la 40–60. Regulile sunt cele din `components/seo/SeoPanel.tsx` (SEO) și `lib/seo/geo-scorer.ts` (GEO).
+
+### Regula de aur: cuvântul cheie se scrie CU diacritice
+
+Potrivirea este literală, fără normalizare. `focusKeyword: "ciobanesc german"` nu se găsește în „Ciobănescul German", deci pierzi aproape toate punctele de cuvânt cheie. Scrie `"ciobănesc german"` și folosește-l **exact în această formă** (nominativ, nearticulat) în titlu, meta descriere, primul paragraf și un H2. Formele articulate („Ciobănescul German") nu se potrivesc.
+
+### Scor SEO (100 de puncte)
+
+| Criteriu | Puncte | Ce trebuie să conțină articolul |
+|---|---|---|
+| Lungime | 20 | minim 600 de cuvinte (ținta ghidului: 800+) |
+| Cuvânt cheie în titlu | 15 | forma exactă din `focusKeyword` |
+| Cuvânt cheie în meta descriere | 10 | la fel; meta de 130–155 de caractere |
+| Cuvânt cheie în primul paragraf | 10 | primul `<p>` din articol |
+| Cuvânt cheie într-un H2 | 5 | ex. „Ciobănesc German: origine și istorie" |
+| Structură H2 | 10 | minim 2 titluri H2 |
+| Linkuri interne | 10 | minim 2 (1 link dă doar 5 puncte) |
+| Linkuri externe | 5 | minim 1, spre o sursă de autoritate (standard FCI, club de rasă, PDSA, articol veterinar) |
+| Imagini cu alt | 10 | doar imaginile din textul articolului; imaginea principală nu contează |
+| Meta completată | 10 | minim 50 de caractere |
+| Slug fără cuvinte de oprire | 5 | fără „și", „de", „la", „cu" etc. |
+
+Densitatea cuvântului cheie nu trebuie să depășească 3%.
+
+### Scor GEO / AEO (100 de puncte)
+
+| Criteriu | Puncte | Regula |
+|---|---|---|
+| Răspuns direct | 20 | **primul `<p>` al articolului**: maxim 60 de cuvinte, se termină cu punct, conține cuvântul cheie exact |
+| Speakable | 15 | minim 3 H2 (cele 5 puncte pentru schemă se acordă automat la salvare) |
+| FAQ structurat | 15 | minim **5** întrebări, răspunsuri de maxim 50 de cuvinte (medie) |
+| Date numerice | 10 | minim 3 cifre distincte: ani, procente, „de N ori", „N milioane". Anii contează |
+| Autor | 10 | nume (4), credențiale (4), autor în schemă (2) — vezi nota de mai jos |
+| Bloc de definiție | 10 | cuvântul cheie și un verb de definiție („este", „reprezintă", „înseamnă") în primele 100 de cuvinte |
+| Tabel comparativ | 10 | un bloc `comparisonBlock` (în editor: `/compare`) |
+| Citabilitate | 10 | propoziții scurte: media sub 20 de cuvinte (20–25 dă doar 6 puncte, peste 25 dă 0) |
+
+### Șablon pentru primul paragraf
+
+Primul paragraf rezolvă patru criterii deodată: răspuns direct, bloc de definiție, cuvânt cheie în primul paragraf și propoziții scurte. Structura:
+
+```
+<Cuvânt cheie exact> este <ce este>, <origine/dată>. Este <3 trăsături>. Are nevoie de <cerința principală>. Speranța de viață este de <N–M ani>.
+```
+
+Exemplu (42 de cuvinte): „Ciobănesc German este o rasă de câini de talie mare, dezvoltată în Germania la sfârșitul secolului al XIX-lea. Este inteligent, loial și ușor de dresat. Are nevoie de mișcare zilnică și de un proprietar consecvent. Speranța de viață este de 10–13 ani."
+
+**Articolul trebuie să înceapă cu acest `<p>`**, înaintea primului H2. Nu pune o imagine, o listă sau un citat într-un `<p>` înaintea lui.
+
+### Ce date numerice poți folosi fără să inventezi
+
+Anii verificabili contează ca statistici: anul înființării unui club de rasă, perioade istorice, ani de recunoaștere a rasei. Nu adăuga procente sau cifre pe care nu le poți susține cu o sursă. Dacă nu ai trei date reale, mai bine pierzi puncte decât să inventezi.
+
+### Reguli de scriere pentru citabilitate
+
+- propoziții de 8–15 cuvinte; o idee pe propoziție
+- paragrafe de 2–4 propoziții
+- începe fiecare secțiune cu răspunsul, apoi detaliile
+- răspunsurile FAQ au 2–3 propoziții și repetă numele rasei, ca să poată fi citate singure
+- compară cu rase sau situații apropiate: tabelul comparativ și 2–3 linkuri interne către rasele comparate
+
+### Limitări cunoscute ale CMS-ului
+
+1. **Tabelele din `contentHtml` strică `contentJson`.** API-ul de publicare transformă HTML în JSON fără suport pentru `<table>`: tabelul devine un paragraf de text fără caracterele `<`. Pagina publică arată corect, pentru că se afișează din `contentHtml`, dar editorul din admin încarcă `contentJson` și va afișa text stricat; o salvare din editor poate stârni același text și pe pagina publică. Până la repararea parserului, pune tabelul comparativ ca `comparisonBlock` (în editor, `/compare`) și verifică `contentJson` după publicare.
+2. **Scorul de autor rămâne 0 în editor și la publicare prin API.** Panoul GEO primește `authorName={null}` și `authorCredentials={null}`, iar API-ul de publicare calculează scorul fără autor. Maximul real este 90, până când autorul și credențialele sunt transmise scorerului.
+3. **Scorul din editor poate fi mai mic cu 5 puncte decât cel de la publicare.** Speakable are 15 puncte doar când schema JSON-LD conține `SpeakableSpecification`; editorul nu are schema până la prima salvare.
+
+### Listă de verificare înainte de trimitere (SEO + GEO)
+
+- [ ] `focusKeyword` cu diacritice, în forma exactă folosită în text
+- [ ] cuvântul cheie în titlu, meta, primul paragraf și un H2
+- [ ] articolul începe cu un `<p>` de maxim 60 de cuvinte, cu punct la final, cu "este" în definiție
+- [ ] minim 800 de cuvinte, minim 3 H2
+- [ ] minim 2 linkuri interne și 1 link extern spre o sursă de autoritate
+- [ ] minim 3 ani sau cifre reale în text
+- [ ] minim 5 întrebări FAQ cu răspunsuri sub 50 de cuvinte
+- [ ] un bloc de comparație (`comparisonBlock`), nu un `<table>` în HTML
+- [ ] propoziții scurte (media sub 20 de cuvinte)
+- [ ] `meta description` de 130–155 de caractere
+
+---
+
 ## Reguli obligatorii
 
 1. **Nu inventa date** — dacă nu știi greutatea exactă a unui animal, omite câmpul `greutate`. Nu scrie valori aproximative fără bază.
@@ -284,7 +368,7 @@ Câmp opțional în payload (`scheduledAt`, string ISO 8601, ex. `"2026-10-23T05
    publicat din admin — deci o greșeală de tastare nu strică meniul, dar creează o categorie de curățat.
 4. **Minim 3 secțiuni H2** — altfel cuprinsul nu apare în template.
 5. **tldr = text simplu** — fără bullet points, fără markdown, fără HTML.
-6. **faqItems = minim 3** — întrebări reale, răspunsuri concise.
+6. **faqItems = minim 5** — întrebări reale, răspunsuri concise, sub 50 de cuvinte (pentru scorul GEO).
 7. **metaDescription = 130–155 caractere** — afișat în Google, trebuie să convingă utilizatorul să dea click.
 8. **Nu duplica conținut** — verifică că slug-ul nu a mai fost publicat. Dacă actualizezi un articol existent, folosește același slug — CMS-ul face upsert automat.
 
@@ -312,7 +396,7 @@ Câmp opțional în payload (`scheduledAt`, string ISO 8601, ex. `"2026-10-23T05
   "categorySlug": "pasari",
   "subCategorySlug": "pasari-salbatice",
   "metaDescription": "Bufnița de zăpadă (Bubo scandiacus) este una dintre cele mai mari bufnițe din lume. Descoperă habitatul, dieta și secretele acestui prădător arctic.",
-  "focusKeyword": "bufnita de zapada",
+  "focusKeyword": "bufnița de zăpadă",
   "status": "published",
   "featuredImageUrl": "https://images.unsplash.com/photo-1543731068-7e0f5beff43a?auto=format&fit=crop&w=1200&h=630&q=80",
   "contentHtml": "<h2>Descriere și Aspect Fizic</h2><p>Bufnița de zăpadă (<em>Bubo scandiacus</em>) este una dintre cele mai mari specii de bufnițe din lume, cu un penaj dens, predominant alb, care îi asigură camuflaj perfect în tundra arctică. Femelele au pete maronii distinctive, în timp ce masculii maturi sunt aproape complet albi.</p><h2>Habitat și Distribuție</h2><p>Specia cuibărește în tundra arctică din Canada, Alaska, Groenlanda, Scandinavia și Rusia. Iarna migrează spre sud, ajungând ocazional în Europa Centrală și de Est, inclusiv în România.</p><h2>Comportament și Vânătoare</h2><p>Spre deosebire de alte bufnițe, bufnița de zăpadă vânează preponderent ziua. Principala pradă o reprezintă lemingii — un singur adult poate consuma peste 1.600 de lemingi pe an. Vânează și iepuri arctici, pești și alte păsări.</p><h2>Reproducere</h2><p>Cuibărește direct pe sol, în zone înalte cu vizibilitate bună. O pontă conține 3–11 ouă, în funcție de disponibilitatea hranei. Puii sunt îngrijiți intens în primele săptămâni.</p><h2>Conservare</h2><p>Clasificată ca Vulnerabilă (VU) de IUCN, bufnița de zăpadă este amenințată de schimbările climatice care afectează populațiile de lemingi și modifică habitatul arctic.</p>",
@@ -369,7 +453,7 @@ CMS-ul ignoră câmpurile necunoscute: dacă trimiți un `fieldKey` nedefinit nu
 - [ ] `contentHtml` conține minim 3 secțiuni `<h2>`
 - [ ] `metaDescription` între 130–155 caractere
 - [ ] `tldr` text simplu, fără formatare
-- [ ] `faqItems` minim 3 întrebări
+- [ ] `faqItems` minim 5 întrebări, răspunsuri sub 50 de cuvinte
 - [ ] `featuredImageUrl` URL Unsplash valid
 - [ ] `fieldValues` conțin doar câmpurile din tabelele de mai sus (cele create de scriptul de seed)
 - [ ] Valorile câmpurilor sunt reale, verificate
