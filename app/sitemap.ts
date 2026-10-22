@@ -6,6 +6,10 @@ import { buildDirectoryPaths } from '@/lib/director'
 
 export const dynamic = 'force-dynamic'
 
+function latest(dates: Date[]): Date | undefined {
+  return dates.reduce<Date | undefined>((max, d) => (!max || d > max ? d : max), undefined)
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const seo = await prisma.seoSettings.findFirst()
   const siteUrl = (seo?.siteUrl ?? 'http://localhost:3000').replace(/\/$/, '')
@@ -27,10 +31,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   )
 
   const entries: MetadataRoute.Sitemap = [
-    { url: `${siteUrl}/`, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
+    { url: `${siteUrl}/`, lastModified: newestPostUpdate ?? undefined, changeFrequency: 'daily', priority: 1.0 },
     {
       url: `${siteUrl}/index-a-z`,
-      lastModified: newestPostUpdate ?? new Date(),
+      lastModified: newestPostUpdate ?? undefined,
       changeFrequency: 'daily',
       priority: 0.6,
     },
@@ -71,20 +75,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Tag pages: only tags with at least one published post
   const tags = await prisma.tag.findMany({
     where: { posts: { some: { post: { status: 'PUBLISHED', noIndex: false } } } },
-    select: { slug: true },
+    select: {
+      slug: true,
+      posts: {
+        where: { post: { status: 'PUBLISHED', noIndex: false } },
+        select: { post: { select: { updatedAt: true } } },
+      },
+    },
   })
   for (const tag of tags) {
-    entries.push({ url: `${siteUrl}/eticheta/${tag.slug}`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.5 })
+    entries.push({ url: `${siteUrl}/eticheta/${tag.slug}`, lastModified: latest(tag.posts.map((p) => p.post.updatedAt)), changeFrequency: 'weekly', priority: 0.5 })
   }
 
   // Author pages: only authors with at least one published post
   const authors = await prisma.user.findMany({
     where: { slug: { not: null }, posts: { some: { status: 'PUBLISHED', noIndex: false } } },
-    select: { slug: true },
+    select: {
+      slug: true,
+      posts: { where: { status: 'PUBLISHED', noIndex: false }, select: { updatedAt: true } },
+    },
   })
   for (const author of authors) {
     if (!author.slug) continue
-    entries.push({ url: `${siteUrl}/autor/${author.slug}`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 })
+    entries.push({ url: `${siteUrl}/autor/${author.slug}`, lastModified: latest(author.posts.map((p) => p.updatedAt)), changeFrequency: 'monthly', priority: 0.6 })
   }
 
   for (const post of posts) {
