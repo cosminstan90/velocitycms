@@ -29,6 +29,13 @@ const GROUPS: Group[] = [
     ['Pești de apă dulce', 'pesti-apa-dulce'], ['Pești marini', 'pesti-marini'],
     ['Reptile', 'reptile'], ['Amfibieni', 'amfibieni'], ['Nevertebrate', 'nevertebrate'],
   ]},
+  { name: 'Animale marine', slug: 'marine', sortOrder: 52, children: [
+    ['Mamifere marine', 'mamifere-marine'], ['Rechini și pești', 'rechini-si-pesti'],
+    ['Nevertebrate marine', 'nevertebrate-marine'], ['Păsări marine', 'pasari-marine'],
+  ]},
+  { name: 'Insecte', slug: 'insecte', sortOrder: 55, children: [
+    ['Gândaci', 'gandaci'], ['Insecte exotice', 'insecte-exotice'], ['Insecte comune', 'insecte-comune'],
+  ]},
   { name: 'Sălbatice', slug: 'salbatice', sortOrder: 60, children: [
     ['Mamifere', 'mamifere'], ['Răpitoare', 'rapitoare'],
     ['Specii protejate', 'specii-protejate'], ['Fauna României', 'fauna-romaniei'],

@@ -360,7 +360,7 @@ Anii verificabili contează ca statistici: anul înființării unui club de ras�
 1. **Nu inventa date** — dacă nu știi greutatea exactă a unui animal, omite câmpul `greutate`. Nu scrie valori aproximative fără bază.
 2. **Slug unic, lowercase, fără diacritice** — `labrador-retriever`, `bufnita-de-zapada`, `rechin-alb`. Fără spații, fără caractere speciale.
 3. **`categorySlug` e grupul, `subCategorySlug` e subcategoria.** Folosește sluguri existente.
-   Grupuri: `caini`, `pisici`, `animale-mici`, `pasari`, `acvariu-terariu`, `salbatice`, `sanatate`.
+   Grupuri: `caini`, `pisici`, `animale-mici`, `pasari`, `acvariu-terariu`, `marine`, `insecte`, `salbatice`, `sanatate`.
    `subCategorySlug` e opțional și trebuie să aparțină grupului ales (ex. `caini` + `rase`).
    Fișele de rasă/specie merg într-o subcategorie (ex. `caini` + `rase` → URL `/caini/rase/labrador-retriever`).
    Nu trimite `subCategorySlug` fără `categorySlug` (eroare 400).
@@ -372,6 +372,8 @@ Anii verificabili contează ca statistici: anul înființării unui club de ras�
 7. **metaDescription = 130–155 caractere** — afișat în Google, trebuie să convingă utilizatorul să dea click.
 8. **Nu duplica conținut** — verifică că slug-ul nu a mai fost publicat. Dacă actualizezi un articol existent, folosește același slug — CMS-ul face upsert automat.
 
+**Grupul potrivit pentru animale marine și insecte:** `marine` și `insecte` sunt grupuri proprii, ca pe site-ul vechi (`/marine/...`, `/insecte/...`), ca redirecturile din URL-urile vechi să se potrivească automat. `acvariu-terariu/pesti-marini` este doar pentru pești de acvariu, nu pentru specii sălbatice (rechin, sturion, sardină). Păsările marine (pinguin) merg în `marine/pasari-marine`.
+
 **Subcategorii valide pe grup:**
 
 | Grup | `subCategorySlug` |
@@ -381,6 +383,8 @@ Anii verificabili contează ca statistici: anul înființării unui club de ras�
 | `animale-mici` | `rozatoare`, `iepuri`, `dihori`, `arici` |
 | `pasari` | `papagali`, `canari`, `pasari-de-curte`, `pasari-salbatice` |
 | `acvariu-terariu` | `pesti-apa-dulce`, `pesti-marini`, `reptile`, `amfibieni`, `nevertebrate` |
+| `marine` | `mamifere-marine`, `rechini-si-pesti`, `nevertebrate-marine`, `pasari-marine` |
+| `insecte` | `gandaci`, `insecte-exotice`, `insecte-comune` |
 | `salbatice` | `mamifere`, `rapitoare`, `specii-protejate`, `fauna-romaniei` |
 | `sanatate` | `boli`, `vaccinare`, `parazitologie`, `urgente` |
 
