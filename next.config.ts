@@ -22,6 +22,8 @@ const nextConfig: NextConfig = {
   // ── Images ────────────────────────────────────────────────────────────────
   images: {
     formats: ['image/avif', 'image/webp'],
+    // In dezvoltare, uploadurile vin de pe localhost; optimizatorul blocheaza implicit IP-urile locale.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV !== 'production',
     // Allow images served from the same host (uploads) and any configured domains
     remotePatterns: [
       { protocol: 'https', hostname: '**' },

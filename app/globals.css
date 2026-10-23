@@ -256,3 +256,48 @@
   --font-dv-display: var(--font-dv-display-src), ui-sans-serif, system-ui, sans-serif;
   --font-dv-body: var(--font-dv-body-src), ui-sans-serif, system-ui, sans-serif;
 }
+
+/* ─── DiVet — homepage: accente calde, textura hero, animatie de intrare ─────── */
+@theme {
+  --color-dv-warm: #B26B1F;
+  --color-dv-warm-soft: #FBF0E0;
+  --color-dv-deep: #0A3B3B;
+  --shadow-dv-lift: 0 1px 2px rgba(16, 33, 43, 0.05), 0 12px 28px -12px rgba(16, 33, 43, 0.22);
+}
+
+/* Curbe de nivel, ca pe o harta topografica: fundal discret pentru hero si bandouri. */
+.dv-contour {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='520' height='360' viewBox='0 0 520 360' fill='none' stroke='%230C5C5C' stroke-opacity='0.055' stroke-width='1.2'><path d='M-20 300C70 250 120 330 210 290S350 190 430 240 520 300 560 270'/><path d='M-20 262C72 214 124 292 212 254S352 156 432 204 522 262 560 234'/><path d='M-20 224C74 178 128 254 214 218S354 122 434 168 524 224 560 198'/><path d='M-20 186C76 142 132 216 216 182S356 88 436 132 526 186 560 162'/><path d='M-20 148C78 106 136 178 218 146S358 54 438 96 528 148 560 126'/><path d='M-20 110C80 70 140 140 220 110S360 20 440 60 530 110 560 90'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right -40px top 20px;
+  background-size: 640px auto;
+}
+
+@keyframes dv-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.dv-rise {
+  animation: dv-rise 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--d, 0) * 90ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dv-rise {
+    animation: none;
+  }
+}
+
+/* Barele de derulare orizontala (mozaic mobil) fara scrollbar vizibil, dar cu derulare tactila. */
+.dv-scrollx {
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.dv-scrollx::-webkit-scrollbar {
+  display: none;
+}
