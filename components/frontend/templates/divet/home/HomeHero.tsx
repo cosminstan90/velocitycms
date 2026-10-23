@@ -36,7 +36,7 @@ export default function HomeHero({ home }: { home: HomeData }) {
   const { mosaic, featured, totalPosts, groups } = home
   const chips = [...featured, ...mosaic].filter((p, i, all) => all.findIndex((q) => q.href === p.href) === i).slice(0, 6)
   const stat =
-    totalPosts > 0 ? `${totalPosts} ${totalPosts === 1 ? 'fișă' : 'fișe'} · ${groups.length} ${groups.length === 1 ? 'grup' : 'grupuri'}` : 'Enciclopedie în construcție'
+    totalPosts > 0 ? `${totalPosts} ${totalPosts === 1 ? 'articol' : 'articole'} · ${groups.length} ${groups.length === 1 ? 'grup' : 'grupuri'}` : 'Enciclopedie în construcție'
 
   return (
     <section className="dv-contour relative">

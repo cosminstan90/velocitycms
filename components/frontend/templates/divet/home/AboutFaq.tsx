@@ -12,7 +12,7 @@ export default function AboutFaq() {
           </h2>
           <p className="mt-4 mb-0 max-w-[48ch] text-[15px] leading-[1.7] text-dv-ink-muted">
             DiVet adună într-un singur loc informații clare despre animalele pe care le ținem acasă sau pe care le întâlnim în natură. Scriem în română,
-            păstrăm același format în toate fișele și semnalăm când sursele nu se potrivesc, ca să poți compara rapid și să iei decizii informate.
+            păstrăm același format în toate articolele și semnalăm când sursele nu se potrivesc, ca să poți compara rapid și să iei decizii informate.
           </p>
         </div>
 

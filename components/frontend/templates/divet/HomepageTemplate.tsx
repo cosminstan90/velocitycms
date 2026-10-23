@@ -48,7 +48,7 @@ export default async function DivetHomepage({ site }: HomepageTemplateProps) {
           <div className="py-12">
             <EmptyState
               title="Enciclopedia e în construcție"
-              description="Primele fișe apar în curând. Între timp, răsfoiește grupurile din meniu."
+              description="Primele articole apar în curând. Între timp, răsfoiește grupurile din meniu."
             />
           </div>
         )}

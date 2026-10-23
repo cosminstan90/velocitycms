@@ -17,7 +17,7 @@ export default function FeaturedSection({ posts }: { posts: HomePost[] }) {
       <div className="mb-7">
         <p className="m-0 mb-1 text-dv-label font-semibold tracking-[0.14em] text-dv-warm uppercase">Alegerea redacției</p>
         <h2 id="dv-home-featured" className="m-0 font-dv-display text-[28px] leading-tight font-bold tracking-[-0.025em] text-dv-ink sm:text-[34px]">
-          Fișe recomandate
+          Articole recomandate
         </h2>
       </div>
 
