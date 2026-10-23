@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma'
 import { ogImages } from '@/lib/default-og'
 import { HomepageDispatcher } from '@/components/frontend/TemplateDispatcher'
 import { CARD_META_KEYS } from '@/lib/fields'
+import { buildHomeSchema } from '@/lib/home-schema'
+import { HOME_INTRO } from '@/lib/home-content'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -101,36 +103,17 @@ export default async function HomePage() {
     return p.category ? `${base}/${p.category.slug}/${p.slug}` : `${base}/blog/${p.slug}`
   }
 
-  const schema = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'WebSite',
-        '@id': `${base}/#website`,
-        url: base,
-        name: siteData.siteName,
-        inLanguage: 'ro-RO',
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: { '@type': 'EntryPoint', urlTemplate: `${base}/cautare?q={search_term_string}` },
-          'query-input': 'required name=search_term_string',
-        },
-      },
-      ...(mappedPosts.length > 0
-        ? [{
-            '@type': 'ItemList',
-            '@id': `${base}/#itemlist`,
-            name: 'Articole recente',
-            itemListElement: mappedPosts.map((p, i) => ({
-              '@type': 'ListItem',
-              position: i + 1,
-              url: postUrl(p),
-              name: p.title,
-            })),
-          }]
-        : []),
-    ],
-  }
+  const schema = buildHomeSchema({
+    base,
+    siteName: siteData.siteName,
+    description: seo?.defaultMetaDesc ?? HOME_INTRO,
+    logoUrl: siteData.defaultOgImage,
+    posts: mappedPosts.map((p) => ({
+      title: p.title,
+      url: postUrl(p),
+      imageUrl: p.featuredImage ? (p.featuredImage.url.startsWith('/') ? base + p.featuredImage.url : p.featuredImage.url) : null,
+    })),
+  })
 
   return (
     <>
