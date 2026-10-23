@@ -68,7 +68,7 @@ export default function DivetMegaPanel({
         <div className="self-start rounded-[9px] bg-dv-accent-soft p-[18px]">
           <p className="text-dv-label uppercase font-semibold text-dv-accent">Nu găsești ce cauți?</p>
           <p className="mb-4 mt-2 font-dv-display text-[17px] font-semibold text-dv-ink">
-            Răsfoiește toate fișele în ordine alfabetică
+            Răsfoiește toate articolele în ordine alfabetică
           </p>
           <Link
             href="/index-a-z"

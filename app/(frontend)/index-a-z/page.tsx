@@ -43,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
   }
   return {
     title: `Index A–Z | ${siteName}`,
-    description: 'Toate fișele din enciclopedie, în ordine alfabetică.',
+    description: 'Toate articolele din enciclopedie, în ordine alfabetică.',
     alternates: { canonical: `${siteUrl.replace(/\/$/, '')}/index-a-z` },
   }
 }
@@ -101,14 +101,14 @@ export default async function IndexAzPage() {
         {total === 0 ? (
           <div className="mt-8">
             <EmptyState
-              title="Încă nu avem fișe"
-              description="Primele fișe apar în curând. Între timp, răsfoiește grupurile din meniu."
+              title="Încă nu avem articole"
+              description="Primele articole apar în curând. Între timp, răsfoiește grupurile din meniu."
             />
           </div>
         ) : (
           <>
             <p className="mt-2 mb-0 text-dv-meta text-dv-ink-subtle">
-              {total === 1 ? '1 fișă' : `${total} fișe`}
+              {total === 1 ? '1 articol' : `${total} articole`}
             </p>
 
             <nav aria-label="Litere" className="mt-6">

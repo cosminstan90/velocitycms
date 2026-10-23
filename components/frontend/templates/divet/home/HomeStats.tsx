@@ -11,7 +11,7 @@ function formatDate(value: Date | string | null): string | null {
 export default function HomeStats({ home }: { home: HomeData }) {
   const updated = formatDate(home.updatedAt)
   const items: Array<{ value: string; label: string }> = [
-    { value: String(home.totalPosts), label: home.totalPosts === 1 ? 'fișă publicată' : 'fișe publicate' },
+    { value: String(home.totalPosts), label: home.totalPosts === 1 ? 'articol publicat' : 'articole publicate' },
     { value: String(home.groups.length), label: home.groups.length === 1 ? 'grup de animale' : 'grupuri de animale' },
     { value: String(home.groups.reduce((n, g) => n + g.children.length, 0)), label: 'categorii și subcategorii' },
   ]

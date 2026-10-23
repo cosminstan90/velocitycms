@@ -13,7 +13,7 @@ function spanClass(i: number, total: number): string {
 }
 
 function plural(n: number): string {
-  return `${n} ${n === 1 ? 'fișă' : 'fișe'}`
+  return `${n} ${n === 1 ? 'articol' : 'articole'}`
 }
 
 /** Placi pe grupuri: fotografie, numar de fise, subcategorii cu numaratori. Linkul principal acopera cardul; chip-urile raman clicabile. */
@@ -78,7 +78,7 @@ export default function GroupTiles({ groups }: { groups: HomeGroup[] }) {
                 </ul>
               ) : null}
               <span className="mt-auto pt-5 text-[13px] font-semibold text-dv-accent group-hover:text-dv-accent-hover">
-                Vezi toate fișele din {g.name} →
+                Vezi toate articolele din {g.name} →
               </span>
             </div>
           </article>

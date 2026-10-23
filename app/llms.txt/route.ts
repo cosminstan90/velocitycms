@@ -30,7 +30,7 @@ export async function GET() {
     '',
     `> ${HOME_INTRO}`,
     '',
-    'Conținutul este în limba română. Fiecare fișă are un rezumat, specificații, întrebări frecvente și, acolo unde este cazul, o comparație cu specii apropiate. Informațiile sunt orientative și nu înlocuiesc sfatul unui medic veterinar.',
+    'Conținutul este în limba română. Fiecare articol are un rezumat, specificații, întrebări frecvente și, acolo unde este cazul, o comparație cu specii apropiate. Informațiile sunt orientative și nu înlocuiesc sfatul unui medic veterinar.',
     '',
     '## Secțiuni',
     ...(lines.length ? lines : [`- [Prima pagină](${base}/)`]),
