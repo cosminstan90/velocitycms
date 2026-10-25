@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import { categoryLastModified } from '@/lib/sitemap-categories'
 import { buildDirectoryPaths } from '@/lib/director'
+import { isTagIndexable } from '@/lib/seo/tag-index'
 
 export const dynamic = 'force-dynamic'
 
@@ -72,8 +73,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entries.push({ url: `${siteUrl}/${page.slug}`, lastModified: page.updatedAt, changeFrequency: 'monthly', priority: 0.5 })
   }
 
-  // Tag pages: only tags with at least one published post
-  const tags = await prisma.tag.findMany({
+  // Tag pages: only tags with enough published posts to be more than a thin page (lib/seo/tag-index.ts)
+  const tagRows = await prisma.tag.findMany({
     where: { posts: { some: { post: { status: 'PUBLISHED', noIndex: false } } } },
     select: {
       slug: true,
@@ -83,6 +84,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
     },
   })
+  const tags = tagRows.filter((t) => isTagIndexable(t.posts.length))
   for (const tag of tags) {
     entries.push({ url: `${siteUrl}/eticheta/${tag.slug}`, lastModified: latest(tag.posts.map((p) => p.post.updatedAt)), changeFrequency: 'weekly', priority: 0.5 })
   }

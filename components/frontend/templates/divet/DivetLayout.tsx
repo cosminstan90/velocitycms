@@ -17,12 +17,14 @@ export default async function DivetLayout({ site, activeGroup, headerSearch = tr
   let groups: NavGroup[] = []
   let recent: Record<string, GroupPost[]> = {}
   let hasDirectory = false
+  let hasAbout = false
   try {
     const activeSite = await prisma.site.findFirst({ where: { isActive: true } })
     if (activeSite) {
       groups = await getNavigation(activeSite.id)
       recent = await getRecentPostsByGroup(activeSite.id, groups.map((g) => g.id))
       hasDirectory = (await prisma.listing.count({ where: { siteId: activeSite.id, status: 'PUBLISHED' } })) > 0
+      hasAbout = (await prisma.page.count({ where: { siteId: activeSite.id, slug: 'despre-noi', status: 'PUBLISHED' } })) > 0
     }
   } catch {
     groups = []
@@ -67,6 +69,9 @@ export default async function DivetLayout({ site, activeGroup, headerSearch = tr
           <div className="mx-auto flex w-full max-w-[1100px] flex-wrap items-center justify-between gap-3 px-4 py-4 text-dv-meta text-dv-ink-muted md:px-10">
             <span>© {new Date().getFullYear()} {site.siteName}</span>
             <span className="flex gap-4">
+              {hasAbout ? (
+                <Link href="/despre-noi" className="hover:text-dv-accent focus-visible:outline-2 focus-visible:outline-dv-accent">Despre noi</Link>
+              ) : null}
               <Link href="/index-a-z" className="hover:text-dv-accent focus-visible:outline-2 focus-visible:outline-dv-accent">Index A–Z</Link>
               {hasDirectory ? (
                 <Link href="/director" className="hover:text-dv-accent focus-visible:outline-2 focus-visible:outline-dv-accent">Director</Link>

@@ -5,6 +5,7 @@ import { TagDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { CARD_META_KEYS } from '@/lib/fields'
+import { isTagIndexable } from '@/lib/seo/tag-index'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,9 +43,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = tag.metaDesc ?? tag.description ?? `Articole etichetate cu ${tag.name}`
   const canonical = `${siteUrl.replace(/\/$/, '')}/eticheta/${slug}`
 
+  const publishedCount = await prisma.post.count({
+    where: { status: 'PUBLISHED', siteId, tags: { some: { tagId: tag.id } } },
+  })
+
   return {
     title,
     description,
+    robots: isTagIndexable(publishedCount) ? undefined : { index: false, follow: true },
     alternates: { canonical },
     openGraph: { title, description, url: canonical, images: ogImages(siteUrl) },
   }
