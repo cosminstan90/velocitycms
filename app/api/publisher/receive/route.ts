@@ -46,6 +46,8 @@ function tokenMatches(received: string, expected: string): boolean {
 export interface PublisherPayload {
   title: string
   slug: string
+  /** Titlul din <title>, fara sufixul de site; implicit se foloseste titlul articolului. */
+  metaTitle?: string | null
   metaDescription?: string | null
   contentHtml: string
   schemaMarkup?: Record<string, unknown> | null
@@ -102,6 +104,7 @@ export async function POST(req: NextRequest) {
   const {
     title,
     slug,
+    metaTitle,
     metaDescription,
     contentHtml,
     faqItems = [],
@@ -241,11 +244,19 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Find default author for site (needed for GEO scoring and schema) ────
-  const siteAccess = await prisma.userSiteAccess.findFirst({
-    where: { siteId },
-    orderBy: [{ role: 'asc' }, { id: 'asc' }],
-    select: { userId: true, user: { select: { name: true, email: true, title: true, slug: true } } },
-  })
+  // Preferam un autor cu pagina publica (slug), ex. "Redactia"; altfel primul utilizator al site-ului.
+  const authorSelect = { userId: true, user: { select: { name: true, email: true, title: true, slug: true } } } as const
+  const siteAccess =
+    (await prisma.userSiteAccess.findFirst({
+      where: { siteId, user: { slug: { not: null } } },
+      orderBy: [{ role: 'asc' }, { id: 'asc' }],
+      select: authorSelect,
+    })) ??
+    (await prisma.userSiteAccess.findFirst({
+      where: { siteId },
+      orderBy: [{ role: 'asc' }, { id: 'asc' }],
+      select: authorSelect,
+    }))
   if (!siteAccess) {
     return NextResponse.json({ error: 'No users found for site' }, { status: 422 })
   }
@@ -347,6 +358,7 @@ export async function POST(req: NextRequest) {
         contentJson: asJson(contentJson),
         contentHtml,
         metaDescription: metaDescription ?? null,
+        ...(metaTitle !== undefined ? { metaTitle: metaTitle || null } : {}),
         focusKeyword: focusKeyword ?? null,
         status: finalStatus,
         scheduledAt,
@@ -376,6 +388,7 @@ export async function POST(req: NextRequest) {
         contentJson: asJson(contentJson),
         contentHtml,
         metaDescription: metaDescription ?? null,
+        metaTitle: metaTitle || null,
         focusKeyword: focusKeyword ?? null,
         status: finalStatus,
         scheduledAt,

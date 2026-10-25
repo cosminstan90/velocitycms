@@ -21,6 +21,7 @@ import { headers } from 'next/headers'
 import { findLegacyRedirect } from '@/lib/legacy-redirects'
 import { getSiteIdFromHostname } from '@/lib/site'
 import { CARD_META_KEYS } from '@/lib/fields'
+import { withContentMeta } from '@/lib/category-content'
 
 export const dynamic = 'force-dynamic'
 
@@ -98,8 +99,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (subCategory) {
     const { siteUrl, siteName, defaultOgImage, seo } = await getSiteData(subCategory.siteId)
-    const title = subCategory.metaTitle ?? subCategory.name
-    const description = subCategory.metaDesc ?? subCategory.description ?? undefined
+    const withMeta = withContentMeta(subCategory, `${categorySlug}/${slug}`)
+    const title = withMeta.metaTitle ?? subCategory.name
+    const description = withMeta.metaDesc ?? undefined
     const canonical = `${siteUrl}/${categorySlug}/${slug}`
     return {
       title: `${title} | ${siteName}`,
@@ -200,7 +202,8 @@ export default async function CategorySlugPage({ params, searchParams }: Props) 
     const posts = await mapPostsWithImages(rawPosts as any)
     const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE)
 
-    const schemaCat = { id: subCategory.id, name: subCategory.name, slug: subCategory.slug, description: subCategory.description, metaTitle: subCategory.metaTitle, metaDesc: subCategory.metaDesc, parent: parentCategory ? { name: parentCategory.name, slug: parentCategory.slug } : null }
+    const metaSub = withContentMeta(subCategory, `${categorySlug}/${slug}`)
+    const schemaCat = { id: subCategory.id, name: subCategory.name, slug: subCategory.slug, description: subCategory.description, metaTitle: metaSub.metaTitle, metaDesc: metaSub.metaDesc, parent: parentCategory ? { name: parentCategory.name, slug: parentCategory.slug } : null }
     const schema = generateCategorySchema(schemaCat, { siteName, siteUrl, defaultOgImage })
 
     return (

@@ -7,6 +7,7 @@ import { generateCategorySchema, generatePageSchema } from '@/lib/seo/schema-gen
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { CARD_META_KEYS } from '@/lib/fields'
+import { withContentMeta } from '@/lib/category-content'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,8 +36,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const seo = await prisma.seoSettings.findFirst({ where: { siteId: category.siteId } })
     const siteName = seo?.siteName ?? 'Site'
     const siteUrl = seo?.siteUrl ?? 'http://localhost'
-    const title = category.metaTitle ?? category.name
-    const description = category.metaDesc ?? category.description ?? undefined
+    const withMeta = withContentMeta(category, slug)
+    const title = withMeta.metaTitle ?? category.name
+    const description = withMeta.metaDesc ?? undefined
     const canonical = `${siteUrl}/${slug}`
     return {
       title: `${title} | ${siteName}`,
@@ -154,13 +156,14 @@ export default async function SlugPage({ params, searchParams }: Props) {
 
     const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE)
 
+    const metaCat = withContentMeta(category, slug)
     const schemaCategory = {
       id: category.id,
       name: category.name,
       slug: category.slug,
       description: category.description ?? null,
-      metaTitle: category.metaTitle ?? null,
-      metaDesc: category.metaDesc ?? null,
+      metaTitle: metaCat.metaTitle ?? null,
+      metaDesc: metaCat.metaDesc ?? null,
     }
     const schema = generateCategorySchema(schemaCategory, siteData)
 

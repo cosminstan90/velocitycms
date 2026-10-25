@@ -220,6 +220,7 @@ X-CMS-Token: {PUBLISHER_TOKEN}
   "slug": "labrador-retriever",
   "categorySlug": "caini",
   "subCategorySlug": "rase",
+  "metaTitle": "Labrador Retriever: caracteristici și îngrijire",
   "metaDescription": "Labrador Retriever este una dintre cele mai iubite rase de câini din lume. Află totul despre caracter, îngrijire, alimentație și sănătate.",
   "focusKeyword": "labrador retriever",
   "status": "published",
@@ -369,8 +370,9 @@ Anii verificabili contează ca statistici: anul înființării unui club de ras�
 4. **Minim 3 secțiuni H2** — altfel cuprinsul nu apare în template.
 5. **tldr = text simplu** — fără bullet points, fără markdown, fără HTML.
 6. **faqItems = minim 5** — întrebări reale, răspunsuri concise, sub 50 de cuvinte (pentru scorul GEO).
-7. **metaDescription = 130–155 caractere** — afișat în Google, trebuie să convingă utilizatorul să dea click.
-8. **Nu duplica conținut** — verifică că slug-ul nu a mai fost publicat. Dacă actualizezi un articol existent, folosește același slug — CMS-ul face upsert automat.
+7. **metaTitle = maxim 52 de caractere** (opțional; sufixul „ | DiVet” se adaugă singur, iar titlul din Google se taie la ~60). Dacă lipsește, se folosește titlul articolului, de regulă prea lung.
+8. **metaDescription = 130–155 caractere** — afișat în Google, trebuie să convingă utilizatorul să dea click.
+9. **Nu duplica conținut** — verifică că slug-ul nu a mai fost publicat. Dacă actualizezi un articol existent, folosește același slug — CMS-ul face upsert automat.
 
 **Grupul potrivit pentru animale marine și insecte:** `marine` și `insecte` sunt grupuri proprii, ca pe site-ul vechi (`/marine/...`, `/insecte/...`), ca redirecturile din URL-urile vechi să se potrivească automat. `acvariu-terariu/pesti-marini` este doar pentru pești de acvariu, nu pentru specii sălbatice (rechin, sturion, sardină). Păsările marine (pinguin) merg în `marine/pasari-marine`.
 
