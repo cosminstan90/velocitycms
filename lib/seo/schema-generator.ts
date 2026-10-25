@@ -189,6 +189,10 @@ function buildArticleSchema(
     },
     ...(post.publishedAt && { datePublished: isoDate(post.publishedAt) }),
     dateModified: isoDate(post.updatedAt),
+    ...(!isAnimalPost && {
+      // Titlul si blocul „Pe scurt" (TldrCard) sunt pasajele potrivite pentru citire vocala / citare de catre AI.
+      speakable: { '@type': 'SpeakableSpecification', cssSelector: ['article h1', '[data-speakable="tldr"]'] },
+    }),
     ...(post.category && {
       articleSection: post.category.name,
     }),
