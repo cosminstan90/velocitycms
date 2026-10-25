@@ -6,7 +6,14 @@ import type { NextRequest } from 'next/server'
 const { auth } = NextAuth(authConfig)
 
 async function handle(req: NextRequest, isLoggedIn: boolean) {
-  const { pathname, origin, hostname } = req.nextUrl
+  const { pathname } = req.nextUrl
+  // In spatele nginx, req.nextUrl descrie serverul intern; domeniul public vine din antetele de forward
+  // (invelisul Auth.js il rezolva singur, dar nu mai trecem prin el pe paginile publice).
+  const first = (v: string | null) => v?.split(',')[0]?.trim() || null
+  const publicHost = first(req.headers.get('x-forwarded-host')) ?? first(req.headers.get('host')) ?? req.nextUrl.host
+  const hostname = publicHost.split(':')[0]
+  const proto = first(req.headers.get('x-forwarded-proto')) ?? req.nextUrl.protocol.replace(':', '')
+  const origin = `${proto}://${publicHost}`
 
   // Always inject pathname so server components (e.g. not-found.tsx) can read it
   const requestHeaders = new Headers(req.headers)
