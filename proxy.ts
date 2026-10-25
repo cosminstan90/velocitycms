@@ -5,9 +5,8 @@ import type { NextRequest } from 'next/server'
 
 const { auth } = NextAuth(authConfig)
 
-export default auth(async (req) => {
+async function handle(req: NextRequest, isLoggedIn: boolean) {
   const { pathname, origin, hostname } = req.nextUrl
-  const isLoggedIn = !!req.auth
 
   // Always inject pathname so server components (e.g. not-found.tsx) can read it
   const requestHeaders = new Headers(req.headers)
@@ -98,7 +97,20 @@ export default auth(async (req) => {
   return NextResponse.next({
     request: { headers: requestHeaders },
   })
-})
+}
+
+const withAuth = auth(async (req) => handle(req, !!req.auth))
+
+/**
+ * Sesiunea (si deci cookie-urile Auth.js) este citita doar pentru /admin si /login.
+ * Paginile publice nu seteaza cookie-uri: vizitatorii nu au nevoie de ele, iar astfel
+ * singurele cookie-uri de pe site sunt cele de publicitate, dupa acord.
+ */
+export default function proxy(req: NextRequest, event: Parameters<typeof withAuth>[1]) {
+  const { pathname } = req.nextUrl
+  if (pathname.startsWith('/admin') || pathname === '/login') return withAuth(req, event)
+  return handle(req, false)
+}
 
 export const config = {
   // Run on all paths except static files and API routes

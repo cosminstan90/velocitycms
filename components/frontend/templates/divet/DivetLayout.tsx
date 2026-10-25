@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { getNavigation, getRecentPostsByGroup, type NavGroup, type GroupPost } from '@/lib/navigation'
 import DivetHeader from './DivetHeader'
 import DivetNav from './DivetNav'
+import CookieSettingsButton from '@/components/frontend/CookieSettingsButton'
+import { getAdsenseClient } from '@/lib/ads'
 
 export interface DivetLayoutProps {
   site: { siteName: string; siteUrl: string }
@@ -18,6 +20,7 @@ export default async function DivetLayout({ site, activeGroup, headerSearch = tr
   let recent: Record<string, GroupPost[]> = {}
   let hasDirectory = false
   let hasAbout = false
+  let hasPrivacy = false
   try {
     const activeSite = await prisma.site.findFirst({ where: { isActive: true } })
     if (activeSite) {
@@ -25,6 +28,7 @@ export default async function DivetLayout({ site, activeGroup, headerSearch = tr
       recent = await getRecentPostsByGroup(activeSite.id, groups.map((g) => g.id))
       hasDirectory = (await prisma.listing.count({ where: { siteId: activeSite.id, status: 'PUBLISHED' } })) > 0
       hasAbout = (await prisma.page.count({ where: { siteId: activeSite.id, slug: 'despre-noi', status: 'PUBLISHED' } })) > 0
+      hasPrivacy = (await prisma.page.count({ where: { siteId: activeSite.id, slug: 'politica-confidentialitate', status: 'PUBLISHED' } })) > 0
     }
   } catch {
     groups = []
@@ -77,6 +81,12 @@ export default async function DivetLayout({ site, activeGroup, headerSearch = tr
                 <Link href="/director" className="hover:text-dv-accent focus-visible:outline-2 focus-visible:outline-dv-accent">Director</Link>
               ) : null}
               <a href="/sitemap.xml" className="hover:text-dv-accent focus-visible:outline-2 focus-visible:outline-dv-accent">Sitemap</a>
+              {hasPrivacy ? (
+                <Link href="/politica-confidentialitate" className="hover:text-dv-accent focus-visible:outline-2 focus-visible:outline-dv-accent">Confidențialitate</Link>
+              ) : null}
+              {getAdsenseClient() ? (
+                <CookieSettingsButton className="cursor-pointer border-0 bg-transparent p-0 text-inherit hover:text-dv-accent focus-visible:outline-2 focus-visible:outline-dv-accent" />
+              ) : null}
             </span>
           </div>
         </div>
