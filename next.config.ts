@@ -7,6 +7,19 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? '')
   .map((o) => o.trim())
   .filter(Boolean)
 
+// Domeniile Google necesare pentru AdSense si mesajul de consimtamant.
+const googleAdsHosts = [
+  'https://pagead2.googlesyndication.com',
+  'https://fundingchoicesmessages.google.com',
+  'https://googleads.g.doubleclick.net',
+  'https://tpc.googlesyndication.com',
+  'https://www.googletagservices.com',
+  'https://partner.googleadservices.com',
+  'https://www.google.com',
+  'https://*.adtrafficquality.google',
+  'https://ep2.adtrafficquality.google',
+].join(' ')
+
 const nextConfig: NextConfig = {
   // ── TypeScript ────────────────────────────────────────────────────────────
   // Type errors are checked locally via `tsc --noEmit`. During production
@@ -50,11 +63,13 @@ const nextConfig: NextConfig = {
         // Reasonably strict CSP — tighten further in production if no inline scripts are needed
         value: [
           "default-src 'self'",
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval needed by Next.js HMR
+          `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${googleAdsHosts}`, // unsafe-eval needed by Next.js HMR
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' data: blob: https:",
           "font-src 'self' data:",
           "connect-src 'self' https:",
+          // Reclame Google AdSense + mesajul de consimtamant (Privacy & messaging) ruleaza in iframe-uri Google.
+          `frame-src 'self' ${googleAdsHosts}`,
           "frame-ancestors 'none'",
         ].join('; '),
       },
