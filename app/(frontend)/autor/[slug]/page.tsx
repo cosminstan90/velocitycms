@@ -5,6 +5,7 @@ import { AuthorDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { CARD_META_KEYS } from '@/lib/fields'
+import { truncateAtWord } from '@/lib/seo/author-schema'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const name = author.name ?? author.email
   const title = `${name} | ${siteName}`
-  const description = author.bio ?? `Articole scrise de ${name} pe ${siteName}`
+  const description = truncateAtWord(author.bio ?? `Articole scrise de ${name} pe ${siteName}`)
   const canonical = `${siteUrl.replace(/\/$/, '')}/autor/${slug}`
 
   return {

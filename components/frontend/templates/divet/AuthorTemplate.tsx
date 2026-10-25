@@ -12,6 +12,7 @@ import PostGrid from './PostGrid'
 import EmptyState from './EmptyState'
 import Pagination from './Pagination'
 import { resolveImageUrl } from '../fauna/utils'
+import { buildAuthorSchema } from '@/lib/seo/author-schema'
 
 interface PostItem {
   id: string
@@ -138,6 +139,12 @@ export default function DivetAuthor({ author, posts, pagination, site }: DivetAu
           basePath={author.slug ? `/autor/${author.slug}` : '/autor'}
         />
       </div>
+      {author.slug ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(buildAuthorSchema(author, site.siteUrl, site.siteName)).replace(/</g, '\\u003c') }}
+        />
+      ) : null}
     </DivetLayout>
   )
 }

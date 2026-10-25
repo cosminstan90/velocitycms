@@ -73,6 +73,14 @@ const rootPost = () =>
   })
 const noCatPost = () => makePost({ title: 'Fara categorie', slug: 'fara-categorie' })
 
+describe('speakable', () => {
+  it('Article are SpeakableSpecification pe titlu si blocul Pe scurt', () => {
+    const a = article(generatePostSchema(subPost(), site)) as any
+    expect(a.speakable['@type']).toBe('SpeakableSpecification')
+    expect(a.speakable.cssSelector).toEqual(['article h1', '[data-speakable="tldr"]'])
+  })
+})
+
 describe('generatePostSchema URLs', () => {
   it('1. subcategory post breadcrumb', () => {
     expect(crumbs(generatePostSchema(subPost(), site))).toEqual([
