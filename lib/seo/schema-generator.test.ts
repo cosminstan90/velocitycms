@@ -175,3 +175,31 @@ describe('generateCategorySchema URLs', () => {
     ])
   })
 })
+
+describe('article schema: absolute URLs, publisher logo, author @id', () => {
+  it('makes a relative featured image absolute', () => {
+    const post = makePost({ featuredImage: { url: '/media/uploads/x.webp', altText: null } })
+    const img = article(generatePostSchema(post, site)).image as Node
+    expect(img.url).toBe('https://divet.ro/media/uploads/x.webp')
+  })
+
+  it('keeps an absolute featured image untouched', () => {
+    const post = makePost({ featuredImage: { url: 'https://upload.wikimedia.org/a.jpg', altText: null } })
+    expect((article(generatePostSchema(post, site)).image as Node).url).toBe('https://upload.wikimedia.org/a.jpg')
+  })
+
+  it('always gives the publisher an absolute logo, falling back to the default OG image route', () => {
+    const pub = article(generatePostSchema(makePost(), site)).publisher as Node
+    expect((pub.logo as Node).url).toBe('https://divet.ro/opengraph-image')
+    expect(pub['@id']).toBe('https://divet.ro/#organization')
+    const withLogo = article(generatePostSchema(makePost(), { ...site, defaultOgImage: '/media/logo.png' })).publisher as Node
+    expect((withLogo.logo as Node).url).toBe('https://divet.ro/media/logo.png')
+  })
+
+  it('links the author to the ProfilePage Person @id', () => {
+    const post = makePost({ author: { name: 'Redacția DiVet', email: 'r@divet.ro', slug: 'redactia' } })
+    const author = article(generatePostSchema(post, site)).author as Node
+    expect(author['@id']).toBe('https://divet.ro/autor/redactia/#person')
+    expect(author.url).toBe('https://divet.ro/autor/redactia')
+  })
+})

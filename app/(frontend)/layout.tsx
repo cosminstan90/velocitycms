@@ -21,6 +21,7 @@ export default function FrontendLayout({ children }: { children: React.ReactNode
   const adsClient = process.env.NODE_ENV === 'production' ? getAdsenseClient() : null
   return (
     <div className={`${display.variable} ${body.variable}`}>
+      <link rel="alternate" type="application/rss+xml" title="DiVet — articole noi" href="/feed.xml" />
       {children}
       {adsClient ? <AdsenseScripts client={adsClient} /> : null}
     </div>

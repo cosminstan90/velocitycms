@@ -3,6 +3,7 @@ import { ogImages } from '@/lib/default-og'
 import { HomepageDispatcher } from '@/components/frontend/TemplateDispatcher'
 import { CARD_META_KEYS } from '@/lib/fields'
 import { buildHomeSchema } from '@/lib/home-schema'
+import { buildPostPath } from '@/lib/seo/canonical-builder'
 import { HOME_INTRO } from '@/lib/home-content'
 import type { Metadata } from 'next'
 
@@ -99,15 +100,17 @@ export default async function HomePage() {
 
   const base = siteData.siteUrl.replace(/\/$/, '')
 
-  function postUrl(p: { slug: string; category: { slug: string } | null }) {
-    return p.category ? `${base}/${p.category.slug}/${p.slug}` : `${base}/blog/${p.slug}`
+  function postUrl(p: { slug: string; category: { slug: string; parent?: { slug: string } | null } | null }) {
+    return `${base}${buildPostPath({ slug: p.slug }, p.category)}`
   }
 
   const schema = buildHomeSchema({
     base,
     siteName: siteData.siteName,
     description: seo?.defaultMetaDesc ?? HOME_INTRO,
-    logoUrl: siteData.defaultOgImage,
+    logoUrl: siteData.defaultOgImage
+      ? (siteData.defaultOgImage.startsWith('/') ? base + siteData.defaultOgImage : siteData.defaultOgImage)
+      : `${base}/opengraph-image`,
     posts: mappedPosts.map((p) => ({
       title: p.title,
       url: postUrl(p),

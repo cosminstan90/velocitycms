@@ -19,6 +19,8 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title: `Blog | ${siteName}`,
       description: seo?.defaultMetaDesc ?? undefined,
+      // /blog nu e legat din navigatie si dubleaza hub-urile pe categorii: fara index, cu urmarirea linkurilor.
+      robots: { index: false, follow: true },
       openGraph: {
         title: `Blog | ${siteName}`,
         description: seo?.defaultMetaDesc ?? undefined,

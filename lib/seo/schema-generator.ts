@@ -156,7 +156,9 @@ function buildArticleSchema(
   url: string,
   fieldValues?: SchemaFieldValue[]
 ) {
-  const imageUrl = post.featuredImage?.url ?? site.defaultOgImage
+  const rawImage = post.featuredImage?.url ?? site.defaultOgImage
+  const imageUrl = rawImage ? resolveUrl(site, rawImage) : null
+  const authorUrl = post.author?.slug ? resolveUrl(site, `/autor/${post.author.slug}`) : null
 
   const isAnimalPost = fieldValues?.some(
     (fv) => ['breed', 'species'].includes(fv.fieldDefinition.fieldKey)
@@ -178,14 +180,15 @@ function buildArticleSchema(
       author: {
         '@type': 'Person',
         name: post.author.name ?? post.author.email,
-        ...(post.author.slug && { url: resolveUrl(site, `/autor/${post.author.slug}`) }),
+        ...(authorUrl && { '@id': `${authorUrl}/#person`, url: authorUrl }),
       },
     }),
     publisher: {
       '@type': 'Organization',
+      '@id': `${site.siteUrl}/#organization`,
       name: site.siteName,
       url: site.siteUrl,
-      ...(site.defaultOgImage && { logo: { '@type': 'ImageObject', url: site.defaultOgImage } }),
+      logo: { '@type': 'ImageObject', url: resolveUrl(site, site.defaultOgImage ?? '/opengraph-image') },
     },
     ...(post.publishedAt && { datePublished: isoDate(post.publishedAt) }),
     dateModified: isoDate(post.updatedAt),

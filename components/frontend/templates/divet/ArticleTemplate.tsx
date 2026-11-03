@@ -15,6 +15,7 @@ import DivetToc from './DivetToc'
 import Breadcrumbs, { type Crumb } from './Breadcrumbs'
 import TldrCard from './TldrCard'
 import SpecGrid from './SpecGrid'
+import { specHeading } from '@/lib/spec-heading'
 import BehaviorProfile from './BehaviorProfile'
 import RelatedArticles from './RelatedArticles'
 import FaqSection from './FaqSection'
@@ -245,7 +246,7 @@ export default function ArticleTemplate({
             ) : null}
           </div>
 
-          <SpecGrid items={specs} />
+          <SpecGrid items={specs} heading={specHeading(groupSlug)} />
 
           {hasAside ? (
             <div className="grid items-start gap-8 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-9">
