@@ -14,6 +14,8 @@ export const LEGACY_ALIASES: Readonly<Record<string, string>> = {
   '/caini/bichon-frise': '/caini/rase/bichon-frise-rasa-caini-caracteristici',
   '/caini/labrador-retriever': '/caini/rase/labrador-rasa-caini-caracteristici',
   '/caini/golden-retriever': '/caini/rase/golden-retriever-caracteristici-temperament',
+  '/caini/vizsla-maghiara': '/caini/rase/vizsla',
+  '/insecte/gandacul-rinocer-oryctes-nasicornis': '/insecte/gandaci/gandacul-rinocer',
   '/caini/ciobanesti': '/caini/rase',
   '/caini/caini-mari': '/caini/rase',
   '/caini/caini-mici': '/caini/rase',

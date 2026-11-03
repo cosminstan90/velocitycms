@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { LEGACY_STATIC_REDIRECTS } from './lib/legacy-static-redirects'
 
 // Origins allowed to call the public headless API.
 // Populate via env: CORS_ALLOWED_ORIGINS=https://site1.com,https://site2.com
@@ -124,7 +125,7 @@ const nextConfig: NextConfig = {
   // Note: runtime redirects are handled by the custom middleware (Redis lookup).
   // Only add static build-time redirects here.
   async redirects() {
-    return []
+    return [...LEGACY_STATIC_REDIRECTS]
   },
 }
 

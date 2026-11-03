@@ -1,0 +1,20 @@
+url_vechi,status_inainte,actiune,tinta
+/rase/bichon-frise-rasa-caini-caracteristici,404,redirect (static),/caini/rase/bichon-frise-rasa-caini-caracteristici
+/labrador-rasa-caini-caracteristici,404,redirect (static),/caini/rase/labrador-rasa-caini-caracteristici
+/golden-retriever-caracteristici-temperament/,404,redirect (static),/caini/rase/golden-retriever-caracteristici-temperament
+/eticheta/{ciobanesc-german|caini-de-lucru|rase-mici|golden-retriever|labrador-retriever|rase-mari|caini-prietenosi|bichon-frise|caini-familie}-1,404,redirect (static),/eticheta/<acelasi slug fara -1>
+/index.php si /index.html,404,redirect (static),/
+/categorie/caini/,404,redirect (static),/caini
+/caini-1 /pisici-1 /salbatice-1,404,redirect (static),/caini /pisici /salbatice
+/caini/rase-2,404,redirect (static),/caini/rase
+/pisici/sanatate-2 /pisici/comportament-2,404,redirect (static),/pisici (nu exista inca hub de sanatate)
+/salbatice/rapitoare-2 /salbatice/fauna-romaniei-2,404,redirect (static),/salbatice
+/cautare-1,404,redirect (static),/cautare
+/politica-de-confidentialitate,404,redirect (static),/politica-confidentialitate
+/caini/alabai/,200 dupa redirect,deja functioneaza,/caini/rase/alabai
+/caini/vizsla-maghiara/,404,alias DB-conditionat,/caini/rase/vizsla
+/insecte/gandacul-rinocer-oryctes-nasicornis/,404,alias DB-conditionat,/insecte/gandaci/gandacul-rinocer
+/insecte/licurici/,404 pana la publicare,automat (slug identic in /insecte/*) dupa 2026-11-09,
+/marine/merluciul /insecte/libelula /insecte/carabusul-coleoptera /caini/ciobanescul-carpatin,404,BACKLOG continut (fara echivalent),scrie articol cu slug identic -> redirect automat
+/acvariu-terariu* /pasari* /animale-mici*,404,lasat 404 (grupuri inexistente; nu redirectionam spre homepage),
+/termeni-si-conditii /contact /oferte/,404,DECIZIE USER: creeaza pagini (contact necesar pentru AdSense/E-E-A-T),
