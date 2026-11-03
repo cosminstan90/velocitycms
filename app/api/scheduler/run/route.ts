@@ -14,6 +14,8 @@ import { prisma } from '@/lib/prisma'
 import { revalidateNavigation } from '@/lib/navigation'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { notifyPostPublished } from '@/lib/notifications/email-service'
+import { buildPostPath } from '@/lib/seo/canonical-builder'
+import { pingIndexNow } from '@/lib/indexnow'
 
 export async function GET(req: NextRequest) {
   // ── Auth ───────────────────────────────────────────────────────────────────
@@ -25,6 +27,7 @@ export async function GET(req: NextRequest) {
   const now = new Date()
   const errors: string[] = []
   let published = 0
+  const pingPaths: Array<{ siteId: string; path: string }> = []
 
   // ── Query due posts ────────────────────────────────────────────────────────
   const duePosts = await prisma.post.findMany({
@@ -97,6 +100,11 @@ export async function GET(req: NextRequest) {
       }).catch(() => {})
 
       published++
+      const cat = post.category
+      pingPaths.push({
+        siteId: post.siteId,
+        path: buildPostPath({ slug: post.slug }, cat ? { slug: cat.slug, parent: cat.parent } : null),
+      })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       errors.push(`Post ${post.id} (${post.slug}): ${msg}`)
@@ -106,6 +114,18 @@ export async function GET(req: NextRequest) {
         where: { postId: post.id, status: 'PENDING' },
         data: { status: 'FAILED', error: msg },
       }).catch(() => {})
+    }
+  }
+
+  // IndexNow: un singur ping per site, dupa ce toate articolele scadente sunt publicate (no-op fara INDEXNOW_KEY).
+  for (const siteId of new Set(pingPaths.map((p) => p.siteId))) {
+    try {
+      const seo = await prisma.seoSettings.findFirst({ where: { siteId }, select: { siteUrl: true } })
+      if (seo?.siteUrl) {
+        await pingIndexNow(seo.siteUrl, pingPaths.filter((p) => p.siteId === siteId).map((p) => p.path))
+      }
+    } catch {
+      // IndexNow e optional: o eroare aici nu trebuie sa afecteze raspunsul schedulerului
     }
   }
 

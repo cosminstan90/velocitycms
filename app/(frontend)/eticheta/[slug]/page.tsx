@@ -6,6 +6,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { CARD_META_KEYS } from '@/lib/fields'
 import { isTagIndexable } from '@/lib/seo/tag-index'
+import { buildCollectionSchema } from '@/lib/seo/collection-schema'
+import { buildPostPath } from '@/lib/seo/canonical-builder'
 
 export const dynamic = 'force-dynamic'
 
@@ -111,14 +113,32 @@ export default async function TagPage({ params, searchParams }: Props) {
     })
   } catch { /* no-op */ }
 
+  const description =
+    tag.description ??
+    `Articole DiVet etichetate cu „${tag.name}": fișe cu caracteristici, temperament, îngrijire și întrebări frecvente.`
+  const schema = buildCollectionSchema({
+    siteUrl,
+    siteName,
+    path: `/eticheta/${slug}`,
+    name: tag.name,
+    description,
+    items: posts.map((p) => ({ name: p.title, path: buildPostPath({ slug: p.slug }, p.category) })),
+  })
+
   return (
-    <TagDispatcher
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }}
+      />
+      <TagDispatcher
       template={template}
-      tag={tag}
+      tag={{ ...tag, description }}
       posts={posts}
       pagination={{ currentPage, totalPages: Math.ceil(totalCount / POSTS_PER_PAGE), totalCount }}
       site={{ siteName, siteUrl }}
       categories={navCategories}
-    />
+      />
+    </>
   )
 }

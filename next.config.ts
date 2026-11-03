@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next'
 import { LEGACY_STATIC_REDIRECTS } from './lib/legacy-static-redirects'
+import { isValidIndexNowKey } from './lib/indexnow'
 
 // Origins allowed to call the public headless API.
 // Populate via env: CORS_ALLOWED_ORIGINS=https://site1.com,https://site2.com
@@ -38,9 +39,12 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     // In dezvoltare, uploadurile vin de pe localhost; optimizatorul blocheaza implicit IP-urile locale.
     dangerouslyAllowLocalIP: process.env.NODE_ENV !== 'production',
-    // Allow images served from the same host (uploads) and any configured domains
+    // Doar hosturile folosite efectiv: uploaduri proprii + sursele de imagini ale articolelor (Wikimedia Commons, Unsplash).
+    // Alt host de imagini se adauga aici explicit; nu mai optimizam orice URL https.
     remotePatterns: [
-      { protocol: 'https', hostname: '**' },
+      { protocol: 'https', hostname: 'divet.ro' },
+      { protocol: 'https', hostname: 'upload.wikimedia.org' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'http', hostname: 'localhost' },
     ],
   },
@@ -113,11 +117,15 @@ const nextConfig: NextConfig = {
   // route handler that reads from disk per request.
   async rewrites() {
     return {
-      beforeFiles: [],
+      beforeFiles: [] as { source: string; destination: string }[],
       afterFiles: [],
       fallback: [
         { source: '/media/uploads/:path*', destination: '/api/media-file/:path*' },
       ],
+      // IndexNow: fisierul-cheie /{INDEXNOW_KEY}.txt (cheia se citeste la build/start; fara ea, nu exista rewrite).
+      ...(isValidIndexNowKey(process.env.INDEXNOW_KEY)
+        ? { beforeFiles: [{ source: `/${process.env.INDEXNOW_KEY}.txt`, destination: '/api/indexnow-key' }] }
+        : {}),
     }
   },
 

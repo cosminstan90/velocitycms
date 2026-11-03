@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
 import { buildPostPath } from '@/lib/seo/canonical-builder'
+import { buildCollectionSchema } from '@/lib/seo/collection-schema'
 import { groupByInitial, INDEX_LETTERS, type IndexGroup, type IndexItem } from '@/lib/index-az'
 import DivetLayout from '@/components/frontend/templates/divet/DivetLayout'
 import Breadcrumbs from '@/components/frontend/templates/divet/Breadcrumbs'
@@ -53,6 +54,7 @@ export default async function IndexAzPage() {
   let seo: Awaited<ReturnType<typeof loadSiteData>>['seo'] = null
   let groups: IndexGroup<Entry>[] = []
   let total = 0
+  let allEntries: Entry[] = []
 
   try {
     ;({ site, seo } = await loadSiteData())
@@ -74,6 +76,7 @@ export default async function IndexAzPage() {
         group: p.category?.parent?.name ?? p.category?.name ?? null,
       }))
       total = entries.length
+      allEntries = entries
       groups = groupByInitial(entries)
     }
   } catch {
@@ -84,8 +87,21 @@ export default async function IndexAzPage() {
   const present = new Set(groups.map((g) => g.letter))
   const barLetters = present.has(OTHER) ? [...INDEX_LETTERS, OTHER] : [...INDEX_LETTERS]
 
+  const schema = buildCollectionSchema({
+    siteUrl: siteData.siteUrl,
+    siteName: siteData.siteName,
+    path: '/index-a-z',
+    name: 'Index A–Z',
+    description: 'Toate articolele din enciclopedie, în ordine alfabetică.',
+    items: allEntries.map((e) => ({ name: e.title, path: e.href })),
+  })
+
   return (
     <DivetLayout site={siteData}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }}
+      />
       <div className="mx-auto w-full max-w-[1100px] px-4 py-6 md:px-10 lg:py-8">
         <Breadcrumbs
           items={[
