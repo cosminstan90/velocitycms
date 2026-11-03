@@ -479,6 +479,38 @@ const POSTS: SamplePost[] = [
     ],
   },
   {
+    // Articol de sanatate de proba (grupul `sanatate`): verifica caseta de urgenta, faptele si legaturile rasa <-> boala.
+    slug: 'parvoviroza-la-caini',
+    title: 'Parvoviroza la câini: simptome, prevenție și când mergi la veterinar',
+    category: 'sanatate/boli',
+    excerpt: 'Parvoviroza este o boală virală contagioasă a câinilor, mai gravă la pui. Afli semnele, prevenția și când e urgent.',
+    metaTitle: 'Parvoviroza la câini: simptome și prevenție',
+    metaDescription: 'Parvoviroza canină: ce este, cum se transmite, ce semne apar, cum se previne prin vaccinare și când mergi urgent la medicul veterinar.',
+    fields: {
+      tldr: 'Parvoviroza este o boală virală foarte contagioasă a câinilor, care afectează mai ales puii. Vomă și diaree la un pui se tratează ca urgență. Vaccinarea după schema stabilită de medic este principala prevenție.',
+      specie: 'Câini',
+      urgenta: 'Urgență imediată',
+      contagios: 'Da',
+      zoonotic: 'Nu',
+      rase_predispuse: 'Labrador, Ciobănesc German',
+    },
+    sections: [
+      {
+        h: 'Cât de urgent este',
+        ps: ['Dacă un pui nevaccinat varsă repetat sau are diaree și pare epuizat, sună imediat la veterinar. Nu aștepta să treacă de la sine.'],
+      },
+      {
+        h: 'Ce este parvoviroza',
+        ps: ['Parvoviroza este o boală provocată de un virus rezistent în mediu, care se transmite prin contact cu fecale sau obiecte contaminate.'],
+      },
+    ],
+    faq: [
+      { question: 'Se poate vindeca parvoviroza acasă?', answer: 'Nu. Diagnosticul și tratamentul le stabilește medicul veterinar, iar cazurile grave cer internare.' },
+      { question: 'Cum se previne?', answer: 'Prin vaccinare după schema stabilită de medic și prin evitarea contactului puilor nevaccinați cu locuri nesigure.' },
+      { question: 'Se transmite la om?', answer: 'Virusul canin nu se transmite la om, dar poate fi purtat pe încălțăminte și haine.' },
+    ],
+  },
+  {
     slug: 'noutati-din-redactie',
     title: 'Noutăți din redacție',
     category: '',

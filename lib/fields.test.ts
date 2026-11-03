@@ -38,7 +38,7 @@ const fv = (fieldKey: string, value: string, sortOrder: number, fieldLabel = fie
 
 describe('splitFieldValues', () => {
   it('lista goala -> structura goala', () => {
-    expect(splitFieldValues([])).toEqual({ tldr: null, specs: [], behavior: [], conservation: [] })
+    expect(splitFieldValues([])).toEqual({ tldr: null, specs: [], behavior: [], conservation: [], health: [] })
   })
 
   it('extrage tldr cu trim', () => {
@@ -78,10 +78,16 @@ describe('splitFieldValues', () => {
   })
 
   it('ignora campurile din afara blocurilor cunoscute', () => {
-    const out = splitFieldValues([fv('altceva', 'x', 50), fv('custom', 'y', 400), fv('origine', 'RO', 100)])
+    const out = splitFieldValues([fv('altceva', 'x', 50), fv('custom', 'y', 900), fv('origine', 'RO', 100)])
     expect(out.specs.map((f) => f.key)).toEqual(['origine'])
     expect(out.behavior).toEqual([])
     expect(out.conservation).toEqual([])
+  })
+
+  it('pune campurile 400-499 in blocul de sanatate', () => {
+    const out = splitFieldValues([fv('urgenta', 'Urgență imediată', 410), fv('specie', 'Câini', 400)])
+    expect(out.health.map((f) => f.key)).toEqual(['specie', 'urgenta'])
+    expect(out.specs).toEqual([])
   })
 
   it('propaga eticheta din definitie si taie valoarea', () => {

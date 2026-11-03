@@ -388,7 +388,44 @@ Anii verificabili contează ca statistici: anul înființării unui club de ras�
 | `marine` | `mamifere-marine`, `rechini-si-pesti`, `nevertebrate-marine`, `pasari-marine` |
 | `insecte` | `gandaci`, `insecte-exotice`, `insecte-comune` |
 | `salbatice` | `mamifere`, `rapitoare`, `specii-protejate`, `fauna-romaniei` |
-| `sanatate` | `boli`, `vaccinare`, `parazitologie`, `urgente` |
+| `sanatate` | `boli`, `simptome`, `substante-toxice`, `vaccinare`, `parazitologie`, `urgente` |
+
+---
+
+## Articole de sănătate (grupul `sanatate`) — reguli YMYL
+
+Sănătatea animalelor este subiect „Your Money or Your Life”: o greșeală poate dăuna unui animal. Regulile de mai jos se adaugă la toate celelalte din ghid și au prioritate.
+
+**Încadrare:** `categorySlug: "sanatate"` și `subCategorySlug`: `boli` (o boală), `simptome` (un simptom), `substante-toxice` (alimente, plante, medicamente), `vaccinare`, `parazitologie`, `urgente`. Specia (câini/pisici) apare în titlu și în câmpul `specie`, nu în URL.
+
+**Ce NU scrii niciodată:**
+- doze de medicamente, scheme de tratament sau „remedii” de făcut acasă;
+- diagnostice („dacă are X, are boala Y”); descrii ce poate însemna un semn, nu îl diagnostichezi;
+- cifre de prevalență, mortalitate sau eficiență pe care nu le poți lega de o sursă;
+- formulări precum „sigur”, „garantat”, „fără risc”;
+- numele unui medic, o „revizuire medicală” sau un titlu profesional (nu există recenzent: articolul nu afirmă așa ceva).
+
+**Ce scrii obligatoriu:**
+1. Prima secțiune după rezumat răspunde la „Cât de urgent este?” și „Când mergi la veterinar?”, concret (semne de urgență enumerate).
+2. Fiecare afirmație medicală importantă are un link către sursa primară în text (Merck Veterinary Manual, WSAVA, AAHA, ASPCA Animal Poison Control, Cornell, ANSVSA, publicații științifice). Minim 3 linkuri externe distincte în articole de boală.
+3. Ultimul paragraf înainte de FAQ recomandă consultul veterinar. Pagina adaugă singură avertismentul medical.
+4. Dacă o informație diferă între surse (ex. vârsta la care se face un vaccin), spui intervalul și că medicul stabilește schema, nu alegi tu o valoare.
+5. Vaccinurile și deparazitarea: te referi la schema recomandată de medic și la normele oficiale, fără a prescrie.
+
+**Câmpuri (`fieldValues`) pentru `sanatate`:**
+
+| fieldKey | Valori permise | Obligatoriu |
+|---|---|---|
+| `tldr` | text simplu, 2 propoziții | da |
+| `specie` | `Câini`, `Pisici`, `Câini și pisici` | da |
+| `urgenta` | `Monitorizare acasă`, `Consult veterinar în 24–48 h`, `Urgență imediată` | da (la boli, simptome, toxice) |
+| `contagios` | `Da` / `Nu` | la boli |
+| `zoonotic` | `Da` / `Nu` (se transmite la om) | la boli |
+| `rase_predispuse` | nume de rase separate prin virgulă, exact cum le scrii în site (ex. `Labrador, Ciobănesc German`) | la boli cu predispoziție dovedită; altfel nu trimite câmpul |
+
+Numele din `rase_predispuse` se transformă automat în linkuri doar dacă există articol publicat despre rasa respectivă (și invers: pagina rasei listează bolile care o menționează). Nu inventa predispoziții: folosești doar rase pentru care sursa linkată le menționează.
+
+**Titluri recomandate:** boală — `Parvoviroza la câini: simptome, prevenție și când mergi la veterinar`; simptom — `Câinele vomită: cauze posibile și când e urgent`; toxic — `Ciocolata și câinii: de ce este periculoasă și ce faci`.
 
 ---
 
@@ -449,6 +486,7 @@ CMS-ul ignoră câmpurile necunoscute: dacă trimiți un `fieldKey` nedefinit nu
 - 100–199 → placa de specificații (origine, talie, greutate, înălțime, speranță de viață, temperament etc.)
 - 200–299 → profilul comportamental (scara de rating și `bun_cu_copiii`)
 - 300–399 → conservare (`statut_conservare`)
+- 400–499 → sănătate (doar grupul `sanatate`, vezi „Articole de sănătate”)
 
 ---
 

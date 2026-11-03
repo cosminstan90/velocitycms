@@ -12,6 +12,8 @@ import { ogImages } from '@/lib/default-og'
 import { ArticleDispatcher } from '@/components/frontend/TemplateDispatcher'
 import { generatePostSchema } from '@/lib/seo/schema-generator'
 import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
+import { getHealthLinks } from '@/lib/health-data'
+import { HEALTH_KEYS } from '@/lib/health'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
@@ -176,6 +178,15 @@ export default async function SubCategoryPostPage({ params }: Props) {
   }
   const schema = generatePostSchema(schemaPost, { siteName, siteUrl, defaultOgImage })
 
+  const healthLinks = await getHealthLinks({
+    siteId: post.siteId,
+    postSlug: post.slug,
+    postTitle: post.title,
+    groupSlug: categorySlug,
+    subSlug: subCategorySlug,
+    breedsValue: post.fieldValues.find((f) => f.fieldDefinition.fieldKey === HEALTH_KEYS.breeds)?.value ?? null,
+  })
+
   return (
     <>
       <script
@@ -199,6 +210,7 @@ export default async function SubCategoryPostPage({ params }: Props) {
         seoSettings={seo}
         categories={navCategories}
         fieldValues={post.fieldValues}
+        healthLinks={healthLinks}
       />
     </>
   )

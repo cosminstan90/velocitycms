@@ -201,6 +201,15 @@ function buildArticleSchema(
     }),
   }
 
+  // Articolele din grupul `sanatate` sunt si MedicalWebPage. Fara recenzent real nu pretindem `reviewedBy`.
+  if (post.category?.parent?.slug === 'sanatate') {
+    article['@type'] = ['Article', 'MedicalWebPage']
+    article.audience = { '@type': 'Audience', audienceType: 'Proprietari de animale de companie' }
+    const subject = (post.title.split(/:\s|\s[-–—]\s/)[0] ?? post.title).trim()
+    if (post.category.slug === 'boli') article.about = { '@type': 'MedicalCondition', name: subject }
+    else if (post.category.slug === 'simptome') article.about = { '@type': 'MedicalSignOrSymptom', name: subject }
+  }
+
   // Additional properties from custom fields
   const schemaFields = fieldValues?.filter(
     (fv) => fv.fieldDefinition.showInSchema && fv.fieldDefinition.schemaProperty

@@ -25,6 +25,9 @@ import { splitFieldValues, ratingToPercent, iucnLabel } from '@/lib/fields'
 import { extractToc, addHeadingIds, readingTimeMinutes } from '@/lib/article-html'
 import { buildPostPath } from '@/lib/seo/canonical-builder'
 import { extractFaqItems } from '@/lib/faq'
+import { HEALTH_GROUP, HEALTH_KEYS } from '@/lib/health'
+import type { HealthLinks } from '@/lib/health-data'
+import { UrgencyBanner, HealthFacts, MedicalDisclaimer, HealthLinkList } from './HealthPanel'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -81,6 +84,8 @@ interface ArticleTemplateProps {
   breadcrumbExtra?: unknown
   seoSettings?: unknown
   fieldValues?: FieldValueItem[]
+  /** Legaturi rasa <-> boala, calculate de pagina (lib/health-data.ts). */
+  healthLinks?: HealthLinks
 }
 
 const CHIP = 'rounded px-[11px] py-[5px] text-[12px] font-semibold'
@@ -119,6 +124,7 @@ export default function ArticleTemplate({
   relatedPosts,
   site,
   fieldValues = [],
+  healthLinks,
 }: ArticleTemplateProps) {
   const category = post.category
   const parent = category?.parent ?? null
@@ -126,7 +132,10 @@ export default function ArticleTemplate({
   const groupSlug = group?.slug ?? null
   const categoryHref = category ? (parent ? `/${parent.slug}/${category.slug}` : `/${category.slug}`) : null
 
-  const { tldr, specs, behavior, conservation } = splitFieldValues(fieldValues)
+  const { tldr, specs, behavior, conservation, health } = splitFieldValues(fieldValues)
+  const isHealth = groupSlug === HEALTH_GROUP
+  const urgency = health.find((h) => h.key === HEALTH_KEYS.urgency)?.value ?? null
+  const healthFacts = health.filter((h) => h.key !== HEALTH_KEYS.urgency && h.key !== HEALTH_KEYS.breeds)
 
   const crumbs: Crumb[] = [{ name: 'Acasă', href: '/' }]
   if (group) crumbs.push({ name: group.name, href: `/${group.slug}` })
@@ -246,6 +255,13 @@ export default function ArticleTemplate({
             ) : null}
           </div>
 
+          {isHealth ? (
+            <>
+              <UrgencyBanner value={urgency} />
+              <HealthFacts items={healthFacts} />
+            </>
+          ) : null}
+
           <SpecGrid items={specs} heading={specHeading(groupSlug)} />
 
           {hasAside ? (
@@ -259,6 +275,10 @@ export default function ArticleTemplate({
           ) : (
             <div className="mx-auto w-full max-w-[720px]">{main}</div>
           )}
+
+          {isHealth ? <HealthLinkList heading="Rase predispuse" links={healthLinks?.breeds ?? []} /> : null}
+          {!isHealth ? <HealthLinkList heading="Probleme de sănătate frecvente" links={healthLinks?.articles ?? []} /> : null}
+          {isHealth ? <MedicalDisclaimer /> : null}
 
           {post.tags.length > 0 ? (
             <div className="flex flex-wrap items-center gap-2 border-t border-dv-border pt-6">
