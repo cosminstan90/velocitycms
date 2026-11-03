@@ -236,3 +236,35 @@ describe('health articles: MedicalWebPage without a fake reviewer', () => {
     expect(article(generatePostSchema(subPost(), site))['@type']).toBe('Article')
   })
 })
+
+describe('health articles: reviewedBy only with a real reviewer and date', () => {
+  const base = () =>
+    makePost({
+      title: 'Parvoviroza',
+      category: { name: 'Boli', slug: 'boli', parent: { name: 'Sănătate', slug: 'sanatate' } },
+    })
+  const node = (p: SchemaPost) => graph(generatePostSchema(p, site)).find((n) => Array.isArray(n['@type']))!
+  const reviewer = { name: 'Dr. Test', slug: 'dr-test', title: 'Medic veterinar', credentials: null }
+
+  it('emits reviewedBy (Person @id of the profile page) and lastReviewed', () => {
+    const n = node({ ...base(), reviewedBy: reviewer, reviewedAt: '2026-11-01T00:00:00.000Z' })
+    expect(n.reviewedBy).toEqual({
+      '@type': 'Person',
+      '@id': 'https://divet.ro/autor/dr-test/#person',
+      name: 'Dr. Test',
+      url: 'https://divet.ro/autor/dr-test',
+      jobTitle: 'Medic veterinar',
+    })
+    expect(n.lastReviewed).toBe('2026-11-01T00:00:00.000Z')
+  })
+
+  it('emits nothing when the date or the reviewer is missing', () => {
+    expect(node({ ...base(), reviewedBy: reviewer, reviewedAt: null })).not.toHaveProperty('reviewedBy')
+    expect(node({ ...base(), reviewedBy: null, reviewedAt: '2026-11-01T00:00:00.000Z' })).not.toHaveProperty('reviewedBy')
+  })
+
+  it('does not add reviewedBy to non-health articles', () => {
+    const n = article(generatePostSchema({ ...subPost(), reviewedBy: reviewer, reviewedAt: '2026-11-01T00:00:00.000Z' }, site))
+    expect(n).not.toHaveProperty('reviewedBy')
+  })
+})

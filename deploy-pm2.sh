@@ -93,8 +93,8 @@ npx prisma migrate deploy
 echo "✓ Baza de date la zi"
 
 if [ "$RUN_SEEDS" = true ]; then
-  echo "  Seed-uri idempotente pentru $SEED_SITE_DOMAIN (categorii, campuri, servicii director)..."
-  for s in seed-categories seed-field-definitions seed-listing-services; do
+  echo "  Seed-uri idempotente pentru $SEED_SITE_DOMAIN (categorii, campuri, servicii director, pagini editoriale)..."
+  for s in seed-categories seed-field-definitions seed-listing-services seed-editorial-pages; do
     SEED_SITE_DOMAIN="$SEED_SITE_DOMAIN" node --env-file=.env node_modules/ts-node/dist/bin.js \
       --compiler-options '{"module":"CommonJS"}' "scripts/$s.ts"
   done

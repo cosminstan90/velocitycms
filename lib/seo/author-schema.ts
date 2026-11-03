@@ -5,6 +5,7 @@ export type AuthorSchemaInput = {
   bio: string | null
   photo: string | null
   website: string | null
+  credentials?: string | null
 }
 
 const META_DESC_MAX = 155
@@ -43,6 +44,9 @@ export function buildAuthorSchema(author: AuthorSchemaInput, siteUrl: string, si
       name,
       url,
       ...(author.title && { jobTitle: author.title }),
+      ...(author.credentials && {
+        hasCredential: { '@type': 'EducationalOccupationalCredential', credentialCategory: 'license', name: author.credentials },
+      }),
       ...(author.bio && { description: author.bio }),
       ...(author.photo && { image: absolute(base, author.photo) }),
       ...(sameAs && { sameAs }),

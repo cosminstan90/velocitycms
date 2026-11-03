@@ -5,6 +5,7 @@ const { prisma, getSmartScheduledAt } = vi.hoisted(() => ({
   prisma: {
     seoSettings: { findUnique: vi.fn() },
     userSiteAccess: { findFirst: vi.fn() },
+    user: { findUnique: vi.fn() },
     post: { findFirst: vi.fn(), update: vi.fn(), create: vi.fn() },
   },
   getSmartScheduledAt: vi.fn(),
@@ -171,5 +172,59 @@ describe('POST /api/publisher/receive', () => {
       expect((await res.json()).error).toBe('post already published')
       expect(prisma.post.update).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe('medical review (reviewerSlug + reviewedAt)', () => {
+  const past = '2026-11-01T10:00:00.000Z'
+
+  it('does not touch the review when neither field is sent', async () => {
+    await send()
+    const data = prisma.post.create.mock.calls[0][0].data
+    expect(data).not.toHaveProperty('reviewedById')
+    expect(data).not.toHaveProperty('reviewedAt')
+  })
+
+  it('stores the reviewer and date on create', async () => {
+    prisma.user.findUnique.mockResolvedValue({ id: 'vet1' })
+    const res = await send({ reviewerSlug: 'radu', reviewedAt: past })
+    expect(res.status).toBe(201)
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { slug: 'radu' }, select: { id: true } })
+    const data = prisma.post.create.mock.calls[0][0].data
+    expect(data.reviewedById).toBe('vet1')
+    expect(data.reviewedAt).toEqual(new Date(past))
+  })
+
+  it('keeps a stored review when an existing post is re-sent without the fields', async () => {
+    prisma.post.findFirst.mockResolvedValue(existingPost('PUBLISHED'))
+    await send()
+    const data = prisma.post.update.mock.calls[0][0].data
+    expect(data).not.toHaveProperty('reviewedById')
+  })
+
+  it('clears the review only when both are explicitly null', async () => {
+    prisma.post.findFirst.mockResolvedValue(existingPost('PUBLISHED'))
+    await send({ reviewerSlug: null, reviewedAt: null })
+    const data = prisma.post.update.mock.calls[0][0].data
+    expect(data.reviewedById).toBeNull()
+    expect(data.reviewedAt).toBeNull()
+  })
+
+  it('400 when only one of the two is sent, or the date is invalid or in the future', async () => {
+    for (const extra of [
+      { reviewerSlug: 'radu' },
+      { reviewedAt: past },
+      { reviewerSlug: 'radu', reviewedAt: 'nu-e-data' },
+      { reviewerSlug: 'radu', reviewedAt: new Date(Date.now() + 86_400_000).toISOString() },
+    ]) {
+      expect((await send(extra)).status).toBe(400)
+    }
+    expect(prisma.post.create).not.toHaveBeenCalled()
+  })
+
+  it('422 when the reviewer does not exist', async () => {
+    prisma.user.findUnique.mockResolvedValue(null)
+    expect((await send({ reviewerSlug: 'nu-exista', reviewedAt: past })).status).toBe(422)
+    expect(prisma.post.create).not.toHaveBeenCalled()
   })
 })

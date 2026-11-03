@@ -19,6 +19,9 @@ export interface SchemaPost {
   updatedAt: Date | string
   createdAt: Date | string
   author: { name: string | null; email: string; slug?: string | null } | null
+  /** Recenzent medical real; se emite in schema doar impreuna cu `reviewedAt`. */
+  reviewedBy?: { name: string | null; slug: string | null; title: string | null; credentials: string | null } | null
+  reviewedAt?: Date | string | null
   featuredImage: { url: string; altText: string | null } | null
   category: { name: string; slug: string; parent?: { name: string; slug: string } | null } | null
   noIndex: boolean
@@ -206,6 +209,17 @@ function buildArticleSchema(
     article['@type'] = ['Article', 'MedicalWebPage']
     article.audience = { '@type': 'Audience', audienceType: 'Proprietari de animale de companie' }
     const subject = (post.title.split(/:\s|\s[-–—]\s/)[0] ?? post.title).trim()
+    if (post.reviewedBy?.slug && post.reviewedAt) {
+      const reviewerUrl = resolveUrl(site, `/autor/${post.reviewedBy.slug}`)
+      article.reviewedBy = {
+        '@type': 'Person',
+        '@id': `${reviewerUrl}/#person`,
+        name: post.reviewedBy.name ?? post.reviewedBy.slug,
+        url: reviewerUrl,
+        ...(post.reviewedBy.title && { jobTitle: post.reviewedBy.title }),
+      }
+      article.lastReviewed = isoDate(post.reviewedAt)
+    }
     if (post.category.slug === 'boli') article.about = { '@type': 'MedicalCondition', name: subject }
     else if (post.category.slug === 'simptome') article.about = { '@type': 'MedicalSignOrSymptom', name: subject }
   }

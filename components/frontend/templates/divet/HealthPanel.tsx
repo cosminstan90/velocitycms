@@ -45,6 +45,39 @@ export function HealthFacts({ items }: { items: FieldItem[] }) {
   )
 }
 
+/** Caseta „Revizuit medical de ...": apare doar cand un recenzent real si data revizuirii sunt setate pe articol. */
+export function ReviewedBy({
+  reviewer,
+  reviewedAt,
+}: {
+  reviewer: { name: string | null; slug: string | null; title: string | null; credentials: string | null } | null
+  reviewedAt: Date | string | null
+}) {
+  if (!reviewer?.name || !reviewedAt) return null
+  const date = new Date(reviewedAt)
+  const label = new Intl.DateTimeFormat('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' }).format(date)
+  return (
+    <aside aria-label="Revizuire medicală" className="rounded-[10px] border border-dv-border bg-dv-accent-soft px-[22px] py-4 text-dv-body text-dv-ink">
+      <p className="m-0">
+        <strong>Revizuit medical de{' '}</strong>
+        {reviewer.slug ? (
+          <Link href={`/autor/${reviewer.slug}`} className="font-semibold text-dv-accent hover:underline">
+            {reviewer.name}
+          </Link>
+        ) : (
+          <strong>{reviewer.name}</strong>
+        )}
+        {reviewer.title ? <span className="text-dv-ink-muted">, {reviewer.title}</span> : null}
+        <span className="text-dv-ink-muted">
+          {' '}
+          · <time dateTime={date.toISOString()}>{label}</time>
+        </span>
+      </p>
+      {reviewer.credentials ? <p className="mt-1 mb-0 text-dv-meta text-dv-ink-muted">{reviewer.credentials}</p> : null}
+    </aside>
+  )
+}
+
 export function MedicalDisclaimer() {
   return (
     <aside
@@ -53,7 +86,11 @@ export function MedicalDisclaimer() {
     >
       <strong className="text-dv-ink">Informație orientativă.</strong> Articolul nu înlocuiește consultul la un medic
       veterinar și nu stabilește diagnostice sau tratamente. Dacă animalul tău are simptome, sună cabinetul veterinar.
-      Sursele folosite sunt linkate în text.
+      Sursele folosite sunt linkate în text. Vezi cum lucrăm în{' '}
+      <Link href="/politica-editoriala" className="underline hover:text-dv-accent">
+        politica editorială
+      </Link>
+      .
     </aside>
   )
 }

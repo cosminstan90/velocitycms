@@ -34,6 +34,7 @@ interface DivetAuthorTemplateProps {
     bio: string | null
     photo: string | null
     website: string | null
+    credentials?: string | null
   }
   posts: PostItem[]
   pagination: { currentPage: number; totalPages: number; totalCount: number }
@@ -103,6 +104,7 @@ export default function DivetAuthor({ author, posts, pagination, site }: DivetAu
               {name}
             </h1>
             {author.title ? <p className="mt-2 mb-0 text-dv-body text-dv-ink-muted">{author.title}</p> : null}
+            {author.credentials ? <p className="mt-1 mb-0 text-dv-meta text-dv-ink-subtle">{author.credentials}</p> : null}
             {author.bio ? <p className="mt-3 mb-0 max-w-[70ch] text-dv-body text-dv-ink-muted">{author.bio}</p> : null}
             {website ? (
               <p className="mt-3 mb-0 text-dv-meta">

@@ -27,7 +27,7 @@ import { buildPostPath } from '@/lib/seo/canonical-builder'
 import { extractFaqItems } from '@/lib/faq'
 import { HEALTH_GROUP, HEALTH_KEYS } from '@/lib/health'
 import type { HealthLinks } from '@/lib/health-data'
-import { UrgencyBanner, HealthFacts, MedicalDisclaimer, HealthLinkList } from './HealthPanel'
+import { UrgencyBanner, HealthFacts, MedicalDisclaimer, HealthLinkList, ReviewedBy } from './HealthPanel'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,6 +65,8 @@ interface ArticleTemplateProps {
       website?: string | null
     } | null
     category: CategoryRef | null
+    reviewedBy?: { name: string | null; slug: string | null; title: string | null; credentials: string | null } | null
+    reviewedAt?: Date | string | null
     featuredImage: { url: string; width: number | null; height: number | null; altText: string | null } | null
     tags: Array<{ tag: { id: string; name: string; slug: string } }>
   }
@@ -257,6 +259,7 @@ export default function ArticleTemplate({
 
           {isHealth ? (
             <>
+              <ReviewedBy reviewer={post.reviewedBy ?? null} reviewedAt={post.reviewedAt ?? null} />
               <UrgencyBanner value={urgency} />
               <HealthFacts items={healthFacts} />
             </>
