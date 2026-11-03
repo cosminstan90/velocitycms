@@ -27,6 +27,10 @@ describe('legacyAliasFor', () => {
     expect(legacyAliasFor('/caini/bichon-frise')).toBe('/caini/rase/bichon-frise-rasa-caini-caracteristici')
     expect(legacyAliasFor('/caini/Caini-Mari/')).toBe('/caini/rase')
   })
+  it('maps renamed legacy articles from the Search Console export', () => {
+    expect(legacyAliasFor('/caini/vizsla-maghiara/')).toBe('/caini/rase/vizsla')
+    expect(legacyAliasFor('/insecte/gandacul-rinocer-oryctes-nasicornis')).toBe('/insecte/gandaci/gandacul-rinocer')
+  })
   it('returns null for unknown paths', () => {
     expect(legacyAliasFor('/caini/nu-exista')).toBeNull()
     expect(legacyAliasFor('/constructor')).toBeNull()
