@@ -263,8 +263,15 @@ function scoreComparisonTable(
   contentJson: Record<string, unknown> | undefined
 ): GeoBreakdown['comparisonTable'] {
   const max = 10
+  // Un comparisonBlock din editor sau un tabel real (>= 2 randuri, >= 2 coloane) conteaza ca tabel comparativ;
+  // publisher-ul scrie `<table>` ca nod `table`, nu ca comparisonBlock.
+  const hasRealTable = (doc: Record<string, unknown>) =>
+    findNodes(doc, 'table').some((t) => {
+      const rows = ((t as { content?: Array<{ content?: unknown[] }> }).content ?? []).filter(Boolean)
+      return rows.length >= 2 && (rows[0]?.content?.length ?? 0) >= 2
+    })
   const hasComparison = contentJson
-    ? findNodes(contentJson, 'comparisonBlock').length > 0
+    ? findNodes(contentJson, 'comparisonBlock').length > 0 || hasRealTable(contentJson)
     : false
   return { score: hasComparison ? max : 0, max, hasComparison }
 }

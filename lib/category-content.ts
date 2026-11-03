@@ -457,6 +457,133 @@ export const CATEGORY_CONTENT: Readonly<Record<string, CategoryContent>> = {
       { group: 'marine', blurb: 'Mamifere din ocean, de la balene la foci, hrana ursului polar.' },
     ],
   },
+
+  sanatate: {
+    metaTitle: 'Sănătatea câinilor și pisicilor: ghiduri',
+    metaDesc:
+      'Ghiduri despre sănătatea câinilor și a pisicilor: boli, simptome, substanțe toxice, vaccinare și urgențe, cu surse linkate și când mergi la veterinar.',
+    intro: [
+      'Aici găsești ghiduri despre sănătatea câinilor și a pisicilor: boli frecvente, simptome care îți spun ce se întâmplă, alimente și substanțe toxice, vaccinare, paraziți și situații de urgență.',
+      'Fiecare articol arată de la început cât de urgentă este situația și când mergi la medicul veterinar, apoi explică cauzele, ce poți observa acasă și ce prevenție există. Afirmațiile medicale trimit la surse, iar articolele nu dau doze și nu stabilesc diagnostice.',
+      'Informațiile sunt orientative și nu înlocuiesc consultul veterinar. Dacă animalul tău are simptome, sună cabinetul veterinar; în caz de urgență, mergi direct la o clinică.',
+    ],
+    faq: [
+      {
+        question: 'Pot trata acasă un animal bolnav după aceste articole?',
+        answer:
+          'Nu. Articolele te ajută să înțelegi ce se poate întâmpla și când să te grăbești, dar diagnosticul și tratamentul le stabilește medicul veterinar, după examinare.',
+      },
+      {
+        question: 'Cum știu dacă situația este o urgență?',
+        answer:
+          'Fiecare articol are o casetă „Cât de urgent este”. Semne precum respirația grea, convulsiile, sângerarea abundentă sau imposibilitatea de a urina cer ajutor veterinar imediat.',
+      },
+      {
+        question: 'De unde vin informațiile din articole?',
+        answer:
+          'Din surse publice de specialitate, precum manualele veterinare, ghidurile asociațiilor profesionale și autoritatea sanitar-veterinară, linkate în fiecare articol.',
+      },
+    ],
+    related: [
+      { group: 'caini', blurb: 'Rasele de câini și predispozițiile lor, pentru a anticipa problemele de sănătate.' },
+      { group: 'pisici', blurb: 'Rasele de pisici și îngrijirea lor, de la blană la vizitele de rutină.' },
+    ],
+  },
+
+  'sanatate/boli': {
+    metaTitle: 'Boli ale câinilor și pisicilor: ghiduri',
+    metaDesc:
+      'Boli frecvente la câini și pisici explicate clar: cauze, simptome, diagnostic, prevenție și când mergi la veterinar. Fără doze și fără diagnostic acasă.',
+    intro: [
+      'Această secțiune explică bolile frecvente ale câinilor și pisicilor: ce le provoacă, cum se manifestă, cum le stabilește medicul veterinar și ce prevenție există.',
+      'Pentru fiecare boală indicăm specia afectată, dacă este contagioasă sau se poate transmite la om și ce rase sunt predispuse, cu link către fișele raselor.',
+      'Articolele nu dau doze și nu recomandă tratamente de făcut acasă. Tratamentul îl stabilește medicul veterinar, în funcție de diagnostic, vârstă și starea animalului.',
+    ],
+    faq: [
+      {
+        question: 'Cum aflu dacă o boală este contagioasă?',
+        answer:
+          'Fiecare articol arată în casetele de la început dacă boala este contagioasă și dacă se transmite la om. Pentru detalii despre izolare, întreabă medicul veterinar.',
+      },
+      {
+        question: 'Prevenția este la fel pentru toate bolile?',
+        answer:
+          'Nu. Unele boli se previn prin vaccinare, altele prin deparazitare sau prin controale regulate. Articolul fiecărei boli spune ce se aplică.',
+      },
+      {
+        question: 'Rasa influențează riscul de boală?',
+        answer:
+          'Da, unele rase sunt predispuse la anumite probleme. Articolele listează rasele predispuse, iar fișele raselor trimit înapoi la bolile relevante.',
+      },
+    ],
+    related: [
+      { group: 'caini', blurb: 'Rasele de câini și problemele la care sunt predispuse.' },
+      { group: 'pisici', blurb: 'Rasele de pisici și problemele la care sunt predispuse.' },
+    ],
+  },
+
+  'sanatate/simptome': {
+    metaTitle: 'Simptome la câini și pisici: ce înseamnă',
+    metaDesc:
+      'Simptome frecvente la câini și pisici: vomă, diaree, lipsa poftei de mâncare și altele. Ce pot însemna, cât de urgent este și când mergi la veterinar.',
+    intro: [
+      'Un simptom nu este un diagnostic. Articolele de aici explică ce poate însemna un semn precum vomă, diaree sau lipsa poftei de mâncare, ce poți observa și notă pentru medic și când situația nu mai poate aștepta.',
+      'Fiecare pagină începe cu nivelul de urgență, apoi enumeră cauzele posibile de la cele ușoare la cele serioase și trimite la articolele despre bolile corespunzătoare.',
+      'Informațiile sunt orientative. Dacă nu ești sigur dacă situația poate aștepta, sună cabinetul veterinar: este mai sigur să întrebi decât să aștepți.',
+    ],
+    faq: [
+      {
+        question: 'Ce notez înainte de a suna la veterinar?',
+        answer:
+          'De când durează simptomul, cât de des apare, ce a mâncat animalul, dacă a primit medicamente și dacă are alte semne. Aceste detalii ajută la stabilirea urgenței.',
+      },
+      {
+        question: 'Ce fac până ajung la cabinet?',
+        answer:
+          'Ține animalul calm și la căldură, fără să-i dai medicamente de om sau mâncare fără indicația medicului. Sună cabinetul și întreabă ce pași să urmezi.',
+      },
+      {
+        question: 'Cât de repede trebuie să merg la veterinar?',
+        answer:
+          'Depinde de simptom. Respirația grea, convulsiile, sângerarea abundentă și imposibilitatea de a urina cer ajutor imediat; pentru restul, articolul indică un interval.',
+      },
+    ],
+    related: [
+      { group: 'caini', blurb: 'Comportamentul și temperamentul raselor de câini, utile pentru a observa ce este diferit.' },
+    ],
+  },
+
+  'sanatate/substante-toxice': {
+    metaTitle: 'Alimente și substanțe toxice pentru animale',
+    metaDesc:
+      'Alimente, plante și medicamente periculoase pentru câini și pisici: ce simptome apar, ce faci imediat și când suni la veterinar sau la urgențe.',
+    intro: [
+      'Unele alimente și substanțe sigure pentru oameni sunt periculoase pentru câini și pisici. Articolele de aici explică ce este toxic, ce semne pot apărea și ce faci imediat.',
+      'Dacă animalul a consumat o substanță periculoasă, sună imediat un cabinet veterinar sau o clinică de urgențe, chiar dacă nu are încă simptome. Nu provoca voma fără indicația medicului.',
+      'Toxicitatea depinde de specie, de cantitate și de greutatea animalului. De aceea articolele explică ce este periculos pentru câini și ce pentru pisici, fără să promită că o cantitate mică este sigură.',
+    ],
+    faq: [
+      {
+        question: 'Ce fac dacă animalul a mâncat ceva toxic?',
+        answer:
+          'Sună imediat la veterinar sau la o clinică de urgențe, spune ce și cât a consumat și când. Nu provoca voma și nu da medicamente fără indicația medicului.',
+      },
+      {
+        question: 'Simptomele apar imediat?',
+        answer:
+          'Nu întotdeauna. La unele substanțe semnele apar după ore sau zile, de aceea contează să suni imediat după consum, nu după apariția simptomelor.',
+      },
+      {
+        question: 'Ce alimente sunt periculoase?',
+        answer:
+          'Printre cele cunoscute sunt ciocolata, strugurii și stafidele, ceapa, usturoiul și îndulcitorii cu xilitol. Articolele din secțiune explică fiecare caz separat.',
+      },
+    ],
+    related: [
+      { group: 'caini', blurb: 'Alimentația câinilor și rasele cu sensibilități specifice.' },
+      { group: 'pisici', blurb: 'Plantele și alimentele periculoase pentru pisici apar și în îngrijirea de zi cu zi.' },
+    ],
+  },
 }
 
 export function getCategoryContent(path: string): CategoryContent | null {

@@ -203,3 +203,36 @@ describe('article schema: absolute URLs, publisher logo, author @id', () => {
     expect(author.url).toBe('https://divet.ro/autor/redactia')
   })
 })
+
+describe('health articles: MedicalWebPage without a fake reviewer', () => {
+  const healthPost = (sub: string, title: string) =>
+    makePost({
+      title,
+      slug: 'x',
+      category: { name: sub, slug: sub, parent: { name: 'Sănătate', slug: 'sanatate' } },
+    })
+  const node = (p: SchemaPost) => graph(generatePostSchema(p, site)).find((n) => Array.isArray(n['@type']))!
+
+  it('types a disease page as Article + MedicalWebPage about a MedicalCondition', () => {
+    const n = node(healthPost('boli', 'Parvoviroza la câini: simptome și tratament'))
+    expect(n['@type']).toEqual(['Article', 'MedicalWebPage'])
+    expect(n.about).toEqual({ '@type': 'MedicalCondition', name: 'Parvoviroza la câini' })
+  })
+
+  it('types a symptom page about a MedicalSignOrSymptom', () => {
+    expect(node(healthPost('simptome', 'Câinele vomită - ce faci')).about).toEqual({
+      '@type': 'MedicalSignOrSymptom',
+      name: 'Câinele vomită',
+    })
+  })
+
+  it('never claims reviewedBy / lastReviewed', () => {
+    const n = node(healthPost('boli', 'Boală'))
+    expect(n).not.toHaveProperty('reviewedBy')
+    expect(n).not.toHaveProperty('lastReviewed')
+  })
+
+  it('leaves non-health articles as plain Article', () => {
+    expect(article(generatePostSchema(subPost(), site))['@type']).toBe('Article')
+  })
+})

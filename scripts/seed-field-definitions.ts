@@ -35,6 +35,13 @@ const DEFS: Def[] = [
   { fieldKey: 'greutate_max', fieldLabel: 'Greutate maximă', fieldType: 'TEXT', sortOrder: 195 },
   { fieldKey: 'adancime', fieldLabel: 'Adâncime', fieldType: 'TEXT', sortOrder: 198 },
 
+  // 400-499: articole de sanatate (grupul `sanatate`). `urgenta` si `rase_predispuse` au randare dedicata.
+  { fieldKey: 'specie', fieldLabel: 'Specie afectată', fieldType: 'SELECT', options: ['Câini', 'Pisici', 'Câini și pisici'], sortOrder: 400 },
+  { fieldKey: 'urgenta', fieldLabel: 'Cât de urgent este', fieldType: 'SELECT', options: ['Monitorizare acasă', 'Consult veterinar în 24–48 h', 'Urgență imediată'], sortOrder: 410 },
+  { fieldKey: 'contagios', fieldLabel: 'Contagios', fieldType: 'SELECT', options: ['Da', 'Nu'], sortOrder: 420 },
+  { fieldKey: 'zoonotic', fieldLabel: 'Se transmite la om', fieldType: 'SELECT', options: ['Da', 'Nu'], sortOrder: 430 },
+  { fieldKey: 'rase_predispuse', fieldLabel: 'Rase predispuse', fieldType: 'TEXT', sortOrder: 440 },
+
   { fieldKey: 'nivel_energie', fieldLabel: 'Nivel de energie', fieldType: 'SELECT', options: RATING, sortOrder: 200 },
   { fieldKey: 'ingrijire_blana', fieldLabel: 'Îngrijirea blănii', fieldType: 'SELECT', options: RATING, sortOrder: 210 },
   { fieldKey: 'usurinta_dresaj', fieldLabel: 'Ușurința la dresaj', fieldType: 'SELECT', options: RATING, sortOrder: 220 },

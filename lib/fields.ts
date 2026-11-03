@@ -36,11 +36,13 @@ export type SplitFields = {
   specs: FieldItem[]
   behavior: FieldItem[]
   conservation: FieldItem[]
+  /** 400-499, articole de sanatate: specie, urgenta, contagios, zoonotic, rase predispuse. */
+  health: FieldItem[]
 }
 
-/** Blocuri de sortOrder: 10 = tldr; 100-199 specificatii; 200-299 comportament; 300-399 conservare. */
+/** Blocuri de sortOrder: 10 = tldr; 100-199 specificatii; 200-299 comportament; 300-399 conservare; 400-499 sanatate. */
 export function splitFieldValues(values: FieldValueLike[]): SplitFields {
-  const out: SplitFields = { tldr: null, specs: [], behavior: [], conservation: [] }
+  const out: SplitFields = { tldr: null, specs: [], behavior: [], conservation: [], health: [] }
   const sorted = [...values].sort((a, b) => a.fieldDefinition.sortOrder - b.fieldDefinition.sortOrder)
 
   for (const v of sorted) {
@@ -53,6 +55,7 @@ export function splitFieldValues(values: FieldValueLike[]): SplitFields {
     else if (sortOrder >= 100 && sortOrder < 200) out.specs.push(item)
     else if (sortOrder >= 200 && sortOrder < 300) out.behavior.push(item)
     else if (sortOrder >= 300 && sortOrder < 400) out.conservation.push(item)
+    else if (sortOrder >= 400 && sortOrder < 500) out.health.push(item)
     // orice alt camp custom, in afara blocurilor, e ignorat deliberat
   }
   return out

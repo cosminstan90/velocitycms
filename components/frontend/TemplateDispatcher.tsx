@@ -29,6 +29,7 @@ import DivetTag         from './templates/divet/TagTemplate'
 import DivetAuthor      from './templates/divet/AuthorTemplate'
 import DivetSearch      from './templates/divet/SearchTemplate'
 
+import type { HealthLinks } from '@/lib/health-data'
 import AuthorShared from './shared/AuthorPageTemplate'
 import TagShared    from './shared/TagPageTemplate'
 
@@ -55,13 +56,14 @@ type ArticleDispatcherProps = ArticleProps & {
   template: string
   categories?: NavCategoryItem[]
   fieldValues?: FieldValueItem[]
+  healthLinks?: HealthLinks
 }
 
-export function ArticleDispatcher({ template, categories, fieldValues, ...props }: ArticleDispatcherProps) {
+export function ArticleDispatcher({ template, categories, fieldValues, healthLinks, ...props }: ArticleDispatcherProps) {
   switch (template) {
     case 'minimal': return <MinimalArticle {...props} />
     case 'fauna':   return <FaunaArticle   {...props} categories={categories} />
-    case 'divet':   return <DivetArticle   {...props} categories={categories} fieldValues={fieldValues} />
+    case 'divet':   return <DivetArticle   {...props} categories={categories} fieldValues={fieldValues} healthLinks={healthLinks} />
     default:        return <DefaultArticle {...props} />
   }
 }

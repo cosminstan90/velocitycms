@@ -41,8 +41,8 @@ const GROUPS: Group[] = [
     ['Specii protejate', 'specii-protejate'], ['Fauna României', 'fauna-romaniei'],
   ]},
   { name: 'Sănătate', slug: 'sanatate', sortOrder: 70, children: [
-    ['Boli', 'boli'], ['Vaccinare', 'vaccinare'],
-    ['Parazitologie', 'parazitologie'], ['Urgențe', 'urgente'],
+    ['Boli', 'boli'], ['Simptome', 'simptome'], ['Substanțe toxice', 'substante-toxice'],
+    ['Vaccinare', 'vaccinare'], ['Parazitologie', 'parazitologie'], ['Urgențe', 'urgente'],
   ]},
 ]
 

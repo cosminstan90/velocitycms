@@ -262,6 +262,8 @@
   --color-dv-warm: #B26B1F;
   --color-dv-warm-soft: #FBF0E0;
   --color-dv-deep: #0A3B3B;
+  --color-dv-alert: #9B2C2C;
+  --color-dv-alert-soft: #FBE9E7;
   --shadow-dv-lift: 0 1px 2px rgba(16, 33, 43, 0.05), 0 12px 28px -12px rgba(16, 33, 43, 0.22);
 }
 
