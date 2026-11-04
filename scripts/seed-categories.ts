@@ -40,6 +40,7 @@ const GROUPS: Group[] = [
     ['Mamifere', 'mamifere'], ['Răpitoare', 'rapitoare'],
     ['Specii protejate', 'specii-protejate'], ['Fauna României', 'fauna-romaniei'],
   ]},
+  { name: 'Comparații', slug: 'comparatie', sortOrder: 80, children: [] },
   { name: 'Sănătate', slug: 'sanatate', sortOrder: 70, children: [
     ['Boli', 'boli'], ['Simptome', 'simptome'], ['Substanțe toxice', 'substante-toxice'],
     ['Vaccinare', 'vaccinare'], ['Parazitologie', 'parazitologie'], ['Urgențe', 'urgente'],

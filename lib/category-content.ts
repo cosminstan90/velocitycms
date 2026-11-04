@@ -458,6 +458,35 @@ export const CATEGORY_CONTENT: Readonly<Record<string, CategoryContent>> = {
     ],
   },
 
+  comparatie: {
+    metaTitle: 'Comparații între rase și specii',
+    metaDesc:
+      'Compară rase de câini și de pisici și specii de animale: tabel cu diferențele din fișe, cine se potrivește cui și răspunsuri la întrebările frecvente.',
+    intro: [
+      'Comparațiile te ajută să alegi între două rase sau specii apropiate: ce au în comun, în ce diferă și pentru cine se potrivește fiecare. Tabelul se generează din fișele celor două animale, deci cifrele sunt aceleași pe care le găsești în fiecare fișă.',
+      'Fiecare comparație adaugă ce nu încape într-un tabel: cele câteva diferențe care contează în viața de zi cu zi, de la nevoia de mișcare la îngrijire și temperament. Verdictul scurt de la început rezumă concluzia.',
+      'Comparațiile nu înlocuiesc fișele și nu sfătuiesc o alegere pentru toți. Pentru decizii legate de sănătate sau de adopție, discută cu un medic veterinar sau cu un adăpost.',
+    ],
+    faq: [
+      {
+        question: 'De unde vin datele din tabel?',
+        answer: 'Din fișele celor două animale de pe DiVet. Tabelul se actualizează automat când fișa se schimbă.',
+      },
+      {
+        question: 'Pot compara orice două rase?',
+        answer: 'Doar rasele care au fișă publicată și o comparație scrisă. Lista se extinde pe măsură ce adăugăm fișe noi.',
+      },
+      {
+        question: 'Comparația spune care rasă este mai bună?',
+        answer: 'Nu. Spune în ce diferă și pentru ce stil de viață se potrivește fiecare, fără un câștigător general.',
+      },
+    ],
+    related: [
+      { group: 'caini', blurb: 'Fișele raselor de câini, de la talie și temperament la îngrijire.' },
+      { group: 'pisici', blurb: 'Fișele raselor de pisici, cu profil comportamental și îngrijire.' },
+    ],
+  },
+
   sanatate: {
     metaTitle: 'Sănătatea câinilor și pisicilor: ghiduri',
     metaDesc:

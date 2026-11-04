@@ -14,6 +14,12 @@ import { prisma } from '@/lib/prisma'
 import { ComparisonDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import DivetComparison from '@/components/frontend/templates/divet/ComparisonTemplate'
+import { getComparisonPair, COMPARISON_CATEGORY } from '@/lib/comparison-data'
+import { buildComparisonRows } from '@/lib/comparison'
+import { splitFieldValues } from '@/lib/fields'
+import { extractFaqItems } from '@/lib/faq'
+import { generatePostSchema } from '@/lib/seo/schema-generator'
 
 export const dynamic = 'force-dynamic'
 
@@ -100,6 +106,58 @@ export default async function ComparisonPage({ params }: Props) {
   const fieldMap = new Map(fieldValues.map((fv) => [fv.fieldDefinition.fieldKey, fv.value]))
   const postASlug = fieldMap.get('postA_slug') ?? null
   const postBSlug = fieldMap.get('postB_slug') ?? null
+
+  // Template DiVet: tabelul se genereaza din fisele comparate; fara doua fise PUBLICATE pagina nu exista.
+  if (template === 'divet') {
+    const pair = await getComparisonPair(site.id, postASlug, postBSlug)
+    if (!pair) notFound()
+    const [imgA, imgB] = await Promise.all([fetchFeaturedImage(pair.a.featuredImageId), fetchFeaturedImage(pair.b.featuredImageId)])
+    const splitA = splitFieldValues(pair.a.fieldValues)
+    const splitB = splitFieldValues(pair.b.fieldValues)
+
+    const others = await prisma.post.findMany({
+      where: { siteId: site.id, status: 'PUBLISHED', id: { not: post.id }, category: { slug: COMPARISON_CATEGORY, parentId: null } },
+      orderBy: { publishedAt: 'desc' },
+      take: 6,
+      select: { title: true, slug: true },
+    })
+
+    const schema = generatePostSchema(
+      {
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt ?? null,
+        contentJson: post.contentJson as Record<string, unknown>,
+        metaTitle: post.metaTitle ?? null,
+        metaDescription: post.metaDescription ?? null,
+        publishedAt: post.publishedAt ?? null,
+        updatedAt: post.updatedAt,
+        createdAt: post.createdAt,
+        author: post.author ? { name: post.author.name ?? null, email: '', slug: post.author.slug ?? null } : null,
+        featuredImage: featuredImage ? { url: featuredImage.url, altText: featuredImage.altText ?? null } : null,
+        category: { name: 'Comparații', slug: COMPARISON_CATEGORY },
+        noIndex: post.noIndex,
+        canonicalUrl: post.canonicalUrl ?? null,
+      },
+      { siteName, siteUrl, defaultOgImage: seo?.defaultOgImage ?? null },
+    )
+
+    return (
+      <DivetComparison
+        site={{ siteName, siteUrl }}
+        title={post.title}
+        contentHtml={post.contentHtml ?? ''}
+        verdict={fieldMap.get('verdict') ?? null}
+        a={{ title: pair.a.title, href: pair.a.href, image: imgA, tldr: splitA.tldr }}
+        b={{ title: pair.b.title, href: pair.b.href, image: imgB, tldr: splitB.tldr }}
+        rows={buildComparisonRows(splitA, splitB)}
+        faqItems={extractFaqItems(post.contentJson)}
+        related={others.map((o) => ({ title: o.title, href: `/${COMPARISON_CATEGORY}/${o.slug}` }))}
+        schema={schema}
+      />
+    )
+  }
 
   // Fetch the two compared items (if they exist as posts)
   const [postA, postB] = await Promise.all([

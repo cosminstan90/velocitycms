@@ -46,7 +46,16 @@ const DEFS: Def[] = [
   { fieldKey: 'ingrijire_blana', fieldLabel: 'Îngrijirea blănii', fieldType: 'SELECT', options: RATING, sortOrder: 210 },
   { fieldKey: 'usurinta_dresaj', fieldLabel: 'Ușurința la dresaj', fieldType: 'SELECT', options: RATING, sortOrder: 220 },
   { fieldKey: 'toleranta_singuratate', fieldLabel: 'Tolerează singurătatea', fieldType: 'SELECT', options: RATING, sortOrder: 230 },
+  { fieldKey: 'naparleste', fieldLabel: 'Năpârlire', fieldType: 'SELECT', options: RATING, sortOrder: 250 },
   { fieldKey: 'bun_cu_copiii', fieldLabel: 'Bun cu copiii', fieldType: 'SELECT', options: ['Da', 'Nu'], sortOrder: 240 },
+
+  // 600+: date pentru liste si comparatii; NU se afiseaza in fisa (in afara blocurilor 100-499).
+  { fieldKey: 'greutate_max_kg', fieldLabel: 'Greutate maximă (kg)', fieldType: 'NUMBER', sortOrder: 600 },
+  { fieldKey: 'pericol', fieldLabel: 'Pericol pentru om', fieldType: 'SELECT', options: ['Inofensiv', 'Periculos dacă este provocat', 'Periculos'], sortOrder: 610 },
+  // 700+: paginile de comparatie (postarile din categoria radacina `comparatie`).
+  { fieldKey: 'postA_slug', fieldLabel: 'Fișa A (slug)', fieldType: 'TEXT', sortOrder: 700 },
+  { fieldKey: 'postB_slug', fieldLabel: 'Fișa B (slug)', fieldType: 'TEXT', sortOrder: 701 },
+  { fieldKey: 'verdict', fieldLabel: 'Verdict', fieldType: 'TEXTAREA', sortOrder: 710 },
 
   { fieldKey: 'statut_conservare', fieldLabel: 'Statut de conservare', fieldType: 'SELECT', options: ['LC', 'NT', 'VU', 'EN', 'CR', 'EW', 'EX'], sortOrder: 300 },
 ]

@@ -6,6 +6,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { parsePageParam } from '@/lib/pagination'
+import { getCategoryContent } from '@/lib/category-content'
 import { CategoryDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -22,9 +23,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const site = await prisma.site.findFirst({ where: { isActive: true } })
   const seo = site ? await prisma.seoSettings.findFirst({ where: { siteId: site.id } }) : null
   const siteName = seo?.siteName ?? site?.name ?? 'Site'
+  const content = getCategoryContent('comparatie')
   return {
-    title: `Comparații Animale | ${siteName}`,
-    description: `Compară rase de animale. Află diferențele și asemănările dintre cele mai populare rase.`,
+    title: `${content?.metaTitle ?? "Comparații între rase și specii"} | ${siteName}`,
+    description: content?.metaDesc ?? "Compară rase de animale. Află diferențele și asemănările dintre cele mai populare rase.",
   }
 }
 

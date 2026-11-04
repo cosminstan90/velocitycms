@@ -14,6 +14,8 @@ export type HealthLinks = {
   breeds: HealthLink[]
   /** Pe un articol-rasa: articolele de sanatate care mentioneaza rasa. */
   articles: HealthLink[]
+  /** Comparatii publicate in care apare fisa (blocul „Compară cu…"). */
+  comparisons?: HealthLink[]
 }
 
 const EMPTY: HealthLinks = { breeds: [], articles: [] }
