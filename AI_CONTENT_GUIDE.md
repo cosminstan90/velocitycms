@@ -91,6 +91,7 @@ Scrie 2–4 propoziții. Fără markdown, HTML sau bullet points — text simplu
 | `temperament` | Max 4 trăsături, separate prin virgulă | `Blând, inteligent, jucăuș, loial` |
 | `nivel_energie` | Scară de 5 trepte (vezi mai jos) | `Ridicat` |
 | `ingrijire_blana` | Scară de 5 trepte (vezi mai jos) | `Mediu` |
+| `naparleste` | Scară de 5 trepte (vezi mai jos): cât năpârlește | `Ridicat` |
 | `usurinta_dresaj` | Scară de 5 trepte (vezi mai jos) | `Foarte ridicat` |
 | `toleranta_singuratate` | Scară de 5 trepte (vezi mai jos) | `Scăzut` |
 | `bun_cu_copiii` | Da / Nu | `Da` |
@@ -502,3 +503,22 @@ CMS-ul ignoră câmpurile necunoscute: dacă trimiți un `fieldKey` nedefinit nu
 - [ ] `fieldValues` conțin doar câmpurile din tabelele de mai sus (cele create de scriptul de seed)
 - [ ] Valorile câmpurilor sunt reale, verificate
 - [ ] `tags` sluguri lowercase, fără diacritice (ex. `caini-familie`, nu `Câini Familie`)
+
+---
+
+## Pagini de comparație (`categorySlug: "comparatie"`, fără subcategorie)
+
+O comparație este un articol obișnuit în categoria rădăcină `comparatie`; URL-ul este `/comparatie/<slug>`. **Tabelul NU se scrie în `contentHtml`**: se generează din specificațiile și profilul comportamental ale celor două fișe. Ce scrii tu este partea editorială.
+
+**Condiții:** ambele fișe trebuie să fie **publicate** (altfel pagina dă 404). Slug-urile din `postA_slug` / `postB_slug` sunt cele ale fișelor (ex. `labrador-rasa-caini-caracteristici`), nu ale comparației.
+
+**Câmpuri (`fieldValues`):**
+
+| fieldKey | Valoare | Obligatoriu |
+|---|---|---|
+| `postA_slug` | slug-ul primei fișe | da |
+| `postB_slug` | slug-ul celei de-a doua fișe | da |
+| `verdict` | 1–2 propoziții: pentru cine se potrivește fiecare, fără „câștigător” general | da |
+| `tldr` | text simplu, 2 propoziții | da |
+
+**`contentHtml` (300–500 de cuvinte unice):** primul `<p>` de 40–55 de cuvinte care răspunde direct („X și Y sunt două rase de… care diferă mai ales prin…”), apoi `<h2>Diferențe care contează</h2>` (3–4 diferențe concrete, fiecare cu implicația pentru stăpân), `<h2>Cui i se potrivește fiecare</h2>`, `<h2>Ce au în comun</h2>`. Nu repeta tabelul și nu copia fișele: trimite la ele cu linkuri interne. Cifrele apar doar dacă sunt în fișe sau au sursă linkată. Un titlu = o intenție (ex. „Labrador vs Golden Retriever: diferențe și asemănări”).
