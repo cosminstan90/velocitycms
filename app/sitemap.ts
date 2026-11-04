@@ -34,6 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const entries: MetadataRoute.Sitemap = [
     { url: `${siteUrl}/`, lastModified: newestPostUpdate ?? undefined, changeFrequency: 'daily', priority: 1.0 },
+    { url: `${siteUrl}/glosar`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${siteUrl}/instrumente`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${siteUrl}/instrumente/varsta-caine`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${siteUrl}/instrumente/aliment-periculos`, changeFrequency: 'weekly', priority: 0.6 },
