@@ -105,6 +105,7 @@ export default async function SubCategoryPostPage({ params }: Props) {
     },
     include: {
       author: { select: { name: true, email: true, slug: true, title: true, bio: true, photo: true, website: true } },
+      reviewedBy: { select: { name: true, slug: true, title: true, credentials: true } },
       category: { select: { id: true, name: true, slug: true, parent: { select: { id: true, name: true, slug: true } } } },
       tags: { include: { tag: { select: { id: true, name: true, slug: true } } } },
       fieldValues: {
@@ -173,6 +174,8 @@ export default async function SubCategoryPostPage({ params }: Props) {
     metaTitle: post.metaTitle ?? null, metaDescription: post.metaDescription ?? null,
     publishedAt: post.publishedAt ?? null, updatedAt: post.updatedAt, createdAt: post.createdAt,
     author: post.author ? { name: post.author.name ?? null, email: post.author.email, slug: post.author.slug ?? null } : null,
+    reviewedBy: post.reviewedBy ?? null,
+    reviewedAt: post.reviewedAt ?? null,
     featuredImage: featuredImage ? { url: featuredImage.url, altText: featuredImage.altText ?? null } : null,
     category: post.category ?? null, noIndex: post.noIndex, canonicalUrl: post.canonicalUrl ?? null,
   }

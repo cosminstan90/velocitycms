@@ -72,6 +72,12 @@ export interface PublisherPayload {
   tags?: string[]
   /** ISO 8601 date. With status 'published' and a future date, the post is stored as DRAFT and published at that time. */
   scheduledAt?: string | null
+  /**
+   * Recenzie medicala reala: slug-ul unui utilizator existent (cu pagina /autor/<slug>) si data revizuirii (ISO 8601).
+   * Se trimit IMPREUNA; ambele null sterg recenzia. Fara ele, recenzia existenta ramane neschimbata.
+   */
+  reviewerSlug?: string | null
+  reviewedAt?: string | null
 }
 
 export async function POST(req: NextRequest) {
@@ -123,6 +129,8 @@ export async function POST(req: NextRequest) {
     fieldValues: rawFieldValues = [],
     tags: rawTags = [],
     scheduledAt: rawScheduledAt = null,
+    reviewerSlug,
+    reviewedAt: rawReviewedAt,
   } = body
 
   if (!title || !slug || !contentHtml) {
@@ -130,6 +138,28 @@ export async function POST(req: NextRequest) {
   }
   if (subCategorySlug && !categorySlug) {
     return NextResponse.json({ error: 'subCategorySlug requires categorySlug' }, { status: 400 })
+  }
+
+  // ── Recenzie medicala (optionala) ─────────────────────────────────────────
+  // undefined = nu se atinge; ambele null = se sterge; ambele setate = se salveaza.
+  let reviewUpdate: { reviewedById: string | null; reviewedAt: Date | null } | null = null
+  if (reviewerSlug !== undefined || rawReviewedAt !== undefined) {
+    if (reviewerSlug === null && rawReviewedAt === null) {
+      reviewUpdate = { reviewedById: null, reviewedAt: null }
+    } else {
+      const reviewedAt = rawReviewedAt ? new Date(rawReviewedAt) : null
+      if (!reviewerSlug || !reviewedAt || Number.isNaN(reviewedAt.getTime()) || reviewedAt.getTime() > Date.now() + 60_000) {
+        return NextResponse.json(
+          { error: 'reviewerSlug and reviewedAt (valid ISO 8601 date, not in the future) must be provided together' },
+          { status: 400 }
+        )
+      }
+      const reviewer = await prisma.user.findUnique({ where: { slug: reviewerSlug }, select: { id: true } })
+      if (!reviewer) {
+        return NextResponse.json({ error: `reviewer "${reviewerSlug}" not found` }, { status: 422 })
+      }
+      reviewUpdate = { reviewedById: reviewer.id, reviewedAt }
+    }
   }
 
   // ── Validate explicit scheduledAt (before any side effect) ───────────────
@@ -371,6 +401,7 @@ export async function POST(req: NextRequest) {
         publisherCampaign: publisherCampaign ?? existing.publisherCampaign,
         featuredImageId: featuredImageId ?? existing.featuredImageId,
         categoryId: categoryId ?? existing.categoryId,
+        ...(reviewUpdate ?? {}),
       },
       select: { id: true, slug: true },
     })
@@ -404,6 +435,7 @@ export async function POST(req: NextRequest) {
         publisherCampaign: publisherCampaign ?? null,
         featuredImageId,
         sourceType: 'publisher',
+        ...(reviewUpdate ?? {}),
       },
       select: { id: true, slug: true },
     })

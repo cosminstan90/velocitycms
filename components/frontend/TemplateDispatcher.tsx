@@ -99,9 +99,11 @@ export function ComparisonDispatcher({ template, ...props }: ComparisonProps & {
 // ── Author ────────────────────────────────────────────────────────────────────
 
 type AuthorFaunaProps = React.ComponentProps<typeof FaunaAuthor>
-type AuthorDispatcherProps = Omit<AuthorFaunaProps, 'categories'> & {
+type AuthorDispatcherProps = Omit<AuthorFaunaProps, 'categories' | 'author'> & {
   template: string
   categories?: NavCategoryItem[]
+  /** `credentials` (calificare verificabila) o afiseaza doar template-ul divet. */
+  author: AuthorFaunaProps['author'] & { credentials?: string | null }
 }
 
 export function AuthorDispatcher({ template, categories, ...props }: AuthorDispatcherProps) {

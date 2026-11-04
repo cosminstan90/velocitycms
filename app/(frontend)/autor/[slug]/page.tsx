@@ -71,7 +71,7 @@ export default async function AuthorPage({ params, searchParams }: Props) {
 
   const [rawPosts, totalCount] = await Promise.all([
     prisma.post.findMany({
-      where: { status: 'PUBLISHED', siteId: siteId!, authorId: author.id },
+      where: { status: 'PUBLISHED', siteId: siteId!, OR: [{ authorId: author.id }, { reviewedById: author.id }] },
       take: POSTS_PER_PAGE,
       skip,
       orderBy: { publishedAt: 'desc' },
@@ -83,7 +83,7 @@ export default async function AuthorPage({ params, searchParams }: Props) {
         },
       },
     }),
-    prisma.post.count({ where: { status: 'PUBLISHED', siteId: siteId!, authorId: author.id } }),
+    prisma.post.count({ where: { status: 'PUBLISHED', siteId: siteId!, OR: [{ authorId: author.id }, { reviewedById: author.id }] } }),
   ])
 
   const imageIds = rawPosts.map((p) => p.featuredImageId).filter((id): id is string => !!id)
@@ -119,6 +119,7 @@ export default async function AuthorPage({ params, searchParams }: Props) {
         bio: author.bio,
         photo: author.photo,
         website: author.website,
+        credentials: author.credentials,
       }}
       posts={posts}
       pagination={{ currentPage, totalPages: Math.ceil(totalCount / POSTS_PER_PAGE), totalCount }}
