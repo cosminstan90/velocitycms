@@ -30,7 +30,7 @@ describe('getListsOverview', () => {
     const mari = overview.find((o) => o.def.slug === 'rase-de-caini-mari')!
     expect(mari.availability.available).toBe(true)
     expect(mari.members).toHaveLength(MIN_LIST_ENTRIES)
-    expect(mari.members[0].fieldValues.map((v) => v.fieldDefinition.fieldKey)).toEqual(['talie'])
+    expect(mari.members[0]?.fieldValues?.map((v) => v.fieldDefinition.fieldKey)).toEqual(['talie'])
     const mici = overview.find((o) => o.def.slug === 'rase-de-caini-mici')!
     expect(mici.availability).toMatchObject({ available: false, reason: 'too-few', count: 6 })
   })
