@@ -4,6 +4,7 @@ import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import { categoryLastModified } from '@/lib/sitemap-categories'
 import { buildDirectoryPaths } from '@/lib/director'
 import { isTagIndexable } from '@/lib/seo/tag-index'
+import { getListsOverview } from '@/lib/lists-data'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,6 +44,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     },
   ]
+
+  // Liste filtrate (/liste/<slug>): doar cele care trec pragurile (intrari suficiente, filtru selectiv)
+  const siteRow = await prisma.site.findFirst({ where: { isActive: true }, select: { id: true } })
+  const availableLists = (await getListsOverview(siteRow?.id ?? null)).filter((o) => o.availability.available)
+  if (availableLists.length > 0) {
+    entries.push({ url: `${siteUrl}/liste`, lastModified: newestPostUpdate ?? undefined, changeFrequency: 'weekly', priority: 0.6 })
+    for (const o of availableLists) {
+      entries.push({ url: `${siteUrl}/liste/${o.def.slug}`, lastModified: newestPostUpdate ?? undefined, changeFrequency: 'weekly', priority: 0.7 })
+    }
+  }
 
   // Categories: only those with at least one published article
   const stats = await prisma.post.groupBy({
