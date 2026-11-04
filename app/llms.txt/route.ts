@@ -37,6 +37,7 @@ export async function GET() {
     '',
     '## Pentru navigare',
     `- [Index A–Z](${base}/index-a-z)`,
+    `- [Instrumente](${base}/instrumente)`,
     `- [Sitemap](${base}/sitemap.xml)`,
     `- [Căutare](${base}/cautare)`,
     '',
