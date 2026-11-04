@@ -14,6 +14,7 @@ import { generatePostSchema } from '@/lib/seo/schema-generator'
 import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import { getHealthLinks } from '@/lib/health-data'
 import { getComparisonsFor } from '@/lib/comparison-data'
+import { getListsForBreed } from '@/lib/lists-data'
 import { HEALTH_KEYS } from '@/lib/health'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -214,7 +215,11 @@ export default async function SubCategoryPostPage({ params }: Props) {
         seoSettings={seo}
         categories={navCategories}
         fieldValues={post.fieldValues}
-        healthLinks={{ ...healthLinks, comparisons: await getComparisonsFor(post.siteId, post.slug) }}
+        healthLinks={{
+          ...healthLinks,
+          comparisons: await getComparisonsFor(post.siteId, post.slug),
+          lists: await getListsForBreed(post.siteId, post.slug),
+        }}
       />
     </>
   )

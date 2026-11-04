@@ -13,6 +13,11 @@ export type ListOverview = {
 
 const GROUPS: ListGroup[] = ['caini', 'pisici']
 
+// Categoriile si fisele cer aceleasi liste la fiecare cerere: cache scurt, in memorie, per proces.
+// In teste (NODE_ENV=test) cache-ul este oprit.
+const CACHE_TTL_MS = process.env.NODE_ENV === 'test' ? 0 : 60_000
+const cache = new Map<string, { at: number; value: ListOverview[] }>()
+
 async function loadGroupPosts(siteId: string, group: ListGroup): Promise<ListMember[]> {
   const posts = await prisma.post.findMany({
     where: { siteId, status: 'PUBLISHED', noIndex: false, category: { slug: 'rase', parent: { slug: group } } },
@@ -50,6 +55,32 @@ async function loadGroupPosts(siteId: string, group: ListGroup): Promise<ListMem
 /** Toate listele cu disponibilitate si membri. Nu arunca: la eroare de baza de date intoarce o lista goala. */
 export async function getListsOverview(siteId: string | null): Promise<ListOverview[]> {
   if (!siteId) return []
+  const hit = cache.get(siteId)
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value
+  const value = await computeListsOverview(siteId)
+  if (CACHE_TTL_MS > 0 && value.length > 0) cache.set(siteId, { at: Date.now(), value })
+  return value
+}
+
+export type ListLink = { title: string; href: string; count: number }
+
+/** „Ghid rapid" pentru paginile de categorie: listele DISPONIBILE ale grupului. */
+export async function getQuickGuide(siteId: string | null, groupSlug: string): Promise<ListLink[]> {
+  const overview = await getListsOverview(siteId)
+  return overview
+    .filter((o) => o.availability.available && o.def.group === groupSlug)
+    .map((o) => ({ title: o.def.title, href: `/liste/${o.def.slug}`, count: o.availability.count }))
+}
+
+/** „Apare in": listele disponibile care contin fisa cu slug-ul dat. */
+export async function getListsForBreed(siteId: string | null, slug: string): Promise<ListLink[]> {
+  const overview = await getListsOverview(siteId)
+  return overview
+    .filter((o) => o.availability.available && o.members.some((m) => m.slug === slug))
+    .map((o) => ({ title: o.def.title, href: `/liste/${o.def.slug}`, count: o.availability.count }))
+}
+
+async function computeListsOverview(siteId: string): Promise<ListOverview[]> {
   try {
     const byGroup = new Map<ListGroup, ListMember[]>()
     for (const g of GROUPS) byGroup.set(g, await loadGroupPosts(siteId, g))

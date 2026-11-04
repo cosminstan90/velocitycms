@@ -5,7 +5,7 @@ const { prisma } = vi.hoisted(() => ({
 }))
 vi.mock('@/lib/prisma', () => ({ prisma }))
 
-import { getListsOverview } from './lists-data'
+import { getListsOverview, getQuickGuide, getListsForBreed } from './lists-data'
 import { MIN_LIST_ENTRIES } from './lists'
 
 const post = (slug: string, fields: Record<string, string>) => ({
@@ -46,5 +46,39 @@ describe('getListsOverview', () => {
     expect(await getListsOverview(null)).toEqual([])
     prisma.post.findMany.mockRejectedValue(new Error('db down'))
     expect(await getListsOverview('s1')).toEqual([])
+  })
+})
+
+describe('getQuickGuide and getListsForBreed', () => {
+  const setup = () => {
+    const big = Array.from({ length: MIN_LIST_ENTRIES }, (_, i) => post(`mare-${i}`, { talie: 'Mare' }))
+    const small = Array.from({ length: 6 }, (_, i) => post(`mic-${i}`, { talie: 'Mic' }))
+    prisma.post.findMany.mockResolvedValueOnce([...big, ...small]).mockResolvedValueOnce([])
+  }
+
+  it('quick guide lists only available lists of the requested group', async () => {
+    setup()
+    const guide = await getQuickGuide('s1', 'caini')
+    expect(guide.map((g) => g.href)).toEqual(['/liste/rase-de-caini-mari'])
+    expect(guide[0].count).toBe(MIN_LIST_ENTRIES)
+  })
+
+  it('quick guide is empty for a group without available lists', async () => {
+    setup()
+    expect(await getQuickGuide('s1', 'pisici')).toEqual([])
+  })
+
+  it('"Apare in" lists the available lists that contain the breed, and none for others', async () => {
+    setup()
+    expect((await getListsForBreed('s1', 'mare-0')).map((l) => l.href)).toEqual(['/liste/rase-de-caini-mari'])
+    setup()
+    expect(await getListsForBreed('s1', 'mic-0')).toEqual([])
+    setup()
+    expect(await getListsForBreed('s1', 'nu-exista')).toEqual([])
+  })
+
+  it('never links to an unavailable list', async () => {
+    prisma.post.findMany.mockResolvedValue([post('mic-0', { talie: 'Mic' })])
+    expect(await getListsForBreed('s1', 'mic-0')).toEqual([])
   })
 })

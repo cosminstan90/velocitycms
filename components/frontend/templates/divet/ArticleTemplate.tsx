@@ -282,6 +282,7 @@ export default function ArticleTemplate({
           {isHealth ? <HealthLinkList heading="Rase predispuse" links={healthLinks?.breeds ?? []} /> : null}
           {!isHealth ? <HealthLinkList heading="Probleme de sănătate frecvente" links={healthLinks?.articles ?? []} /> : null}
           {!isHealth ? <HealthLinkList heading="Compară cu…" links={healthLinks?.comparisons ?? []} /> : null}
+          {!isHealth ? <HealthLinkList heading="Apare în" links={healthLinks?.lists ?? []} /> : null}
           {isHealth ? <MedicalDisclaimer /> : null}
 
           {post.tags.length > 0 ? (
