@@ -15,6 +15,7 @@ import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import { getHealthLinks } from '@/lib/health-data'
 import { getComparisonsFor } from '@/lib/comparison-data'
 import { getListsForBreed } from '@/lib/lists-data'
+import { getRelatedPosts } from '@/lib/related-data'
 import { HEALTH_KEYS } from '@/lib/health'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -133,33 +134,15 @@ export default async function SubCategoryPostPage({ params }: Props) {
     ? await prisma.media.findUnique({ where: { id: post.featuredImageId }, select: { url: true, altText: true, width: true, height: true } })
     : null
 
-  // Related posts: other recent posts of the same group
-  const groupId = post.category?.parent?.id ?? post.category?.id
-  const rawRelated = await prisma.post.findMany({
-    where: {
-      status: 'PUBLISHED',
-      id: { not: post.id },
-      ...(groupId
-        ? { category: { OR: [{ id: groupId }, { parentId: groupId }] } }
-        : { categoryId: post.categoryId }),
-    },
-    orderBy: { publishedAt: 'desc' },
-    take: 6,
-    include: { category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } } },
+  // Articole inrudite: scor dupa etichete comune, subcategorie, grup si campuri (lib/related.ts), calculat la randare.
+  const relatedPosts = await getRelatedPosts(post.siteId, {
+    id: post.id,
+    groupSlug: post.category?.parent?.slug ?? post.category?.slug ?? null,
+    subSlug: post.category?.parent ? post.category.slug : null,
+    tagSlugs: post.tags.map((t) => t.tag.slug),
+    fields: Object.fromEntries(post.fieldValues.map((f) => [f.fieldDefinition.fieldKey, f.value])),
+    publishedAt: post.publishedAt,
   })
-
-  const relatedImageIds = rawRelated.map((p) => p.featuredImageId).filter((id): id is string => !!id)
-  const relatedMediaMap = new Map(
-    relatedImageIds.length
-      ? (await prisma.media.findMany({ where: { id: { in: relatedImageIds } }, select: { id: true, url: true, altText: true } })).map((m) => [m.id, m])
-      : []
-  )
-  const relatedPosts = rawRelated.map((p) => ({
-    ...p,
-    featuredImage: p.featuredImageId ? (relatedMediaMap.get(p.featuredImageId) ?? null) : null,
-    author: null,
-    category: p.category ?? null,
-  }))
 
   const parentCategory = await prisma.category.findFirst({
     where: { slug: categorySlug, parentId: null },
