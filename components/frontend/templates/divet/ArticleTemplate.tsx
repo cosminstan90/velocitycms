@@ -23,6 +23,8 @@ import { DV_PROSE } from './prose'
 import { resolveImageUrl, formatDateLong, getAuthorInitials } from '../fauna/utils'
 import { splitFieldValues, ratingToPercent, iucnLabel } from '@/lib/fields'
 import { extractToc, addHeadingIds, readingTimeMinutes } from '@/lib/article-html'
+import { autolinkGlossary } from '@/lib/glossary-autolink'
+import { GLOSSARY } from '@/lib/glossary'
 import { buildPostPath } from '@/lib/seo/canonical-builder'
 import { extractFaqItems } from '@/lib/faq'
 import { HEALTH_GROUP, HEALTH_KEYS } from '@/lib/health'
@@ -149,7 +151,8 @@ export default function ArticleTemplate({
   const iucn = conservation.find((c) => c.key === 'statut_conservare')
 
   const toc = extractToc(post.contentHtml)
-  const html = addHeadingIds(post.contentHtml)
+  // Termenii marcati din glosar devin link la prima aparitie (lib/glossary-autolink.ts)
+  const html = autolinkGlossary(addHeadingIds(post.contentHtml), GLOSSARY)
   const behaviorHasRatings = behavior.some((b) => ratingToPercent(b.value) !== null)
   const hasAside = behaviorHasRatings || toc.length >= 3
 
