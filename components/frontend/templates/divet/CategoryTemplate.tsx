@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { getCategoryContent } from '@/lib/category-content'
 import { getSilo } from '@/lib/silo'
+import { getQuickGuide } from '@/lib/lists-data'
 import DivetLayout from './DivetLayout'
 import Breadcrumbs from './Breadcrumbs'
 import PostGrid from './PostGrid'
@@ -82,6 +83,8 @@ export default async function DivetCategoryTemplate({
     }
   }
   const silo = siteId ? await getSilo(siteId, groupSlug, subSlug) : { subs: [], related: [] }
+  // „Ghid rapid": doar pe prima pagina din grupurile cu liste (caini/pisici) si doar spre liste disponibile.
+  const quickGuide = firstPage && (!subSlug || subSlug === 'rase') ? await getQuickGuide(siteId, groupSlug) : []
 
   const crumbs = [
     { name: 'Acasă', href: '/' },
@@ -118,6 +121,21 @@ export default async function DivetCategoryTemplate({
           </div>
         ) : category.description ? (
           <p className="mt-3 max-w-[70ch] text-dv-body text-dv-ink-muted">{category.description}</p>
+        ) : null}
+
+        {quickGuide.length > 0 ? (
+          <section aria-label="Ghid rapid" className="mt-6">
+            <h2 className="mb-2 text-dv-label font-semibold uppercase text-dv-accent">Ghid rapid</h2>
+            <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
+              {quickGuide.map((g) => (
+                <li key={g.href}>
+                  <Link href={g.href} className={`inline-block rounded-full border border-dv-border bg-dv-surface px-3 py-1 text-[13px] hover:text-dv-accent ${focusRing}`}>
+                    {g.title} ({g.count})
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
 
         {/* Silo: de pe pagina grupului, coboara in subcategorii, cu articolele lor recente */}
