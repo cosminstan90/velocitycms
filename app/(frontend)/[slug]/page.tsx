@@ -8,6 +8,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { CARD_META_KEYS } from '@/lib/fields'
 import { withContentMeta } from '@/lib/category-content'
+import { categoryRobots } from '@/lib/category-visibility-data'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,6 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: `${title} | ${siteName}`,
       description,
+      robots: await categoryRobots(category.id, true),
       openGraph: {
         title,
         description,
