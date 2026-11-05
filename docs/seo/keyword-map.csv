@@ -1,0 +1,26 @@
+keyword,intent,source,target_url,target_type,status,demand_1_5,serp_weakness_1_5,fit_1_5,risk_1_5,score,notes
+labrador vs golden retriever,comparison,autocomplete 2026-11-04,/comparatie/labrador-vs-golden-retriever,comparatie,planned,,,5,1,,"consolida si ""golden retriever vs labrador""; ambele fise sunt publicate"
+husky vs malamut,comparison,autocomplete 2026-11-04,/comparatie/husky-vs-malamut,comparatie,planned,,,3,1,,necesita fisele husky si malamut
+pisică sau câine,comparison,autocomplete 2026-11-04,/comparatie/pisica-sau-caine,comparatie,planned,,,4,1,,"pagina-hub; intentie de decizie, fara cifre de cost nesustinute"
+rase de câini mari,list,autocomplete 2026-11-04,/liste/rase-de-caini-mari,lista,exists,,,5,1,,publicata (12 rase)
+rase de câini mici,list,autocomplete 2026-11-04,/liste/rase-de-caini-mici,lista,blocked,,,5,1,,"sub 8 fise cu talie ""Mic"": mai multe fise de rase mici"
+rase de câini medii,list,autocomplete 2026-11-04,/liste/rase-de-caini-medii,lista,blocked,,,4,1,,"sub 8 fise cu talie ""Mediu"""
+rase de câini pentru apartament,list,autocomplete 2026-11-04,/liste/rase-de-caini-pentru-apartament,lista,blocked,,,5,1,,combina talie mic/mediu + energie scazuta/medie
+rase de câini care nu năpârlesc,list,autocomplete 2026-11-04,/liste/rase-de-caini-care-naparlesc-putin,lista,blocked,,,5,3,,"lipseste campul naparleste pe fise; evitam ""hipoalergenic"""
+cel mai inteligent câine,list,autocomplete 2026-11-04,/liste/cele-mai-inteligente-rase-de-caini,lista,blocked,,,4,1,,sub 8 fise cu dresaj ridicat
+rase de pisici liniștite,list,autocomplete 2026-11-04,/liste/rase-de-pisici-linistite,lista,blocked,,,3,1,,sub 8 fise de pisici
+cele mai mari animale din lume,list,autocomplete 2026-11-04,/liste/cele-mai-mari-animale,lista,planned,,,5,1,,necesita greutate_max_kg completat din surse
+animale periculoase din România,list,autocomplete 2026-11-04,/liste/animale-periculoase-romania,lista,planned,,,4,2,,necesita campul pericol + fisele de fauna a Romaniei
+animale marine,list,autocomplete 2026-11-04,/marine,categorie,exists,,,5,1,,"hub existent; cuvinte inrudite: denumiri, imagini (imaginile nu le servim)"
+balena albastră cât trăiește,short-answer,autocomplete 2026-11-04,,raspuns-in-fisa,planned,,,4,1,,fisa balenei albastre lipseste; raspuns de 1-2 fraze in prima sectiune
+balena cu cocoașă,informational,autocomplete + SERP RO gol,/marine/mamifere-marine/balena-cu-cocoasa,fisa,exists,,5,5,1,,SERP-ul romanesc era fara rezultate in romana
+urs polar cât trăiește,short-answer,autocomplete 2026-11-04,/salbatice/mamifere/ursul-polar,fisa,planned,,,4,1,,fisa programata; raspuns scurt in fisa
+rase de pisici,list,autocomplete 2026-11-04,/pisici/rase,categorie,exists,,,5,1,,hub existent
+ciocolată câine,health,plan sanatate,/sanatate/substante-toxice/ciocolata-si-cainii,sanatate,exists,,,5,3,,"YMYL: fara doze, surse linkate"
+câinele a mâncat struguri,health,plan sanatate,/sanatate/substante-toxice/strugurii-si-stafidele-la-caini,sanatate,exists,,,5,3,,YMYL
+parvoviroza la câini,health,plan sanatate,/sanatate/boli/parvoviroza-la-caini,sanatate,exists,,,5,4,,"YMYL, fara recenzent medical inca"
+câinele vomită,health,plan sanatate,/sanatate/simptome/cainele-vomita,sanatate,exists,,,5,4,,YMYL
+varsta câinelui în ani umani,short-answer,instrument,/instrumente/varsta-caine,instrument,exists,,,5,1,,calculator
+cât de mari ajung gândacii,short-answer,plan fauna,,raspuns-in-fisa,planned,,,3,1,,in fisele de gandaci
+labrador pret,commercial,autocomplete 2026-11-04,,ignorat,dropped,,,1,4,,comercial: nu servim; nu avem preturi verificabile
+licurici,noise,autocomplete 2026-11-04,,ignorat,dropped,,,1,1,,rezultate de firme; pastram doar insecta

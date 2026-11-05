@@ -1,0 +1,76 @@
+id,bucket,prompt,target_page,page_status,notes
+RAS-01,rase,Ce rasă de câine se potrivește într-un apartament de două camere?,/liste/rase-de-caini-pentru-apartament,blocked,
+RAS-02,rase,Cât trăiește un labrador?,/caini/rase/labrador-rasa-caini-caracteristici,exists,
+RAS-03,rase,Care este diferența dintre labrador și golden retriever?,/comparatie/labrador-vs-golden-retriever,planned,
+RAS-04,rase,Ce pisică năpârlește puțin?,/liste/rase-de-pisici-care-naparlesc-putin,planned,necesita camp nou
+RAS-05,rase,Care sunt cele mai inteligente rase de câini?,/liste/cele-mai-inteligente-rase-de-caini,blocked,
+RAS-06,rase,Ce rase de câini sunt potrivite pentru familii cu copii?,/caini/rase,exists,"lista ""cu copii"" nu filtreaza (aproape toate au Da)"
+RAS-07,rase,Cum este un ciobănesc german ca temperament?,/caini/rase/ciobanesc-german,exists,
+RAS-08,rase,Ce este un maine coon și cât crește?,/pisici/rase/maine-coon,exists,
+RAS-09,rase,Ce rasă de pisică se potrivește pentru apartament?,/pisici/rase,exists,
+RAS-10,rase,Care sunt cele mai mari rase de câini?,/liste/rase-de-caini-mari,exists,
+RAS-11,rase,Ce este alabaiul și cum se comportă?,/caini/rase/alabai,exists,
+RAS-12,rase,Cât costă întreținerea unui câine mare pe lună?,,planned,cifre de cost: doar cu sursa; risc de imprecizie
+RAS-13,rase,Ce rase de câini nu latră mult?,,planned,
+RAS-14,rase,Cum aleg o rasă de pisică pentru un copil?,/pisici/rase,exists,
+RAS-15,rase,Care e diferența dintre british shorthair și scottish fold?,/comparatie/british-shorthair-vs-scottish-fold,planned,
+SAN-01,sanatate,"Câinele meu a mâncat ciocolată, ce fac?",/sanatate/substante-toxice/ciocolata-si-cainii,scheduled,raspunsul corect: suna imediat veterinarul; fara doze
+SAN-02,sanatate,Sunt toxici strugurii pentru câini?,/sanatate/substante-toxice/strugurii-si-stafidele-la-caini,scheduled,
+SAN-03,sanatate,Este xilitolul periculos pentru câini?,/sanatate/substante-toxice/xilitolul-si-cainii,scheduled,
+SAN-04,sanatate,Pot da ceapă sau usturoi câinelui?,/sanatate/substante-toxice/ceapa-si-usturoiul-la-caini-si-pisici,scheduled,
+SAN-05,sanatate,De ce sunt periculoși crinii pentru pisici?,/sanatate/substante-toxice/crinii-si-pisicile,scheduled,
+SAN-06,sanatate,De ce vomită câinele meu?,/sanatate/simptome/cainele-vomita,scheduled,
+SAN-07,sanatate,De ce vomită pisica?,/sanatate/simptome/pisica-vomita,scheduled,
+SAN-08,sanatate,De ce are câinele diaree?,/sanatate/simptome/diareea-la-caini,scheduled,
+SAN-09,sanatate,Ce fac dacă pisica nu mănâncă de o zi?,/sanatate/simptome/pisica-nu-mananca,scheduled,
+SAN-10,sanatate,Când se vaccinează un cățel?,/sanatate/vaccinare/vaccinarea-catelului,scheduled,raspunsul corect: schema o stabileste medicul
+SAN-11,sanatate,Când se vaccinează un pisoi?,/sanatate/vaccinare/vaccinarea-pisoiului,scheduled,
+SAN-12,sanatate,Cât de des se deparazitează un câine?,/sanatate/parazitologie/deparazitarea-cainilor-si-pisicilor,scheduled,
+SAN-13,sanatate,Cum scot corect o căpușă de pe câine?,/sanatate/parazitologie/capusele-la-caini-si-pisici,scheduled,
+SAN-14,sanatate,Ce este babesioza la câini?,/sanatate/boli/babesioza-la-caini,scheduled,
+SAN-15,sanatate,Ce este parvoviroza și cum se previne?,/sanatate/boli/parvoviroza-la-caini,scheduled,
+SAN-16,sanatate,Ce este jigodia la câini?,/sanatate/boli/ciuma-la-caini,scheduled,
+SAN-17,sanatate,Ce este FIV la pisici?,/sanatate/boli/fiv-si-felv-la-pisici,scheduled,
+SAN-18,sanatate,Pot da paracetamol câinelui meu?,/sanatate/substante-toxice/medicamentele-umane-si-animalele,scheduled,"raspunsul corect: nu, suna veterinarul"
+SAN-19,sanatate,Cum scap de purici la pisică?,/sanatate/parazitologie/puricii-la-caini-si-pisici,scheduled,
+SAN-20,sanatate,Ce plante sunt toxice pentru pisici?,/sanatate/substante-toxice/plantele-toxice-pentru-pisici,scheduled,
+FAU-01,fauna,Cât trăiește balena albastră?,,planned,
+FAU-02,fauna,Care este cel mai mare animal terestru?,/liste/cele-mai-mari-animale,planned,
+FAU-03,fauna,Ce mănâncă rechinul taur?,/marine/rechini-si-pesti/rechinul-taur,exists,
+FAU-04,fauna,Ce animale periculoase trăiesc în România?,/liste/animale-periculoase-romania,planned,
+FAU-05,fauna,De ce luminează licuricii?,/insecte/gandaci/licurici,exists,
+FAU-06,fauna,Unde trăiește ursul polar?,/salbatice/mamifere/ursul-polar,planned,
+FAU-07,fauna,Cât de mare este caracatița uriașă din Pacific?,/marine/nevertebrate-marine/caracatita-uriasa-din-pacific,exists,
+FAU-08,fauna,Ce este insecta-băț?,/insecte/insecte-exotice/insecta-frunza,exists,insecta-bat si insecta-frunza sunt articole distincte
+FAU-09,fauna,Cum se comportă un urs grizzly?,/salbatice/mamifere/ursul-grizzly,exists,
+FAU-10,fauna,Ce mănâncă balena cu cocoașă?,/marine/mamifere-marine/balena-cu-cocoasa,exists,
+FAU-11,fauna,Cum hibernează ursul?,/salbatice/mamifere/ursul-grizzly,exists,
+FAU-12,fauna,Ce este gândacul rinocer?,/insecte/gandaci/gandacul-rinocer,exists,
+FAU-13,fauna,Care sunt animalele marine cele mai mari?,/liste/cele-mai-mari-animale-marine,planned,
+FAU-14,fauna,Ce este bioluminescența?,/glosar#bioluminescenta,exists,
+FAU-15,fauna,Ce înseamnă specie endemică?,/glosar#endemic,exists,
+COM-01,comparatii,Husky sau malamut pentru familie?,/comparatie/husky-vs-malamut,planned,
+COM-02,comparatii,Pisică sau câine într-un apartament?,/comparatie/pisica-sau-caine,planned,
+COM-03,comparatii,Diferența dintre ursul brun și ursul grizzly?,/comparatie/ursul-brun-vs-ursul-grizzly,planned,
+COM-04,comparatii,Maine coon sau pisică norvegiană de pădure?,/comparatie/maine-coon-vs-norvegiana-de-padure,planned,
+COM-05,comparatii,Bulldog francez sau bulldog englez?,/comparatie/bulldog-francez-vs-bulldog-englez,planned,
+COM-06,comparatii,Rottweiler sau dobermann?,/comparatie/rottweiler-vs-dobermann,planned,
+COM-07,comparatii,Beagle sau basset hound?,/comparatie/beagle-vs-basset,planned,
+COM-08,comparatii,Persană sau exotic shorthair?,/comparatie/persana-vs-exotic-shorthair,planned,
+COM-09,comparatii,Chihuahua sau pomeranian?,/comparatie/chihuahua-vs-pomeranian,planned,
+COM-10,comparatii,Rechin taur sau rechin alb?,/comparatie/rechin-taur-vs-rechin-alb,planned,
+PRA-01,practic,Este obligatorie vaccinarea antirabică a câinilor în România?,/sanatate/vaccinare/vaccinarea-catelului,scheduled,raspunsul trebuie sa fie conform ANSVSA
+PRA-02,practic,Ce acte trebuie să am pentru un câine în România?,/sanatate/vaccinare/vaccinarea-catelului,scheduled,carnetul de sanatate; fara acoperire completa a legislatiei
+PRA-03,practic,Ce este carnetul de sănătate al câinelui?,/glosar#carnet-de-sanatate,exists,
+PRA-04,practic,Cum aleg medicul veterinar?,,planned,subiect fara pagina; nu este o prioritate
+PRA-05,practic,Ce fac dacă găsesc un pui de pisică abandonat?,,planned,"YMYL, necesita recenzent"
+PRA-06,practic,Cum știu dacă un câine are nevoie de urgență veterinară?,/sanatate/urgente,planned,categorie fara articol inca
+PRA-07,practic,Ce numere de telefon folosesc la o intoxicație a câinelui?,,planned,liniile publice sunt din SUA; nu le publicam
+PRA-08,practic,Cum pregătesc casa pentru un cățel?,,planned,
+PRA-09,practic,Ce mănâncă un pisoi?,,planned,YMYL
+PRA-10,practic,Cât de des merg la veterinar cu un câine adult?,,planned,YMYL
+BRA-01,brand,Ce este DiVet?,/despre-noi,exists,
+BRA-02,brand,Este DiVet un site de încredere?,/politica-editoriala,exists,"raspunsul corect: articole asistate de AI, surse linkate, fara revizuire medicala decat unde e mentionata"
+BRA-03,brand,Cine scrie articolele de pe divet.ro?,/echipa,exists,
+BRA-04,brand,Are DiVet medic veterinar?,/echipa,exists,"raspunsul corect: doar articolele cu mentiunea ""Revizuit medical de"" au fost citite de un medic"
+BRA-05,brand,Unde găsesc o enciclopedie online de animale în română?,/,exists,
