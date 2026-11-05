@@ -613,6 +613,230 @@ export const CATEGORY_CONTENT: Readonly<Record<string, CategoryContent>> = {
       { group: 'pisici', blurb: 'Plantele și alimentele periculoase pentru pisici apar și în îngrijirea de zi cu zi.' },
     ],
   },
+
+  'sanatate/vaccinare': {
+    metaTitle: 'Vaccinarea câinilor și a pisicilor: ghiduri',
+    metaDesc:
+      'Ghiduri despre vaccinarea câinilor și a pisicilor: vaccinuri esențiale și opționale, rapeluri, schema stabilită de medic și vaccinarea antirabică.',
+    intro: [
+      'Vaccinarea protejează animalele de boli grave și răspândite. Aici găsești ghiduri despre ce sunt vaccinurile esențiale (core) și cele opționale (non-core), de ce puii primesc mai multe doze și ce sunt rapelurile.',
+      'Articolele se bazează pe ghidurile internaționale ale WSAVA și AAHA și, pentru România, pe informațiile ANSVSA. Schema exactă o stabilește întotdeauna medicul veterinar, după examinarea animalului, nu un articol.',
+      'Vaccinarea antirabică are reguli legale în România, care se pot modifica. De aceea trimitem la sursa oficială și te îndemnăm să întrebi medicul veterinar care este regula în vigoare.',
+    ],
+    faq: [
+      {
+        question: 'De ce primește puiul mai multe doze?',
+        answer:
+          'Anticorpii primiți de la mamă pot bloca răspunsul la vaccin, iar nivelul lor diferă între pui. Ghidurile recomandă mai multe doze la interval de câteva săptămâni; medicul stabilește datele.',
+      },
+      {
+        question: 'Care este diferența dintre vaccin core și non-core?',
+        answer:
+          'Cele core sunt recomandate tuturor animalelor unei specii, pentru boli grave și răspândite. Cele non-core se aleg în funcție de zonă, stil de viață și risc, împreună cu medicul.',
+      },
+      {
+        question: 'Cine face vaccinarea și unde se notează?',
+        answer:
+          'Vaccinarea se face de medicul veterinar, în cadrul unei consultații. Vaccinările, în special cea antirabică, se trec în carnetul de sănătate al animalului.',
+      },
+    ],
+    related: [
+      { group: 'caini', blurb: 'Rasele de câini și îngrijirea lor, de la prima vizită la veterinar la controalele de rutină.' },
+      { group: 'pisici', blurb: 'Rasele de pisici și îngrijirea lor, inclusiv vizitele de rutină la medicul veterinar.' },
+    ],
+  },
+
+  'sanatate/parazitologie': {
+    metaTitle: 'Paraziți la câini și pisici: ghiduri',
+    metaDesc:
+      'Ghiduri despre paraziții câinilor și ai pisicilor: căpușe, purici, viermi intestinali, riscuri și prevenție stabilită împreună cu medicul veterinar.',
+    intro: [
+      'Paraziții sunt interni, în intestin, sau externi, pe piele și în blană. Articolele din această secțiune explică ce sunt, ce riscuri aduc și cum se previn, de la căpușe și purici la viermii intestinali.',
+      'Ghidurile folosite vin de la organizații specializate în paraziți, precum ESCCAP și CAPC. Ele arată că frecvența deparazitării depinde de riscul fiecărui animal, deci nu există o schemă valabilă pentru toți.',
+      'Nu indicăm produse sau doze: alegerea tratamentului și a intervalului o face medicul veterinar. Unele boli transmise prin căpușe sunt grave și cer prezentare rapidă la medic.',
+    ],
+    faq: [
+      {
+        question: 'Ce înseamnă deparazitare internă și externă?',
+        answer:
+          'Cea internă vizează paraziții din organism, mai ales viermii intestinali; cea externă, paraziții de pe piele și din blană, precum puricii și căpușele.',
+      },
+      {
+        question: 'Cât de des se deparazitează un animal?',
+        answer:
+          'Depinde de riscul individual: stilul de viață, vârsta, zona și contactul cu alte animale. Medicul veterinar stabilește produsul și frecvența.',
+      },
+      {
+        question: 'De ce contează căpușele?',
+        answer:
+          'Pot transmite boli, printre care babesioza la câini. Articolele explică riscurile și când este nevoie de consult veterinar.',
+      },
+    ],
+    related: [
+      { group: 'caini', blurb: 'Rasele de câini, activitatea lor în aer liber și îngrijirea de zi cu zi.' },
+      { group: 'pisici', blurb: 'Rasele de pisici și diferențele dintre pisicile de apartament și cele care ies afară.' },
+    ],
+  },
+
+  'sanatate/urgente': {
+    metaTitle: 'Urgențe veterinare: când suni la veterinar',
+    metaDesc:
+      'Semne care cer ajutor veterinar imediat la câini și pisici, ce spui la telefon și când situația poate aștepta un consult programat.',
+    intro: [
+      'O urgență veterinară este orice situație în care amânarea poate agrava starea animalului sau îi poate pune viața în pericol. Secțiunea te ajută să recunoști semnele care cer ajutor imediat și să știi ce spui la telefon.',
+      'Primul pas este să suni cabinetul sau o clinică de urgențe, să spui ce s-a întâmplat și să urmezi indicațiile primite. Nu administra medicamente pentru oameni și nu provoca voma fără indicația medicului.',
+      'Articolele nu pun diagnostice și nu înlocuiesc consultul. Dacă nu ești sigur că situația poate aștepta, sună: este mai sigur să întrebi decât să aștepți.',
+    ],
+    faq: [
+      {
+        question: 'Ce semne cer ajutor imediat?',
+        answer:
+          'Respirația grea, convulsiile, sângerarea abundentă, colapsul sau imposibilitatea de a urina cer ajutor veterinar imediat.',
+      },
+      {
+        question: 'Ce spun când sun la clinică?',
+        answer:
+          'Specia și vârsta animalului, ce s-a întâmplat și când, semnele observate și orice substanță consumată. La o intoxicație, păstrează ambalajul produsului.',
+      },
+      {
+        question: 'Pot aștepta până dimineața dacă animalul pare liniștit?',
+        answer:
+          'Nu întotdeauna. Unele probleme, precum intoxicațiile, pot părea liniștite la început și se pot agrava. Sună și întreabă ce este de făcut.',
+      },
+    ],
+    related: [
+      { group: 'caini', blurb: 'Rasele de câini și predispozițiile lor, ca să știi la ce să fii atent.' },
+      { group: 'pisici', blurb: 'Rasele de pisici și semnele care diferă de la o rasă la alta.' },
+    ],
+  },
+
+  'insecte/insecte-comune': {
+    metaTitle: 'Insecte comune: specii din jurul nostru',
+    metaDesc:
+      'Insecte pe care le întâlnești des: cum arată, ce mănâncă, cum se dezvoltă și ce rol au în natură, explicate clar și fără termeni inutili.',
+    intro: [
+      'Insectele sunt cel mai numeros grup de animale de pe uscat. Aici găsești speciile pe care le vezi cel mai des în grădini, păduri și case: cum arată, ce mănâncă și cum trec de la ou la adult.',
+      'Majoritatea sunt inofensive pentru oameni, iar multe sunt utile: polenizează plantele, descompun materia moartă și hrănesc păsări și alte animale. Câteva specii pot înțepa sau pot deveni dăunători pentru culturi.',
+      'Articolele descriu fiecare specie după aceeași structură, ca să le poți compara ușor. Pentru identificarea precisă a unei insecte sau pentru o înțepătură care te îngrijorează, cere sfatul unui specialist sau al unui medic.',
+    ],
+    faq: [
+      {
+        question: 'Sunt toate insectele periculoase?',
+        answer:
+          'Nu. Majoritatea nu fac rău oamenilor. Doar unele înțeapă sau mușcă, iar o reacție alergică la o înțepătură cere ajutor medical.',
+      },
+      {
+        question: 'De ce sunt importante insectele?',
+        answer:
+          'Polenizează multe plante, descompun resturi organice și sunt hrană pentru alte animale, deci contribuie la echilibrul ecosistemelor.',
+      },
+      {
+        question: 'Cum se dezvoltă o insectă?',
+        answer:
+          'Unele trec prin metamorfoză completă (ou, larvă, pupă, adult), altele prin metamorfoză incompletă, în care puiul seamănă cu adultul.',
+      },
+    ],
+    related: [
+      { group: 'marine', blurb: 'Alte nevertebrate, din ocean: caracatițe, arici și castraveți de mare.' },
+      { group: 'salbatice', blurb: 'Animalele pe care le hrănesc insectele în natură, de la păsări la mamifere.' },
+    ],
+  },
+
+  'salbatice/rapitoare': {
+    metaTitle: 'Răpitoare: păsări și mamifere prădătoare',
+    metaDesc:
+      'Răpitoare explicate clar: păsări și mamifere care vânează, cu mărime, hrană, habitat, durata vieții și statut de conservare, pe fișe comparabile.',
+    intro: [
+      'Răpitoarele sunt animale care vânează alte animale ca să se hrănească. Secțiunea include păsări de pradă și mamifere carnivore, fiecare cu mărime, hrană, habitat, durata vieții și statut de conservare.',
+      'Rolul lor în natură este important: prin vânătoare influențează numărul prăzii și contribuie la echilibrul ecosistemelor. Multe specii sunt sensibile la pierderea habitatului și la otrăvirea cu substanțe folosite în agricultură.',
+      'Nu dăm sfaturi de apropiere sau de hrănire a animalelor sălbatice. Dacă găsești un animal rănit, cheamă autoritățile locale sau o organizație de protecție a faunei.',
+    ],
+    faq: [
+      {
+        question: 'Ce înseamnă răpitoare?',
+        answer:
+          'Sunt animale care vânează alte animale pentru hrană. În vorbirea obișnuită, termenul se folosește mai ales pentru păsările de pradă, dar aici includem și mamiferele carnivore.',
+      },
+      {
+        question: 'Sunt periculoase pentru oameni?',
+        answer:
+          'Depinde de specie. Majoritatea evită oamenii, dar animalele mari sau cele care își apără puii pot fi periculoase. Păstrează distanța față de orice animal sălbatic.',
+      },
+      {
+        question: 'Pot hrăni un animal sălbatic?',
+        answer:
+          'Nu este recomandat. Hrănirea schimbă comportamentul animalelor și le apropie de oameni, ceea ce le poate pune în pericol.',
+      },
+    ],
+    related: [
+      { group: 'marine', blurb: 'Prădători din ocean, de la rechini la mamifere marine.' },
+      { group: 'caini', blurb: 'Câinii domestici, rude îndepărtate ale prădătorilor din natură.' },
+    ],
+  },
+
+  'salbatice/specii-protejate': {
+    metaTitle: 'Specii protejate: statut și conservare',
+    metaDesc:
+      'Specii protejate explicate clar: ce înseamnă protecția legală, cum se evaluează statutul de conservare IUCN și cum diferă evaluările între zone.',
+    intro: [
+      'O specie protejată este una pe care legea o apără, de exemplu prin interzicerea vânării sau a capturării. Nu orice specie rară este protejată legal și nu orice specie protejată este rară.',
+      'Statutul de conservare descrie riscul de dispariție și se evaluează separat de protecția legală. Cea mai folosită evaluare internațională este Lista Roșie a IUCN, cu categorii de la risc minim până la dispărut.',
+      'Articolele indică statutul IUCN și, când este cazul, diferența dintre evaluarea globală și cea regională: aceeași specie poate fi de risc minim în lume și protejată într-o țară. Cifrele despre populații diferă între surse.',
+    ],
+    faq: [
+      {
+        question: 'Ce este Lista Roșie IUCN?',
+        answer:
+          'Este o evaluare internațională a riscului de dispariție al speciilor, cu categorii de la risc minim (LC) până la dispărut (EX).',
+      },
+      {
+        question: 'Protecția legală este același lucru cu statutul IUCN?',
+        answer:
+          'Nu. Protecția legală vine din legislație, iar statutul IUCN este o evaluare științifică a riscului de dispariție; cele două pot să nu coincidă.',
+      },
+      {
+        question: 'De ce diferă statutul aceleiași specii?',
+        answer:
+          'Evaluările pot fi globale sau regionale. O specie poate fi de risc minim în lume și protejată într-o zonă unde populațiile sunt mici.',
+      },
+    ],
+    related: [
+      { group: 'marine', blurb: 'Specii marine și statutul lor de conservare, de la balene la rechini.' },
+      { group: 'insecte', blurb: 'Insecte a căror populație scade din cauza pierderii habitatului.' },
+    ],
+  },
+
+  'salbatice/fauna-romaniei': {
+    metaTitle: 'Fauna României: specii din țara noastră',
+    metaDesc:
+      'Animale care trăiesc în România: mamifere, păsări și alte specii din păduri, munți și Delta Dunării, cu habitat, hrană și statut de conservare.',
+    intro: [
+      'România are o faună variată, de la mamifere mari din Carpați la păsări din Delta Dunării. Secțiunea prezintă speciile care trăiesc în țară, cu habitat, hrană, comportament și statut de conservare.',
+      'Pentru fiecare specie indicăm unde se găsește în România, acolo unde sursele o spun, și dacă este protejată. Cifrele despre populații diferă între surse, așa că dăm intervale și trimitem la evaluările oficiale.',
+      'Nu recomandăm apropierea de animale sălbatice. Dacă întâlnești un animal mare, păstrează distanța și urmează indicațiile autorităților locale.',
+    ],
+    faq: [
+      {
+        question: 'Ce animale mari trăiesc în România?',
+        answer:
+          'Printre mamiferele mari din Carpați se numără ursul brun, lupul și râsul. Fișele speciilor dau detalii și statutul de conservare.',
+      },
+      {
+        question: 'Cum mă comport dacă întâlnesc un urs?',
+        answer:
+          'Păstrează distanța, nu te apropia de pui, nu fugi și retrage-te încet, vorbind calm. Ține mâncarea închisă și fă zgomot pe traseu.',
+      },
+      {
+        question: 'Sunt protejate toate animalele sălbatice din România?',
+        answer:
+          'Nu toate. Unele specii sunt protejate prin lege, iar altele pot fi vânate în condiții stabilite de reglementări. Pentru o anumită specie, verifică legislația în vigoare.',
+      },
+    ],
+    related: [
+      { group: 'marine', blurb: 'Fauna Mării Negre și a oceanelor, de la delfini la rechini.' },
+      { group: 'caini', blurb: 'Câinii domestici, rude îndepărtate ale lupului din Carpați.' },
+    ],
+  },
 }
 
 export function getCategoryContent(path: string): CategoryContent | null {
