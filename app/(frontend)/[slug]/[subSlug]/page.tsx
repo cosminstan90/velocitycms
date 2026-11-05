@@ -22,6 +22,7 @@ import { findLegacyRedirect } from '@/lib/legacy-redirects'
 import { getSiteIdFromHostname } from '@/lib/site'
 import { CARD_META_KEYS } from '@/lib/fields'
 import { withContentMeta } from '@/lib/category-content'
+import { categoryRobots } from '@/lib/category-visibility-data'
 
 export const dynamic = 'force-dynamic'
 
@@ -106,6 +107,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: `${title} | ${siteName}`,
       description,
+      robots: await categoryRobots(subCategory.id, false),
       openGraph: { title, description, url: canonical, images: ogImages(siteUrl, defaultOgImage) },
       alternates: { canonical },
     }

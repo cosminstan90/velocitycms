@@ -1,4 +1,5 @@
 import { buildPostPath } from './seo/canonical-builder'
+import { categoryTotals, isGroupInNav, isSubcategoryInNav } from './category-visibility'
 
 export type CategoryRow = {
   id: string
@@ -20,9 +21,9 @@ function byOrderThenName(a: CategoryRow, b: CategoryRow): number {
 }
 
 /**
- * Meniul arata doar categorii cu continut: o subcategorie apare daca are >= 1 articol
- * publicat direct in ea; un grup apare daca are articole proprii sau cel putin o
- * subcategorie vizibila.
+ * Meniul arata doar categorii cu continut suficient (praguri in lib/category-visibility.ts): o subcategorie apare
+ * de la CATEGORY_NAV_MIN articole publicate direct in ea; un grup apare cand totalul lui (propriu + subcategorii)
+ * ajunge la CATEGORY_INDEX_MIN, adica atunci cand pagina lui este indexabila.
  */
 export function buildNavTree(rows: CategoryRow[]): NavGroup[] {
   const visible = rows.filter((r) => r.showInNav)
@@ -34,7 +35,7 @@ export function buildNavTree(rows: CategoryRow[]): NavGroup[] {
     slug: root.slug,
     href: `/${root.slug}`,
     children: visible
-      .filter((r) => r.parentId === root.id && r.postCount > 0)
+      .filter((r) => r.parentId === root.id && isSubcategoryInNav(r.postCount))
       .sort(byOrderThenName)
       .map((child) => ({
         id: child.id,
@@ -44,8 +45,9 @@ export function buildNavTree(rows: CategoryRow[]): NavGroup[] {
       })),
   }))
 
-  const postCountById = new Map(roots.map((r) => [r.id, r.postCount]))
-  return groups.filter((g) => (postCountById.get(g.id) ?? 0) > 0 || g.children.length > 0)
+  // Totalul unui grup include si subcategoriile ascunse din meniu (showInNav fals sau sub prag).
+  const totals = categoryTotals(rows.map((r) => ({ id: r.id, parentId: r.parentId, directCount: r.postCount })))
+  return groups.filter((g) => isGroupInNav(totals.get(g.id) ?? 0))
 }
 
 export type RecentPostRow = {

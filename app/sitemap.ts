@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
 import { buildCanonicalUrl } from '@/lib/seo/canonical-builder'
 import { categoryLastModified } from '@/lib/sitemap-categories'
+import { categoryTotals, isCategoryIndexable } from '@/lib/category-visibility'
 import { buildDirectoryPaths } from '@/lib/director'
 import { isTagIndexable } from '@/lib/seo/tag-index'
 import { getListsOverview } from '@/lib/lists-data'
@@ -56,11 +57,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // Categories: only those with at least one published article
+  // Categories: only indexable ones (>= CATEGORY_INDEX_MIN published articles; a group counts its subcategories)
   const stats = await prisma.post.groupBy({
     by: ['categoryId'],
     where: { status: 'PUBLISHED', noIndex: false, categoryId: { not: null } },
     _max: { updatedAt: true },
+    _count: { _all: true },
   })
   const categories = await prisma.category.findMany({
     select: { id: true, slug: true, parentId: true, parent: { select: { slug: true } } },
@@ -69,9 +71,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     categories,
     stats.map((s) => ({ categoryId: s.categoryId, maxUpdatedAt: s._max.updatedAt })),
   )
+  const totals = categoryTotals(
+    categories.map((c) => ({
+      id: c.id,
+      parentId: c.parentId,
+      directCount: stats.find((s) => s.categoryId === c.id)?._count._all ?? 0,
+    })),
+  )
   for (const cat of categories) {
     const lastModified = lastMod.get(cat.id)
     if (!lastModified) continue
+    if (!isCategoryIndexable(totals.get(cat.id) ?? 0)) continue
     if (cat.parentId === null) {
       entries.push({ url: `${siteUrl}/${cat.slug}`, lastModified, changeFrequency: 'weekly', priority: 0.8 })
     } else if (cat.parent) {

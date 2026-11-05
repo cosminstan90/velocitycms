@@ -5,7 +5,7 @@ import {
 } from './navigation-tree'
 
 const row = (p: Partial<CategoryRow>): CategoryRow => ({
-  id: 'x', name: 'X', slug: 'x', parentId: null, sortOrder: 0, showInNav: true, postCount: 1, ...p,
+  id: 'x', name: 'X', slug: 'x', parentId: null, sortOrder: 0, showInNav: true, postCount: 10, ...p,
 })
 
 describe('buildNavTree', () => {
@@ -73,7 +73,7 @@ describe('buildNavTree', () => {
   it('pastreaza grupul gol daca o subcategorie are articole', () => {
     const tree = buildNavTree([
       row({ id: 'a', name: 'Câini', slug: 'caini', postCount: 0 }),
-      row({ id: 'a1', name: 'Rase', slug: 'rase', parentId: 'a', postCount: 2 }),
+      row({ id: 'a1', name: 'Rase', slug: 'rase', parentId: 'a', postCount: 6 }),
     ])
     expect(tree.map((g) => g.slug)).toEqual(['caini'])
     expect(tree[0].children.map((c) => c.slug)).toEqual(['rase'])
@@ -82,7 +82,7 @@ describe('buildNavTree', () => {
   it('ascunde subcategoria fara articole', () => {
     const tree = buildNavTree([
       row({ id: 'a', name: 'Câini', slug: 'caini', postCount: 1 }),
-      row({ id: 'a1', name: 'Rase', slug: 'rase', parentId: 'a', postCount: 2 }),
+      row({ id: 'a1', name: 'Rase', slug: 'rase', parentId: 'a', postCount: 6 }),
       row({ id: 'a2', name: 'Goala', slug: 'goala', parentId: 'a', postCount: 0 }),
     ])
     expect(tree[0].children.map((c) => c.slug)).toEqual(['rase'])
@@ -134,5 +134,43 @@ describe('toGroupPost', () => {
   it('articol fara categorie: /blog', () => {
     const row: RecentPostRow = { title: 'Stire', slug: 'stire', category: null }
     expect(toGroupPost(row)).toEqual({ title: 'Stire', href: '/blog/stire' })
+  })
+})
+
+describe('buildNavTree: praguri de vizibilitate', () => {
+  it('ascunde subcategoria sub pragul de meniu, dar o numara in totalul grupului', () => {
+    const tree = buildNavTree([
+      row({ id: 'm', name: 'Marine', slug: 'marine', postCount: 0 }),
+      row({ id: 'm1', name: 'Mamifere', slug: 'mamifere-marine', parentId: 'm', postCount: 2 }),
+      row({ id: 'm2', name: 'Rechini', slug: 'rechini', parentId: 'm', postCount: 2 }),
+      row({ id: 'm3', name: 'Nevertebrate', slug: 'nevertebrate', parentId: 'm', postCount: 3 }),
+    ])
+    expect(tree.map((g) => g.slug)).toEqual(['marine'])
+    expect(tree[0].children).toEqual([])
+  })
+
+  it('arata grupul de la pragul de indexare, chiar daca nicio subcategorie nu atinge pragul de meniu', () => {
+    const tree = buildNavTree([
+      row({ id: 'i', name: 'Insecte', slug: 'insecte', postCount: 0 }),
+      row({ id: 'i1', name: 'Gandaci', slug: 'gandaci', parentId: 'i', postCount: 2 }),
+      row({ id: 'i2', name: 'Exotice', slug: 'exotice', parentId: 'i', postCount: 2 }),
+    ])
+    expect(tree.map((g) => g.slug)).toEqual(['insecte'])
+  })
+
+  it('ascunde grupul care ramane sub pragul de indexare (pagina lui este noindex)', () => {
+    const tree = buildNavTree([
+      row({ id: 's', name: 'Salbatice', slug: 'salbatice', postCount: 0 }),
+      row({ id: 's1', name: 'Mamifere', slug: 'mamifere', parentId: 's', postCount: 1 }),
+    ])
+    expect(tree).toEqual([])
+  })
+
+  it('arata subcategoria exact la prag', () => {
+    const tree = buildNavTree([
+      row({ id: 'c', name: 'Caini', slug: 'caini', postCount: 0 }),
+      row({ id: 'c1', name: 'Rase', slug: 'rase', parentId: 'c', postCount: 6 }),
+    ])
+    expect(tree[0].children.map((c) => c.slug)).toEqual(['rase'])
   })
 })
