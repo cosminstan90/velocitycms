@@ -2,6 +2,10 @@
 
 import Script from 'next/script'
 import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
+
+/** Pagini de listare fara continut propriu: nu incarcam reclame acolo (risc "continut redus" la AdSense). */
+const AD_FREE_PREFIXES = ['/eticheta/']
 
 /**
  * Mesajul de consimtamant Google (Privacy & messaging, fost Funding Choices) si scriptul AdSense.
@@ -18,6 +22,9 @@ export default function AdsenseScripts({ client }: { client: string }) {
     iframe.tabIndex = -1
     document.body.appendChild(iframe)
   }, [])
+
+  const pathname = usePathname() ?? ''
+  if (AD_FREE_PREFIXES.some((p) => pathname.startsWith(p))) return null
 
   const pub = client.replace(/^ca-/, '')
   return (
