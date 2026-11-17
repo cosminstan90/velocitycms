@@ -7,6 +7,7 @@
 import { prisma } from '@/lib/prisma'
 import { parsePageParam } from '@/lib/pagination'
 import { getCategoryContent } from '@/lib/category-content'
+import { isCategoryIndexable } from '@/lib/category-visibility'
 import { CategoryDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -24,9 +25,18 @@ export async function generateMetadata(): Promise<Metadata> {
   const seo = site ? await prisma.seoSettings.findFirst({ where: { siteId: site.id } }) : null
   const siteName = seo?.siteName ?? site?.name ?? 'Site'
   const content = getCategoryContent('comparatie')
+  const siteUrl = (seo?.siteUrl ?? `http://${site?.domain ?? 'localhost'}`).replace(/\/$/, '')
+  // Aceeasi regula ca la categorii (lib/category-visibility.ts): hub-ul e continut subtire sub INDEX_MIN comparatii.
+  const published = site
+    ? await prisma.post.count({
+        where: { siteId: site.id, status: 'PUBLISHED', category: { slug: 'comparatie', parentId: null } },
+      })
+    : 0
   return {
     title: `${content?.metaTitle ?? "Comparații între rase și specii"} | ${siteName}`,
     description: content?.metaDesc ?? "Compară rase de animale. Află diferențele și asemănările dintre cele mai populare rase.",
+    alternates: { canonical: `${siteUrl}/comparatie` },
+    ...(!isCategoryIndexable(published) && { robots: { index: false, follow: true } }),
   }
 }
 

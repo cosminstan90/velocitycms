@@ -69,3 +69,20 @@ describe('findLegacyRedirect', () => {
     expect(await findLegacyRedirect({ siteId: 's1', group: 'caini', slug: 'caini-mari' })).toBeNull()
   })
 })
+
+describe('findLegacyRedirect: flat /articole/<slug>', () => {
+  it('redirects to the single published post with that slug, wherever it lives', async () => {
+    prisma.post.findMany.mockResolvedValue([found('boala-addison-la-caine', 'boli-endocrine', 'sanatate')])
+    expect(await findLegacyRedirect({ siteId: 's1', group: 'articole', slug: 'boala-addison-la-caine' })).toBe(
+      '/sanatate/boli-endocrine/boala-addison-la-caine',
+    )
+    const where = prisma.post.findMany.mock.calls[0][0].where
+    expect(where).toEqual({ siteId: 's1', slug: 'boala-addison-la-caine', status: 'PUBLISHED' })
+  })
+
+  it('stays a 404 when no post has that slug, or when the slug is ambiguous', async () => {
+    expect(await findLegacyRedirect({ siteId: 's1', group: 'articole', slug: 'boala-addison-la-caine' })).toBeNull()
+    prisma.post.findMany.mockResolvedValue([found('x', 'a', 'g1'), found('x', 'b', 'g2')])
+    expect(await findLegacyRedirect({ siteId: 's1', group: 'articole', slug: 'x' })).toBeNull()
+  })
+})

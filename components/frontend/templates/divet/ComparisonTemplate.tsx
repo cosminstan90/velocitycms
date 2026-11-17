@@ -11,7 +11,7 @@ import DivetLayout from './DivetLayout'
 import Breadcrumbs from './Breadcrumbs'
 import FaqSection from './FaqSection'
 import { DV_PROSE } from './prose'
-import { resolveImageUrl } from '../fauna/utils'
+import { resolveImageUrl, formatDateLong } from '../fauna/utils'
 import type { CompareRow } from '@/lib/comparison'
 import { differingRows } from '@/lib/comparison'
 import type { FaqItem } from '@/lib/faq'
@@ -35,6 +35,11 @@ type Props = {
   faqItems: FaqItem[]
   related: Array<{ title: string; href: string }>
   schema: Record<string, unknown>
+  byline?: {
+    author: { name: string; href: string | null } | null
+    publishedAt: Date | string | null
+    updatedAt: Date | string
+  }
 }
 
 function Card({ item, siteUrl, label }: { item: ComparedItem; siteUrl: string; label: string }) {
@@ -63,9 +68,13 @@ function Card({ item, siteUrl, label }: { item: ComparedItem; siteUrl: string; l
   )
 }
 
-export default function DivetComparison({ site, title, contentHtml, verdict, a, b, rows, faqItems, related, schema }: Props) {
+export default function DivetComparison({ site, title, contentHtml, verdict, a, b, rows, faqItems, related, schema, byline }: Props) {
   const differences = differingRows(rows).length
   const html = addHeadingIds(contentHtml)
+  const published = byline?.publishedAt ? new Date(byline.publishedAt) : null
+  const updated = byline ? new Date(byline.updatedAt) : null
+  const showUpdated =
+    published !== null && updated !== null && updated.toISOString().slice(0, 10) !== published.toISOString().slice(0, 10)
 
   return (
     <DivetLayout site={site}>
@@ -78,19 +87,40 @@ export default function DivetComparison({ site, title, contentHtml, verdict, a, 
             { name: title, href: '#' },
           ]}
         />
+        <article>
         <h1 className="mt-6 mb-0 font-dv-display text-[34px] leading-[1.08] font-bold tracking-[-0.03em] text-balance text-dv-ink sm:text-[44px]">
           {title}
         </h1>
+        {byline && (byline.author || published) ? (
+          <p className="mt-3 mb-0 flex flex-wrap gap-x-3 gap-y-1 text-dv-meta text-dv-ink-muted">
+            {byline.author ? (
+              byline.author.href ? (
+                <Link href={byline.author.href} className="font-semibold text-dv-ink hover:text-dv-accent">{byline.author.name}</Link>
+              ) : (
+                <span className="font-semibold text-dv-ink">{byline.author.name}</span>
+              )
+            ) : null}
+            {published ? <time dateTime={published.toISOString()}>{formatDateLong(published)}</time> : null}
+            {showUpdated && updated ? <time dateTime={updated.toISOString()}>Actualizat {formatDateLong(updated)}</time> : null}
+          </p>
+        ) : null}
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <Card item={a} siteUrl={site.siteUrl} label="Fișa A" />
           <Card item={b} siteUrl={site.siteUrl} label="Fișa B" />
         </div>
 
+        {verdict ? (
+          <section aria-label="Verdict" className="mt-6 rounded-[10px] border border-dv-border bg-dv-accent-soft px-[22px] py-5" data-speakable="tldr">
+            <h2 className="mb-2 text-dv-label font-semibold uppercase text-dv-accent">Pe scurt</h2>
+            <p className="m-0 text-dv-body text-dv-ink">{verdict}</p>
+          </section>
+        ) : null}
+
         {rows.length > 0 ? (
           <section aria-labelledby="tabel-comparativ" className="mt-8">
             <h2 id="tabel-comparativ" className="mb-3 font-dv-display text-dv-heading-m font-semibold tracking-tight text-dv-ink">
-              Comparație pe scurt
+              Tabel comparativ
             </h2>
             <p className="mt-0 mb-3 text-dv-meta text-dv-ink-muted">
               {differences === 0 ? 'Cele două sunt identice pe toate criteriile din fișe.' : `Diferă pe ${differences} din ${rows.length} criterii.`} Datele vin din fișele celor două.
@@ -118,17 +148,12 @@ export default function DivetComparison({ site, title, contentHtml, verdict, a, 
           </section>
         ) : null}
 
-        {verdict ? (
-          <section aria-label="Verdict" className="mt-8 rounded-[10px] border border-dv-border bg-dv-accent-soft px-[22px] py-5" data-speakable="tldr">
-            <h2 className="mb-2 text-dv-label font-semibold uppercase text-dv-accent">Pe scurt</h2>
-            <p className="m-0 text-dv-body text-dv-ink">{verdict}</p>
-          </section>
-        ) : null}
-
         <div className={`${DV_PROSE} mt-8 max-w-[720px]`} dangerouslySetInnerHTML={{ __html: html }} />
         <div className="max-w-[720px]">
           <FaqSection items={faqItems} />
         </div>
+
+        </article>
 
         {related.length > 0 ? (
           <section aria-label="Alte comparații" className="mt-10">

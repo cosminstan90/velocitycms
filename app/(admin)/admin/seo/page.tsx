@@ -151,7 +151,7 @@ function GeneralTab({
         <div className="flex-1">
           <p className="text-gray-200 text-sm font-medium">Blochează roboții AI pentru training</p>
           <p className="text-gray-500 text-xs mt-1">
-            Adaugă reguli Disallow pentru GPTBot, CCBot, Claude-Web, anthropic-ai și alți roboți de training.
+            Blochează doar roboții de antrenare (GPTBot, ClaudeBot, CCBot, Google-Extended etc.). Roboții care aduc citări în căutarea AI (ChatGPT-User, OAI-SearchBot, PerplexityBot) rămân permiși. Nu se aplică dacă ai robots.txt personalizat.
           </p>
         </div>
         <button
