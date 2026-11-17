@@ -69,3 +69,53 @@ export async function getComparisonsFor(siteId: string, slug: string): Promise<A
     return []
   }
 }
+
+type PairCandidate = {
+  slug: string
+  publishedAt: Date | null
+  fieldValues: Array<{ value: string; fieldDefinition: { fieldKey: string } }>
+}
+
+/**
+ * Pura: dintre comparatiile care compara ACEEASI pereche (in orice ordine: a-vs-b sau b-vs-a), slug-ul celei publicate
+ * prima (la egalitate, alfabetic). Celelalte devin duplicate si primesc canonical spre ea. null daca nu e niciuna.
+ */
+export function pickPrimaryComparison(candidates: PairCandidate[], slugA: string, slugB: string): string | null {
+  const want = [slugA, slugB].sort().join('|')
+  const same = candidates.filter((c) => {
+    const get = (k: string) => c.fieldValues.find((f) => f.fieldDefinition.fieldKey === k)?.value ?? ''
+    return [get(COMPARISON_KEYS.a), get(COMPARISON_KEYS.b)].sort().join('|') === want
+  })
+  same.sort(
+    (x, y) =>
+      (x.publishedAt?.getTime() ?? Infinity) - (y.publishedAt?.getTime() ?? Infinity) || x.slug.localeCompare(y.slug),
+  )
+  return same[0]?.slug ?? null
+}
+
+/** Slug-ul comparatiei „principale" pentru perechea data (vezi pickPrimaryComparison). Nu arunca. */
+export async function getPrimaryComparisonSlug(siteId: string, slugA: string, slugB: string): Promise<string | null> {
+  try {
+    const rows = await prisma.post.findMany({
+      where: {
+        siteId,
+        status: 'PUBLISHED',
+        category: { slug: COMPARISON_CATEGORY, parentId: null },
+        fieldValues: {
+          some: { value: { in: [slugA, slugB] }, fieldDefinition: { fieldKey: { in: [COMPARISON_KEYS.a, COMPARISON_KEYS.b] } } },
+        },
+      },
+      select: {
+        slug: true,
+        publishedAt: true,
+        fieldValues: {
+          where: { fieldDefinition: { fieldKey: { in: [COMPARISON_KEYS.a, COMPARISON_KEYS.b] } } },
+          select: { value: true, fieldDefinition: { select: { fieldKey: true } } },
+        },
+      },
+    })
+    return pickPrimaryComparison(rows, slugA, slugB)
+  } catch {
+    return null
+  }
+}

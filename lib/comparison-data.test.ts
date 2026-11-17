@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const { prisma } = vi.hoisted(() => ({ prisma: { post: { findMany: vi.fn() } } }))
 vi.mock('@/lib/prisma', () => ({ prisma }))
 
-import { getComparisonPair, getComparisonsFor } from './comparison-data'
+import { getComparisonPair, getComparisonsFor, pickPrimaryComparison } from './comparison-data'
 
 const row = (slug: string, sub = 'rase', group = 'caini') => ({
   id: slug,
@@ -47,5 +47,32 @@ describe('getComparisonsFor', () => {
   it('never throws', async () => {
     prisma.post.findMany.mockRejectedValue(new Error('db down'))
     expect(await getComparisonsFor('s1', 'labrador')).toEqual([])
+  })
+})
+
+describe('pickPrimaryComparison', () => {
+  const cand = (slug: string, a: string, b: string, day: number | null) => ({
+    slug,
+    publishedAt: day === null ? null : new Date(Date.UTC(2026, 10, day)),
+    fieldValues: [
+      { value: a, fieldDefinition: { fieldKey: 'postA_slug' } },
+      { value: b, fieldDefinition: { fieldKey: 'postB_slug' } },
+    ],
+  })
+
+  it('treats a-vs-b and b-vs-a as the same pair and keeps the first published', () => {
+    const rows = [cand('golden-vs-labrador', 'golden', 'labrador', 25), cand('labrador-vs-golden', 'labrador', 'golden', 22)]
+    expect(pickPrimaryComparison(rows, 'golden', 'labrador')).toBe('labrador-vs-golden')
+  })
+
+  it('ignores comparisons that share only one of the two fiches', () => {
+    const rows = [cand('labrador-vs-beagle', 'labrador', 'beagle', 1), cand('labrador-vs-golden', 'labrador', 'golden', 22)]
+    expect(pickPrimaryComparison(rows, 'labrador', 'golden')).toBe('labrador-vs-golden')
+  })
+
+  it('breaks date ties alphabetically and returns null when nothing matches', () => {
+    const rows = [cand('z-vs', 'a', 'b', 3), cand('a-vs', 'b', 'a', 3)]
+    expect(pickPrimaryComparison(rows, 'a', 'b')).toBe('a-vs')
+    expect(pickPrimaryComparison(rows, 'x', 'y')).toBeNull()
   })
 })

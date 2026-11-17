@@ -15,7 +15,8 @@ import { ComparisonDispatcher } from '@/components/frontend/TemplateDispatcher'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import DivetComparison from '@/components/frontend/templates/divet/ComparisonTemplate'
-import { getComparisonPair, COMPARISON_CATEGORY } from '@/lib/comparison-data'
+import { getComparisonPair, getPrimaryComparisonSlug, COMPARISON_CATEGORY, COMPARISON_KEYS } from '@/lib/comparison-data'
+import { ogImages } from '@/lib/default-og'
 import { buildComparisonRows } from '@/lib/comparison'
 import { splitFieldValues } from '@/lib/fields'
 import { extractFaqItems } from '@/lib/faq'
@@ -54,20 +55,68 @@ async function fetchFeaturedImage(id: string | null) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const { siteName, siteUrl } = await getSiteData()
+  const { site, seo, siteName, siteUrl } = await getSiteData()
+  if (!site) return { title: 'Comparație | ' + siteName }
 
   const post = await prisma.post.findFirst({
-    where: { slug, status: 'PUBLISHED' },
-    select: { title: true, metaTitle: true, metaDescription: true, excerpt: true },
+    where: { slug, status: 'PUBLISHED', siteId: site.id, category: COMPARISON_CATEGORY_WHERE },
+    select: {
+      id: true,
+      title: true,
+      metaTitle: true,
+      metaDescription: true,
+      excerpt: true,
+      ogTitle: true,
+      ogDescription: true,
+      ogImageId: true,
+      featuredImageId: true,
+      noIndex: true,
+      canonicalUrl: true,
+      publishedAt: true,
+      updatedAt: true,
+    },
   })
   if (!post) return { title: 'Comparație | ' + siteName }
 
+  const base = siteUrl.replace(/\/$/, '')
+  // a-vs-b si b-vs-a sunt aceeasi pagina: duplicatul primeste canonical spre comparatia publicata prima.
+  const { a: slugA, b: slugB } = await getPairSlugs(post.id)
+  const primary = slugA && slugB ? await getPrimaryComparisonSlug(site.id, slugA, slugB) : null
+  const canonical = post.canonicalUrl || `${base}/${COMPARISON_CATEGORY}/${primary ?? slug}`
+
+  const imageId = post.ogImageId ?? post.featuredImageId
+  const image = imageId ? await prisma.media.findUnique({ where: { id: imageId }, select: { url: true } }) : null
+  const ogImageUrl = image?.url ?? seo?.defaultOgImage ?? undefined
+
   const title = post.metaTitle ?? post.title
+  const description = post.metaDescription ?? post.excerpt ?? undefined
   return {
     title: `${title} | ${siteName}`,
-    description: post.metaDescription ?? post.excerpt ?? undefined,
-    alternates: { canonical: `${siteUrl}/comparatie/${slug}` },
+    description,
+    robots: post.noIndex ? { index: false, follow: false } : undefined,
+    alternates: { canonical },
+    openGraph: {
+      title: post.ogTitle ?? title,
+      description: post.ogDescription ?? description,
+      url: canonical,
+      images: ogImages(base, ogImageUrl),
+      type: 'article',
+      publishedTime: post.publishedAt?.toISOString(),
+      modifiedTime: post.updatedAt.toISOString(),
+    },
+    twitter: { card: 'summary_large_image', images: ogImages(base, ogImageUrl) },
   }
+}
+
+const COMPARISON_CATEGORY_WHERE = { slug: COMPARISON_CATEGORY, parentId: null }
+
+async function getPairSlugs(postId: string): Promise<{ a: string | null; b: string | null }> {
+  const rows = await prisma.fieldValue.findMany({
+    where: { postId, fieldDefinition: { fieldKey: { in: [COMPARISON_KEYS.a, COMPARISON_KEYS.b] } } },
+    select: { value: true, fieldDefinition: { select: { fieldKey: true } } },
+  })
+  const get = (k: string) => rows.find((r) => r.fieldDefinition.fieldKey === k)?.value || null
+  return { a: get(COMPARISON_KEYS.a), b: get(COMPARISON_KEYS.b) }
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -83,6 +132,8 @@ export default async function ComparisonPage({ params }: Props) {
       slug,
       status: 'PUBLISHED',
       siteId: site.id,
+      // doar articolele din categoria radacina „comparatie": altfel /comparatie/<orice-slug> ar randa orice articol
+      category: COMPARISON_CATEGORY_WHERE,
     },
     include: {
       author: { select: { name: true, slug: true } },
@@ -155,6 +206,11 @@ export default async function ComparisonPage({ params }: Props) {
         faqItems={extractFaqItems(post.contentJson)}
         related={others.map((o) => ({ title: o.title, href: `/${COMPARISON_CATEGORY}/${o.slug}` }))}
         schema={schema}
+        byline={{
+          author: post.author?.name ? { name: post.author.name, href: post.author.slug ? `/autor/${post.author.slug}` : null } : null,
+          publishedAt: post.publishedAt,
+          updatedAt: post.updatedAt,
+        }}
       />
     )
   }

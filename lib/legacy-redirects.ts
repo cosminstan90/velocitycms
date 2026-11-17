@@ -27,6 +27,13 @@ export const LEGACY_ALIASES: Readonly<Record<string, string>> = {
   '/caini/caini-de-vanatoare': '/caini/rase',
 }
 
+/**
+ * Prefixe plate ale site-ului vechi (/articole/<slug>), fara grup: articolul se cauta dupa slug in TOT site-ul.
+ * Exemplu din SERP: /articole/boala-addison-la-caine. Fara articol publicat cu acelasi slug ramane 404
+ * (nu redirectionam spre un hub nerelevant); scrierea articolului cu slug identic activeaza redirectul automat.
+ */
+export const LEGACY_FLAT_PREFIXES: readonly string[] = ['articole']
+
 /** Pure lookup in the explicit alias map (trailing slash / case tolerant). */
 export function legacyAliasFor(path: string): string | null {
   const key = path.replace(/\/+$/, '').toLowerCase() || '/'
@@ -71,6 +78,21 @@ export async function findLegacyRedirect(args: {
   slug: string
 }): Promise<string | null> {
   const { siteId, group, slug } = args
+
+  if (LEGACY_FLAT_PREFIXES.includes(group.toLowerCase())) {
+    const any = await prisma.post.findMany({
+      where: { siteId, slug, status: 'PUBLISHED' },
+      select: { slug: true, category: { select: { slug: true, parent: { select: { slug: true } } } } },
+      take: 2,
+    })
+    if (any.length === 1 && any[0].category) {
+      const c = any[0].category
+      return buildPostPath({ slug: any[0].slug }, { slug: c.slug, parent: c.parent ? { slug: c.parent.slug } : null })
+    }
+    if (any.length > 1) return null
+    const alias = legacyAliasFor(`/${group}/${slug}`)
+    return alias && (await targetExists(siteId, alias)) ? alias : null
+  }
 
   const posts = await prisma.post.findMany({
     where: {
