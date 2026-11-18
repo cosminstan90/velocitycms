@@ -1,0 +1,133 @@
+{
+  "_note": "Exemple JSON-LD pentru DiVet. Valorile sunt ilustrative (verificate cu structura emisă de lib/seo/schema-generator.ts și cu schema live de pe /liste/rase-de-caini-mari). Fără Product, SoftwareApplication sau AggregateRating: nu avem evaluări. Nu se emit al doilea FAQPage / BreadcrumbList.",
+  "_rules": [
+    "Pagina de comparație: generatePostSchema produce deja WebSite, BreadcrumbList, Article, FAQPage (din faqBlock). Singura adăugare: 'about' pe Article (2 animale).",
+    "Primul element din BreadcrumbList este emis de generator cu numele site-ului ('DiVet'), nu 'Acasă' (diferă de breadcrumb-ul vizibil; minor).",
+    "speakable: selectorul 'article h1' din generator nu se potrivește fără element <article> în ComparisonTemplate; [data-speakable=\"tldr\"] se potrivește.",
+    "Lista roundup: CollectionPage cu mainEntity ItemList este deja emisă; se propune doar itemListOrder și nume scurte; FAQPage rămâne separat în @graph.",
+    "Nu adăuga ItemList cu cele două animale pe pagina de comparație (duplică 'about' și poate intra în conflict cu Article)."
+  ],
+  "comparison_page": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://divet.ro/#website",
+        "url": "https://divet.ro",
+        "name": "DiVet",
+        "inLanguage": "ro-RO",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": { "@type": "EntryPoint", "urlTemplate": "https://divet.ro/cautare?q={search_term_string}" },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "DiVet", "item": "https://divet.ro" },
+          { "@type": "ListItem", "position": 2, "name": "Comparații", "item": "https://divet.ro/comparatie" },
+          { "@type": "ListItem", "position": 3, "name": "Labrador vs Golden Retriever: diferențe și asemănări", "item": "https://divet.ro/comparatie/labrador-vs-golden-retriever" }
+        ]
+      },
+      {
+        "@type": "Article",
+        "@id": "https://divet.ro/comparatie/labrador-vs-golden-retriever/#article",
+        "headline": "Labrador vs Golden Retriever: diferențe și asemănări",
+        "description": "Compară Labradorul și Golden Retrieverul pe criteriile din fișele DiVet: talie, blană, energie, dresaj și îngrijire, plus cui i se potrivește fiecare.",
+        "url": "https://divet.ro/comparatie/labrador-vs-golden-retriever",
+        "inLanguage": "ro-RO",
+        "isPartOf": { "@id": "https://divet.ro/#website" },
+        "image": {
+          "@type": "ImageObject",
+          "url": "https://divet.ro/media/labrador-vs-golden.webp",
+          "caption": "Un Labrador și un Golden Retriever alături"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Nume Autor",
+          "@id": "https://divet.ro/autor/nume-autor/#person",
+          "url": "https://divet.ro/autor/nume-autor"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "@id": "https://divet.ro/#organization",
+          "name": "DiVet",
+          "url": "https://divet.ro",
+          "logo": { "@type": "ImageObject", "url": "https://divet.ro/opengraph-image" }
+        },
+        "datePublished": "2026-11-22T11:00:00.000Z",
+        "dateModified": "2026-11-22T11:00:00.000Z",
+        "speakable": {
+          "@type": "SpeakableSpecification",
+          "cssSelector": ["article h1", "[data-speakable=\"tldr\"]"]
+        },
+        "articleSection": "Comparații",
+        "about": [
+          { "@type": "Thing", "name": "Labrador Retriever", "url": "https://divet.ro/caini/rase/labrador-rasa-caini-caracteristici" },
+          { "@type": "Thing", "name": "Golden Retriever", "url": "https://divet.ro/caini/rase/golden-retriever-caracteristici-temperament" }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Care este diferența principală dintre Labrador și Golden Retriever?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Textul răspunsului de 40–60 de cuvinte, identic cu cel afișat în pagină (faqBlock)." }
+          },
+          {
+            "@type": "Question",
+            "name": "Care se potrivește mai bine familiilor cu copii?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Textul răspunsului, identic cu cel afișat în pagină." }
+          }
+        ]
+      }
+    ]
+  },
+  "list_roundup_page": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "DiVet", "item": "https://divet.ro/" },
+          { "@type": "ListItem", "position": 2, "name": "Liste", "item": "https://divet.ro/liste" },
+          { "@type": "ListItem", "position": 3, "name": "Rase de câini pentru copii", "item": "https://divet.ro/liste/rase-de-caini-pentru-copii" }
+        ]
+      },
+      {
+        "@type": "CollectionPage",
+        "@id": "https://divet.ro/liste/rase-de-caini-pentru-copii#collectionpage",
+        "url": "https://divet.ro/liste/rase-de-caini-pentru-copii",
+        "name": "Rase de câini pentru copii",
+        "description": "Rase de câini marcate ca potrivite pentru copii în fișele DiVet, cu link spre fișa fiecărei rase.",
+        "inLanguage": "ro-RO",
+        "isPartOf": { "@id": "https://divet.ro/#website" },
+        "mainEntity": {
+          "@type": "ItemList",
+          "@id": "https://divet.ro/liste/rase-de-caini-pentru-copii#itemlist",
+          "name": "Rase de câini pentru copii",
+          "itemListOrder": "https://schema.org/ItemListUnordered",
+          "numberOfItems": 3,
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Golden Retriever", "url": "https://divet.ro/caini/rase/golden-retriever-caracteristici-temperament" },
+            { "@type": "ListItem", "position": 2, "name": "Labrador Retriever", "url": "https://divet.ro/caini/rase/labrador-rasa-caini-caracteristici" },
+            { "@type": "ListItem", "position": 3, "name": "Beagle", "url": "https://divet.ro/caini/rase/beagle" }
+          ]
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Ce înseamnă „potrivit pentru copii” în fișele DiVet?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Textul din def.faq (lib/lists.ts), identic cu cel afișat în pagină." }
+          }
+        ]
+      }
+    ],
+    "_note_list": "numberOfItems = numărul real de fișe (minim 8 pentru a fi publică; exemplul are 3 doar pentru lizibilitate). Numele ListItem = nume scurt al rasei, nu titlul lung al fișei (live azi: 'Alabai - Rasă de câini: caracteristici, îngrijire și sănătate'). ItemListUnordered pentru liste alfabetice; ItemListOrderDescending doar dacă există un clasament real."
+  }
+}
