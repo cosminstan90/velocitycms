@@ -82,3 +82,17 @@ describe('getQuickGuide and getListsForBreed', () => {
     expect(await getListsForBreed('s1', 'mic-0')).toEqual([])
   })
 })
+
+describe('curated lists in the overview', () => {
+  it('keep the editorial order and appear in "Apare in" only once published members reach the threshold', async () => {
+    // fișele vin din baza de date în ordine alfabetică; lista Labrador le cere în ordinea redacției
+    const fiches = ['golden-retriever-caracteristici-temperament', 'pointer-englez', 'setter-irlandez', 'vizsla'].map((s) => post(s, {}))
+    prisma.post.findMany.mockResolvedValueOnce(fiches).mockResolvedValueOnce([])
+    const lab = (await getListsOverview('s1')).find((o) => o.def.slug === 'rase-asemanatoare-cu-labrador')!
+    expect(lab.availability).toMatchObject({ available: true, count: 4 })
+    expect(lab.members.map((m) => m.slug)).toEqual(['golden-retriever-caracteristici-temperament', 'vizsla', 'pointer-englez', 'setter-irlandez'])
+
+    prisma.post.findMany.mockResolvedValueOnce([post('coton-de-tulear', {}), post('lagotto-romagnolo', {})]).mockResolvedValueOnce([])
+    expect(await getListsForBreed('s1', 'coton-de-tulear')).toEqual([])
+  })
+})
