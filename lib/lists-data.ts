@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { LISTS, listAvailability, type FieldMap, type ListAvailability, type ListDefinition, type ListGroup } from '@/lib/lists'
+import { LISTS, listAvailability, listMatches, type FieldMap, type ListAvailability, type ListDefinition, type ListGroup } from '@/lib/lists'
 import type { PostListItem } from '@/lib/post-card'
 import { CARD_META_KEYS } from '@/lib/fields'
 
@@ -86,8 +86,13 @@ async function computeListsOverview(siteId: string): Promise<ListOverview[]> {
     for (const g of GROUPS) byGroup.set(g, await loadGroupPosts(siteId, g))
     return LISTS.map((def) => {
       const groupPosts = byGroup.get(def.group) ?? []
-      const members = groupPosts.filter((p) => def.match(p.fields))
-      return { def, availability: listAvailability(def, groupPosts.map((p) => ({ fields: p.fields }))), members }
+      const members = groupPosts.filter((p) => listMatches(def, p))
+      // Listele alese manual păstrează ordinea redacției.
+      if (def.curated) {
+        const order = new Map(def.curated.map((c, i) => [c.slug, i]))
+        members.sort((x, y) => (order.get(x.slug) ?? 0) - (order.get(y.slug) ?? 0))
+      }
+      return { def, availability: listAvailability(def, groupPosts.map((p) => ({ slug: p.slug, fields: p.fields }))), members }
     })
   } catch {
     return []

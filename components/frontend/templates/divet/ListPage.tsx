@@ -58,6 +58,41 @@ export default function ListPage({
           {members.length === 1 ? '1 rasă' : `${members.length} rase`} · {def.criteria}
         </p>
 
+        {def.subject ? (
+          <p className="mt-2 mb-0 text-dv-meta text-dv-ink-muted">
+            Rasa de referință:{' '}
+            <Link href={def.subject.href} className="font-semibold text-dv-accent underline focus-visible:outline-2 focus-visible:outline-dv-accent">
+              {def.subject.name}
+            </Link>
+          </p>
+        ) : null}
+
+        {def.curated ? (
+          <section aria-labelledby="alternative" className="mt-8 max-w-[760px]">
+            <h2 id="alternative" className="mb-4 font-dv-display text-dv-heading-m font-semibold tracking-tight text-dv-ink">
+              Alternativele, pe scurt
+            </h2>
+            <ol className="m-0 flex list-none flex-col gap-4 p-0">
+              {members.map((m, i) => {
+                const note = def.curated?.find((c) => c.slug === m.slug)?.note
+                const href = buildPostPath({ slug: m.slug }, m.category)
+                const name = m.title.split(/\s[-–—:]\s|:\s/)[0] ?? m.title
+                return (
+                  <li key={m.slug} className="rounded-[10px] border border-dv-border bg-dv-surface px-5 py-4">
+                    <h3 className="m-0 font-dv-display text-[20px] font-semibold leading-tight tracking-tight text-dv-ink">
+                      <span className="mr-2 text-dv-accent">{i + 1}.</span>
+                      <Link href={href} className="hover:text-dv-accent focus-visible:outline-2 focus-visible:outline-dv-accent">
+                        {name}
+                      </Link>
+                    </h3>
+                    {note ? <p className="mt-2 mb-0 text-dv-body text-dv-ink">{note}</p> : null}
+                  </li>
+                )
+              })}
+            </ol>
+          </section>
+        ) : null}
+
         <div className="mt-6">
           <PostGrid posts={members} siteUrl={site.siteUrl} />
         </div>
@@ -65,6 +100,21 @@ export default function ListPage({
         <div className="max-w-[720px]">
           <FaqSection items={def.faq} />
         </div>
+
+        {def.sources && def.sources.length > 0 ? (
+          <section aria-label="Surse" className="mt-8 max-w-[720px]">
+            <h2 className="mb-2 text-dv-label font-semibold uppercase text-dv-ink-muted">Surse</h2>
+            <ul className="m-0 flex flex-col gap-1 pl-5 text-dv-meta text-dv-ink-muted">
+              {def.sources.map((src) => (
+                <li key={src.href}>
+                  <a href={src.href} target="_blank" rel="noopener" className="underline hover:text-dv-accent">
+                    {src.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         {others.length > 0 ? (
           <section aria-label="Alte liste" className="mt-10">

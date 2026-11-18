@@ -1,0 +1,90 @@
+# DiVet
+
+> DiVet (divet.ro) este o enciclopedie în limba română despre animale: rase de câini și pisici, animale marine, insecte și specii sălbatice, plus un ghid de sănătate pentru proprietarii de animale de companie. Fiecare articol începe cu un rezumat de 40-60 de cuvinte, are specificații, o comparație cu specii apropiate, 6 întrebări frecvente și surse indicate în text.
+
+Despre conținut: articolele sunt documentate din surse publice (standarde de rasă FCI, Royal Kennel Club, IUCN, Merck Veterinary Manual, VCA, ASPCA, studii VetCompass) și pregătite cu ajutorul instrumentelor de inteligență artificială, sub semnătura redacției. Informațiile sunt orientative și nu înlocuiesc consultul unui medic veterinar. Fiecare pagină afișează data publicării și data actualizării. Metoda de lucru este descrisă în politica editorială.
+
+Pentru citare: indicați titlul articolului, DiVet (divet.ro) și URL-ul paginii. Pentru cifre medicale, citați și sursa primară menționată în articol.
+
+## Despre DiVet și metodologie
+- [Despre noi](https://divet.ro/despre-noi): cine face DiVet și cum sunt realizate articolele
+- [Politica editorială](https://divet.ro/politica-editoriala): surse, verificare, actualizări, corecturi, rolul AI
+- [Echipa](https://divet.ro/echipa): echipa editorială
+- [Redacția DiVet](https://divet.ro/autor/redactia): pagina autorului
+
+## Sănătate (câini și pisici)
+- [Sănătate](https://divet.ro/sanatate): toate ghidurile de sănătate
+- [Boli](https://divet.ro/sanatate/boli)
+  - [Parvoviroza la câini](https://divet.ro/sanatate/boli/parvoviroza-la-caini): simptome, transmitere, prevenție
+  - [Ciuma la câini](https://divet.ro/sanatate/boli/ciuma-la-caini)
+  - [Babesioza la câini](https://divet.ro/sanatate/boli/babesioza-la-caini)
+  - [Panleucopenia felină](https://divet.ro/sanatate/boli/panleucopenia-felina)
+  - [FIV și FeLV la pisici](https://divet.ro/sanatate/boli/fiv-si-felv-la-pisici)
+- [Simptome](https://divet.ro/sanatate/simptome)
+  - [Câinele vomită](https://divet.ro/sanatate/simptome/cainele-vomita)
+  - [Diareea la câini](https://divet.ro/sanatate/simptome/diareea-la-caini)
+  - [Câinele nu mănâncă](https://divet.ro/sanatate/simptome/cainele-nu-mananca)
+  - [Câinele șchiopătează](https://divet.ro/sanatate/simptome/cainele-schioapata)
+  - [Pisica vomită](https://divet.ro/sanatate/simptome/pisica-vomita)
+  - [Pisica are diaree](https://divet.ro/sanatate/simptome/pisica-are-diaree)
+  - [Pisica nu mănâncă](https://divet.ro/sanatate/simptome/pisica-nu-mananca)
+- [Substanțe toxice](https://divet.ro/sanatate/substante-toxice)
+  - [Ciocolata și câinii](https://divet.ro/sanatate/substante-toxice/ciocolata-si-cainii)
+  - [Xilitolul și câinii](https://divet.ro/sanatate/substante-toxice/xilitolul-si-cainii)
+  - [Strugurii și stafidele la câini](https://divet.ro/sanatate/substante-toxice/strugurii-si-stafidele-la-caini)
+  - [Ceapa și usturoiul la câini și pisici](https://divet.ro/sanatate/substante-toxice/ceapa-si-usturoiul-la-caini-si-pisici)
+  - [Crinii și pisicile](https://divet.ro/sanatate/substante-toxice/crinii-si-pisicile)
+  - [Plantele toxice pentru pisici](https://divet.ro/sanatate/substante-toxice/plantele-toxice-pentru-pisici)
+  - [Antigelul și animalele](https://divet.ro/sanatate/substante-toxice/antigelul-si-animalele)
+  - [Medicamentele umane și animalele](https://divet.ro/sanatate/substante-toxice/medicamentele-umane-si-animalele)
+- [Parazitologie](https://divet.ro/sanatate/parazitologie)
+  - [Puricii la câini și pisici](https://divet.ro/sanatate/parazitologie/puricii-la-caini-si-pisici)
+  - [Căpușele la câini și pisici](https://divet.ro/sanatate/parazitologie/capusele-la-caini-si-pisici)
+  - [Deparazitarea câinilor și pisicilor](https://divet.ro/sanatate/parazitologie/deparazitarea-cainilor-si-pisicilor)
+- Vaccinare
+  - [Vaccinarea cățelului](https://divet.ro/sanatate/vaccinare/vaccinarea-catelului)
+  - [Vaccinarea pisoiului](https://divet.ro/sanatate/vaccinare/vaccinarea-pisoiului)
+
+## Rase de câini și pisici
+- [Câini](https://divet.ro/caini) și [Rase de câini](https://divet.ro/caini/rase): aproape 30 de rase, cu talie, greutate, speranță de viață, temperament, cerințe de îngrijire și legislație românească (ex. câini periculoși, OUG 55/2002)
+  - [Rottweiler](https://divet.ro/caini/rase/rottweiler)
+  - [Husky siberian](https://divet.ro/caini/rase/husky-siberian)
+  - [Chihuahua](https://divet.ro/caini/rase/chihuahua)
+  - [Border Collie](https://divet.ro/caini/rase/border-collie)
+  - [Ciobănesc mioritic](https://divet.ro/caini/rase/ciobanesc-mioritic)
+  - [Ciobănesc carpatin](https://divet.ro/caini/rase/ciobanesc-carpatin)
+- [Pisici](https://divet.ro/pisici) și [Rase de pisici](https://divet.ro/pisici/rase): 19 rase
+  - [Ragdoll](https://divet.ro/pisici/rase/ragdoll)
+  - [Pisica persană](https://divet.ro/pisici/rase/pisica-persana)
+  - [Pisica siameză](https://divet.ro/pisici/rase/pisica-siameza)
+  - [Russian Blue](https://divet.ro/pisici/rase/russian-blue)
+- [Rase de câini mari](https://divet.ro/liste/rase-de-caini-mari)
+- [Cele mai inteligente rase de câini](https://divet.ro/liste/cele-mai-inteligente-rase-de-caini)
+- [Rase de pisici liniștite](https://divet.ro/liste/rase-de-pisici-linistite)
+
+## Animale marine, insecte, specii sălbatice
+- [Animale marine](https://divet.ro/marine): [Mamifere marine](https://divet.ro/marine/mamifere-marine), [Rechini și pești](https://divet.ro/marine/rechini-si-pesti), [Nevertebrate marine](https://divet.ro/marine/nevertebrate-marine)
+  - [Orca](https://divet.ro/marine/mamifere-marine/orca)
+  - [Balena cu cocoașă](https://divet.ro/marine/mamifere-marine/balena-cu-cocoasa)
+  - [Rechinul-balenă](https://divet.ro/marine/rechini-si-pesti/rechinul-balena)
+  - [Rechinul alb](https://divet.ro/marine/rechini-si-pesti/rechinul-alb)
+- [Insecte](https://divet.ro/insecte): [Gândaci](https://divet.ro/insecte/gandaci), [Insecte exotice](https://divet.ro/insecte/insecte-exotice)
+  - [Licurici](https://divet.ro/insecte/gandaci/licurici)
+  - [Buburuza](https://divet.ro/insecte/gandaci/buburuza)
+- [Sălbatice](https://divet.ro/salbatice): [Mamifere sălbatice](https://divet.ro/salbatice/mamifere)
+  - [Zimbrul](https://divet.ro/salbatice/mamifere/zimbrul)
+  - [Lupul cenușiu](https://divet.ro/salbatice/mamifere/lupul-cenusiu)
+  - [Ursul brun](https://divet.ro/salbatice/mamifere/ursul-brun)
+  - [Râsul eurasiatic](https://divet.ro/salbatice/mamifere/risul-eurasiatic)
+
+## Instrumente și referință
+- [Este periculos pentru câine sau pisică? (alimente)](https://divet.ro/instrumente/aliment-periculos): verificare rapidă a alimentelor toxice
+- [Vârsta câinelui în ani umani](https://divet.ro/instrumente/varsta-caine)
+- [Glosar de termeni veterinari și zoologici](https://divet.ro/glosar)
+- [Index A–Z](https://divet.ro/index-a-z)
+
+## Optional
+- [Text integral al articolelor (llms-full.txt)](https://divet.ro/llms-full.txt)
+- [Sitemap](https://divet.ro/sitemap.xml)
+- [Feed RSS](https://divet.ro/feed.xml)
+- [Căutare](https://divet.ro/cautare)

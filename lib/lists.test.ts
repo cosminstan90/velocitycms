@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { LISTS, getList, listAvailability, MIN_LIST_ENTRIES, type FieldMap } from './lists'
+import { LISTS, getList, listAvailability, listMatches, MIN_LIST_ENTRIES, CURATED_MIN_ENTRIES, type FieldMap } from './lists'
 
 const dog = (f: FieldMap) => ({ fields: f })
 
@@ -68,5 +68,41 @@ describe('listAvailability', () => {
 
   it('works on an empty group', () => {
     expect(listAvailability(def, [], 8)).toMatchObject({ available: false, count: 0, total: 0 })
+  })
+})
+
+describe('curated „rase asemănătoare" lists', () => {
+  const curated = LISTS.filter((l) => l.curated)
+
+  it('exist, each with 3+ distinct members and a short note per member', () => {
+    expect(curated.length).toBeGreaterThanOrEqual(3)
+    for (const l of curated) {
+      const slugs = l.curated!.map((c) => c.slug)
+      expect(slugs.length, l.slug).toBeGreaterThanOrEqual(CURATED_MIN_ENTRIES)
+      expect(new Set(slugs).size, l.slug).toBe(slugs.length)
+      expect(l.slug, l.slug).toMatch(/^rase-asemanatoare-cu-/)
+      for (const c of l.curated!) {
+        const words = c.note.split(/\s+/).length
+        expect(words, `${l.slug}/${c.slug}`).toBeGreaterThanOrEqual(12)
+        expect(words, `${l.slug}/${c.slug}`).toBeLessThanOrEqual(45)
+      }
+      if (l.subject) expect(slugs.some((s) => l.subject!.href.endsWith(`/${s}`)), l.slug).toBe(false)
+    }
+  })
+
+  it('match by slug only, never by fields', () => {
+    const l = getList('rase-asemanatoare-cu-labrador')!
+    expect(listMatches(l, { slug: 'vizsla', fields: {} })).toBe(true)
+    expect(listMatches(l, { slug: 'beagle', fields: { talie: 'Mare' } })).toBe(false)
+    expect(listMatches(l, { fields: { talie: 'Mare' } })).toBe(false)
+  })
+
+  it('publish with CURATED_MIN_ENTRIES published members, without the selectivity rule', () => {
+    const l = getList('rase-asemanatoare-cu-bichon')!
+    const two = [{ slug: 'coton-de-tulear', fields: {} }, { slug: 'lagotto-romagnolo', fields: {} }]
+    expect(listAvailability(l, two)).toMatchObject({ available: false, reason: 'too-few', count: 2 })
+    const three = [...two, { slug: 'bichon-maltez', fields: {} }]
+    // 3 din 3 fișe ale grupului: o listă filtrată ar fi „not-selective", una aleasă manual se publică.
+    expect(listAvailability(l, three)).toMatchObject({ available: true, count: 3, total: 3 })
   })
 })
